@@ -81,10 +81,43 @@ Pendiente de diseñar/construir:
 ## Backend (Google Apps Script + Google Sheets)
 
 El archivo `backend/apps-script.js` es una copia de referencia del código
-desplegado en Google Apps Script. **La fuente de verdad real vive en el
-editor de Apps Script de la hoja de Google**, no en este repo — si lo
-editas aquí, tienes que copiar el cambio manualmente allá y volver a
-implementar (Implementar → Administrar implementaciones → Nueva versión).
+desplegado en Google Apps Script.
+
+### Despliegue automatizado con clasp (recomendado)
+
+En vez de copiar y pegar el código en el editor de Apps Script cada vez,
+usa **clasp** (la CLI oficial de Google para Apps Script) para que Claude
+Code pueda hacer `push`/`deploy` directo desde la terminal.
+
+**Configuración inicial (una sola vez, requiere pasos manuales tuyos):**
+
+1. `npm install -g @google/clasp`
+2. Activa la API de Apps Script en tu cuenta de Google:
+   https://script.google.com/home/usersettings (interruptor "Google Apps
+   Script API" en ON). Sin esto, clasp no puede autenticarse.
+3. `clasp login` — abre tu navegador para autorizar con tu cuenta de
+   Google. Este paso es interactivo, tienes que hacerlo tú.
+4. Consigue el **Script ID** de tu proyecto actual: ábrelo en
+   script.google.com → ⚙️ Configuración del proyecto → copia el "ID de
+   secuencia de comandos".
+5. Dentro de `backend/`, ejecuta `clasp clone <SCRIPT_ID>` — esto conecta
+   la carpeta local con tu script YA EXISTENTE (no crea uno nuevo, no
+   cambia tu URL).
+6. Anota también tu **Deployment ID** (Administrar implementaciones, en el
+   editor de Apps Script) — lo necesitas para que las actualizaciones
+   sobrescriban la implementación existente en vez de crear una nueva URL.
+
+**De ahí en adelante, el ciclo normal es:**
+
+```bash
+# después de editar backend/apps-script.js (o el archivo que clasp haya creado)
+clasp push
+clasp deploy -i TU_DEPLOYMENT_ID -d "Descripción del cambio"
+```
+
+Pídele a Claude Code que encadene esto en un solo comando o script una vez
+esté configurado — a partir de ahí, actualizar el backend es un comando,
+no una sesión manual en el navegador.
 
 Hojas usadas:
 - **Perfiles**: progreso en curso + cronómetros por estudiante (para poder

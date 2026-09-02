@@ -67,3 +67,13 @@ Antes de tocar código, lee `README.md` para la arquitectura general.
   curso.
 - Sigue el patrón de los módulos A/B en `MODULES` como plantilla para la
   forma de los objetos `level`.
+
+## Backend: automatizar despliegue con clasp
+
+El usuario quiere dejar de copiar/pegar manualmente el backend en el
+editor de Apps Script. Ver la sección "Despliegue automatizado con clasp"
+en README.md para el procedimiento completo. Si el usuario no ha hecho
+`clasp login` todavía, ese paso es interactivo (abre su navegador) — no
+se puede completar sin que él participe activamente. Todo lo demás
+(`clasp push`, `clasp deploy -i <id>`) sí se puede ejecutar y encadenar
+por Claude Code una vez esté logueado y el proyecto clonado.
