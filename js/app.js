@@ -708,7 +708,6 @@ function viewCategories(){
   outer.appendChild(el('h1','','¿Qué quieres entrenar?'));
   outer.appendChild(el('p','','Elige un tema del curso para ver sus actividades.'));
   outer.appendChild(sessionBar());
-  outer.appendChild(treePanelGlobal());
 
   const grid=el('div','modgrid');
   Object.values(CATEGORIES).forEach(cat=>{
@@ -752,8 +751,6 @@ function viewMenu(){
   infoCard.appendChild(el('p','','Elige un módulo. Cada uno avanza en cuatro niveles: reconocimiento, identificación, relaciones y aplicación.'));
   infoCard.appendChild(sessionBar());
   wrap.appendChild(infoCard);
-
-  wrap.appendChild(treePanelSystem(cat));
 
   const outer=el('div','card');
   outer.appendChild(el('div','section-title','Temas'));
@@ -839,8 +836,6 @@ function viewModuleSubmenu(){
   card.appendChild(el('div','eyebrow','🔧 EN CONSTRUCCIÓN'));
   card.appendChild(el('h1','', mod? esc(mod.title) : 'Actividad'));
   card.appendChild(el('p','','Elige el tipo de actividad. Tu profesor las va habilitando una por una.'));
-
-  if(mod){ card.appendChild(treePanelModule(mod)); }
 
   const grid=el('div','modgrid');
   const standaloneWrap=el('div','');
@@ -1277,351 +1272,18 @@ function finishLevel(modId, levelId, correct, total){
 }
 
 /* ============================================================
-   CALIFICACIÓN POR HUESOS (reemplaza estrellas)
-   ============================================================ */
-function bonesFor(score){
-  return score>=90?3:score>=70?2:score>=1?1:0;
-}
-function boneGlyph(earned){
-  return '<svg class="bone'+(earned?'':' dim')+'" viewBox="0 0 32 32" aria-hidden="true">'+
-    '<g transform="rotate(45 16 16)">'+
-      '<rect x="6" y="12" width="20" height="8" rx="3"/>'+
-      '<circle cx="7" cy="11" r="5"/><circle cx="7" cy="21" r="5"/>'+
-      '<circle cx="25" cy="11" r="5"/><circle cx="25" cy="21" r="5"/>'+
-    '</g></svg>';
-}
-function boneRow(count){
-  let s='';
-  for(let i=0;i<3;i++) s += boneGlyph(i<count);
-  return el('div','bonerow', s);
-}
-
-/* ============================================================
-   ESQUELETO DE PROGRESO ("esqueleto que se arma")
-   Visualización anatómica del avance en tres escalas:
-   global (todos los temas), sistema (un tema), módulo (un subtema).
-   Todo se deriva de state.progress + MODULES — sin persistencia nueva.
-   ============================================================ */
-
-// Qué regiones del esqueleto "arma" cada módulo regional.
-// A y B NO están: son módulos concepto (aplican a toda la figura).
-const SKELETON_REGIONS = {
-  C: ['skull','cervical'],
-  D: ['cervical','thoracic','lumbar','sacrum'],
-  E: ['ribs','sternum'],
-  F: ['clavicleL','clavicleR','scapulaL','scapulaR',
-      'humerusL','humerusR','forearmL','forearmR','handL','handR']
-};
-const SKELETON_BASE_PARTS = ['pelvis','femurL','femurR','shinL','shinR','footL','footR'];
-const SKELETON_MAPPED_PARTS = [...new Set(
-  Object.keys(SKELETON_REGIONS).reduce((a,k)=>a.concat(SKELETON_REGIONS[k]), [])
-)];
-
-const SKELETON_MARKUP = `
-<svg class="sk-figure" viewBox="0 0 200 380" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Esqueleto de progreso">
-  <g class="sk-part" data-part="femurL"><rect x="86" y="214" width="12" height="80" rx="6" transform="rotate(3 92 254)"/></g>
-  <g class="sk-part" data-part="femurR"><rect x="102" y="214" width="12" height="80" rx="6" transform="rotate(-3 108 254)"/></g>
-  <g class="sk-part" data-part="shinL"><rect x="85" y="292" width="10" height="74" rx="5" transform="rotate(2 90 329)"/></g>
-  <g class="sk-part" data-part="shinR"><rect x="105" y="292" width="10" height="74" rx="5" transform="rotate(-2 110 329)"/></g>
-  <g class="sk-part" data-part="footL"><path d="M74 362 h18 a3 3 0 0 1 3 3 v3 a3 3 0 0 1-3 3 h-21 a3 3 0 0 1-3-3 v-3 a3 3 0 0 1 3-3 z"/></g>
-  <g class="sk-part" data-part="footR"><path d="M126 362 h-18 a3 3 0 0 0-3 3 v3 a3 3 0 0 0 3 3 h21 a3 3 0 0 0 3-3 v-3 a3 3 0 0 0-3-3 z"/></g>
-  <g class="sk-part" data-part="pelvis"><path d="M82 190 q-16 4 -14 22 q3 14 18 12 q10 -2 12 -14 v-18 z"/><path d="M118 190 q16 4 14 22 q-3 14 -18 12 q-10 -2 -12 -14 v-18 z"/></g>
-
-  <g class="sk-part" data-part="thoracic"><rect x="94" y="72" width="12" height="64" rx="4"/></g>
-  <g class="sk-part" data-part="lumbar"><rect x="92" y="136" width="16" height="34" rx="5"/></g>
-  <g class="sk-part" data-part="sacrum"><polygon points="90,170 110,170 106,192 94,192"/></g>
-
-  <g class="sk-part" data-part="ribs">
-    <path d="M100 88 Q58 92 64 118"/>
-    <path d="M100 100 Q54 106 60 134"/>
-    <path d="M100 112 Q52 120 60 146"/>
-    <path d="M100 88 Q142 92 136 118"/>
-    <path d="M100 100 Q146 106 140 134"/>
-    <path d="M100 112 Q148 120 140 146"/>
-  </g>
-  <g class="sk-part" data-part="sternum"><rect x="95" y="84" width="10" height="42" rx="5"/></g>
-
-  <g class="sk-part" data-part="skull">
-    <ellipse cx="100" cy="30" rx="20" ry="21"/>
-    <path d="M85 44 q15 13 30 0 v7 q-15 11 -30 0 z"/>
-  </g>
-  <g class="sk-part" data-part="cervical">
-    <rect x="94" y="52" width="12" height="5" rx="2"/>
-    <rect x="94" y="58" width="12" height="5" rx="2"/>
-    <rect x="94" y="64" width="12" height="5" rx="2"/>
-  </g>
-
-  <g class="sk-part" data-part="clavicleL"><rect x="66" y="72" width="32" height="7" rx="3.5" transform="rotate(-8 82 75)"/></g>
-  <g class="sk-part" data-part="clavicleR"><rect x="102" y="72" width="32" height="7" rx="3.5" transform="rotate(8 118 75)"/></g>
-  <g class="sk-part" data-part="scapulaL"><path d="M62 80 q-12 3 -10 21 q11 6 21 -3 z"/></g>
-  <g class="sk-part" data-part="scapulaR"><path d="M138 80 q12 3 10 21 q-11 6 -21 -3 z"/></g>
-
-  <g class="sk-part" data-part="humerusL"><rect x="50" y="80" width="11" height="64" rx="5.5" transform="rotate(7 55 112)"/></g>
-  <g class="sk-part" data-part="humerusR"><rect x="139" y="80" width="11" height="64" rx="5.5" transform="rotate(-7 145 112)"/></g>
-  <g class="sk-part" data-part="forearmL"><rect x="44" y="146" width="9" height="58" rx="4.5" transform="rotate(4 48 175)"/></g>
-  <g class="sk-part" data-part="forearmR"><rect x="147" y="146" width="9" height="58" rx="4.5" transform="rotate(-4 152 175)"/></g>
-  <g class="sk-part" data-part="handL"><path d="M39 204 h13 a3 3 0 0 1 3 3 l-1 13 a4 4 0 0 1-4 4 h-7 a4 4 0 0 1-4-4 l-2-16 a3 3 0 0 1 3-3 z"/></g>
-  <g class="sk-part" data-part="handR"><path d="M161 204 h-13 a3 3 0 0 0-3 3 l1 13 a4 4 0 0 0 4 4 h7 a4 4 0 0 0 4-4 l2-16 a3 3 0 0 0-3-3 z"/></g>
-</svg>`;
-
-// Avance de un módulo desde el progreso de la sesión actual.
-function moduleProgress(modId){
-  const mod = MODULES[modId];
-  const levels = (mod && mod.levels) || [];
-  let done=0, sum=0;
-  levels.forEach(l=>{
-    const p = state.progress[levelKey(modId, l.id)];
-    if(p){ done++; sum += pct(p.correct, p.total); }
-  });
-  const total = levels.length;
-  return {
-    hasContent: total > 0,
-    total: total,
-    done: done,
-    frac: total ? done/total : 0,
-    avgScore: done ? Math.round(sum/done) : null,
-    complete: total > 0 && done === total
-  };
-}
-
-// Clase de estado de una región a partir de su fracción de avance.
-function regionClass(frac, hasContent){
-  if(!hasContent) return 'sk-dormant';
-  if(frac <= 0) return 'sk-ghost';
-  if(frac < 1) return 'sk-forming';
-  return 'sk-solid';
-}
-
-// Avance combinado de los módulos "concepto" (A, B): no mapean a una
-// región, sino que aplican a toda la figura (divisiones y clasificación
-// ósea abarcan el esqueleto entero).
-function conceptProgress(modIds){
-  let sum=0, n=0, hasAny=false;
-  modIds.forEach(mid=>{
-    if(SKELETON_REGIONS[mid]) return;
-    const pr = moduleProgress(mid);
-    if(!pr.hasContent) return;
-    hasAny = true; sum += pr.frac; n++;
-  });
-  return { frac: n ? sum/n : 0, hasContent: hasAny };
-}
-
-// Estado por región: los módulos regionales pintan sus regiones y los
-// módulos concepto tiñen toda la figura (gana la fracción más alta).
-function partStatesForModules(modIds){
-  const byPart = {};
-  modIds.forEach(mid=>{
-    const regions = SKELETON_REGIONS[mid];
-    if(!regions) return;
-    const prog = moduleProgress(mid);
-    regions.forEach(part=>{
-      const cur = byPart[part];
-      if(!cur || prog.frac > cur.frac){
-        byPart[part] = { frac: prog.frac, hasContent: prog.hasContent, modId: mid };
-      }
-    });
-  });
-  const cp = conceptProgress(modIds);
-  if(cp.hasContent){
-    SKELETON_MAPPED_PARTS.concat(SKELETON_BASE_PARTS).forEach(part=>{
-      const cur = byPart[part];
-      if(!cur || cp.frac > cur.frac){
-        byPart[part] = { frac: cp.frac, hasContent: true, modId: cur ? cur.modId : null };
-      }
-    });
-  }
-  return byPart;
-}
-
-// Cuánto del esqueleto (regiones mapeadas) está ensamblado.
-function assemblyStats(partStates){
-  let sumFrac=0, complete=0;
-  const total = SKELETON_MAPPED_PARTS.length;
-  SKELETON_MAPPED_PARTS.forEach(p=>{
-    const st = partStates[p];
-    const frac = (st && st.hasContent) ? st.frac : 0;
-    sumFrac += frac;
-    if(frac >= 1) complete++;
-  });
-  return { pct: Math.round(sumFrac/total*100), complete: complete, total: total };
-}
-
-// Construye la figura SVG y pinta cada <g data-part> según partStates.
-// opts.focusParts: si se da, el resto de regiones se atenúa (sk-dim).
-function skeletonSVG(partStates, opts){
-  opts = opts || {};
-  const wrap = el('div','sk-figure-wrap', SKELETON_MARKUP);
-  const focus = opts.focusParts ? new Set(opts.focusParts) : null;
-  wrap.querySelectorAll('[data-part]').forEach(g=>{
-    const part = g.getAttribute('data-part');
-    const st = partStates && partStates[part];
-    let cls;
-    if(st) cls = regionClass(st.frac, st.hasContent);
-    else cls = 'sk-base';
-    if(focus && !focus.has(part)) cls += ' sk-dim';
-    g.setAttribute('class', 'sk-part ' + cls);
-  });
-  return wrap;
-}
-
-// Abrir un módulo desde la leyenda del esqueleto (misma lógica que su tarjeta).
-function openModuleFromTree(modId){
-  const mod = MODULES[modId];
-  if(!mod) return;
-  if(mod.placeholder){
-    state.currentModule = mod.id;
-    state.currentSubActivity = null;
-    state.view = (mod.subActivities && mod.subActivities.length) ? 'moduleSubmenu' : 'comingSoon';
-    render();
-  } else {
-    goToLevel(mod.id, firstIncompleteLevelIdx(mod));
-  }
-}
-
-// --- Panel escala GLOBAL: todos los temas en conjunto ---
-function treePanelGlobal(){
-  const allModIds = [];
-  Object.values(CATEGORIES).forEach(c=> c.moduleIds.forEach(m=> allModIds.push(m)));
-  const partStates = partStatesForModules(allModIds);
-
-  let sum=0, n=0;
-  allModIds.forEach(mid=>{
-    const pr = moduleProgress(mid);
-    if(pr.avgScore!==null){ sum += pr.avgScore; n++; }
-  });
-  const avg = n ? Math.round(sum/n) : 0;
-
-  const asm = assemblyStats(partStates);
-
-  const panel = el('div','skeleton-panel compact');
-  panel.appendChild(el('div','eyebrow','🦴 Tu esqueleto anatómico'));
-  panel.appendChild(skeletonSVG(partStates));
-  const summ = el('div','sk-summary');
-  summ.innerHTML = 'Esqueleto <b>'+asm.pct+'%</b> ensamblado'
-    + (asm.complete ? ' · <b>'+asm.complete+' / '+asm.total+'</b> regiones completas' : '')
-    + (avg ? ' · promedio general <b>'+avg+'%</b>' : '');
-  panel.appendChild(summ);
-  panel.appendChild(boneRow(bonesFor(avg)));
-
-  Object.values(CATEGORIES).forEach(c=>{
-    let cs=0, cn=0, doneLv=0, totLv=0;
-    c.moduleIds.forEach(mid=>{
-      const pr = moduleProgress(mid);
-      doneLv += pr.done; totLv += pr.total;
-      if(pr.avgScore!==null){ cs += pr.avgScore; cn++; }
-    });
-    const cavg = cn ? Math.round(cs/cn) : 0;
-    const line = el('div','sk-catline');
-    line.innerHTML = esc(c.emoji+' '+c.title) + ' — <b>'+doneLv+' / '+totLv+'</b> niveles'
-      + (cavg ? ' · '+cavg+'%' : '');
-    panel.appendChild(line);
-  });
-  return panel;
-}
-
-// --- Panel escala SISTEMA: un tema completo ---
-function treePanelSystem(cat){
-  const partStates = partStatesForModules(cat.moduleIds);
-  const asm = assemblyStats(partStates);
-  const panel = el('div','skeleton-panel');
-  panel.appendChild(el('div','eyebrow','🦴 Esqueleto del sistema'));
-  panel.appendChild(skeletonSVG(partStates));
-  panel.appendChild(el('div','sk-summary', 'Esqueleto <b>'+asm.pct+'%</b> ensamblado'
-    + (asm.complete ? ' · <b>'+asm.complete+' / '+asm.total+'</b> regiones completas' : '')));
-
-  const regionalIds = cat.moduleIds.filter(mid=> SKELETON_REGIONS[mid] && MODULES[mid]);
-  const conceptIds  = cat.moduleIds.filter(mid=> !SKELETON_REGIONS[mid] && MODULES[mid]);
-
-  if(regionalIds.length){
-    panel.appendChild(el('div','section-title','Regiones'));
-    const legend = el('div','sk-legend');
-    regionalIds.forEach(mid=>{
-      const mod = MODULES[mid];
-      const pr = moduleProgress(mid);
-      const row = el('div','lrow');
-      const nameBtn = el('button','sk-lname', esc(mod.title));
-      nameBtn.onclick = ()=> openModuleFromTree(mid);
-      const right = el('div','lright');
-      if(pr.hasContent){
-        right.appendChild(el('span','pct', pr.done+' / '+pr.total));
-        right.appendChild(boneRow(pr.avgScore!==null ? bonesFor(pr.avgScore) : 0));
-      } else {
-        right.appendChild(el('span','pct', '🔒 sin contenido'));
-      }
-      row.appendChild(nameBtn);
-      row.appendChild(right);
-      legend.appendChild(row);
-    });
-    panel.appendChild(legend);
-  }
-
-  if(conceptIds.length){
-    panel.appendChild(el('div','section-title','Cimientos'));
-    conceptIds.forEach(mid=>{
-      const mod = MODULES[mid];
-      const pr = moduleProgress(mid);
-      const slab = el('div','sk-slab');
-      const head = el('div','sk-slab-head');
-      const nameBtn = el('button','sk-lname', esc(mod.title));
-      nameBtn.onclick = ()=> openModuleFromTree(mid);
-      head.appendChild(nameBtn);
-      head.appendChild(boneRow(pr.avgScore!==null ? bonesFor(pr.avgScore) : 0));
-      slab.appendChild(head);
-      slab.appendChild(el('div','progressbar','<i style="width:'+Math.round(pr.frac*100)+'%"></i>'));
-      slab.appendChild(el('div','pct', pr.done+' / '+pr.total+' niveles'
-        + (pr.avgScore!==null ? ' · promedio '+pr.avgScore+'%' : '')));
-      panel.appendChild(slab);
-    });
-  }
-  return panel;
-}
-
-// --- Panel escala MÓDULO: un subtema ---
-function treePanelModule(mod, opts){
-  opts = opts || {};
-  if(!mod) return el('div','');
-  const pr = moduleProgress(mod.id);
-  const regions = SKELETON_REGIONS[mod.id];
-
-  const panel = el('div','skeleton-panel'+(opts.compact ? ' compact' : ''));
-  panel.appendChild(el('div','eyebrow','🦴 '+esc(mod.title)));
-
-  if(regions){
-    panel.appendChild(skeletonSVG(partStatesForModules([mod.id]), { focusParts: regions }));
-  } else {
-    // módulo concepto (A/B): toda la figura se arma según los niveles hechos
-    const whole = {};
-    SKELETON_MAPPED_PARTS.concat(SKELETON_BASE_PARTS).forEach(p=>{
-      whole[p] = { frac: pr.frac, hasContent: pr.hasContent };
-    });
-    panel.appendChild(skeletonSVG(whole));
-  }
-
-  const levels = (mod.levels || []);
-  if(levels.length){
-    const pips = el('div','sk-pips');
-    levels.forEach(l=>{
-      const done = !!state.progress[levelKey(mod.id, l.id)];
-      pips.appendChild(el('div','sk-pip'+(done?' on':''), esc(l.title || '')));
-    });
-    panel.appendChild(pips);
-  }
-
-  if(pr.hasContent){
-    const summ = el('div','sk-summary');
-    summ.innerHTML = '<b>'+pr.done+' / '+pr.total+'</b> niveles'
-      + (pr.avgScore!==null ? ' · promedio <b>'+pr.avgScore+'%</b>' : '');
-    panel.appendChild(summ);
-    panel.appendChild(boneRow(pr.avgScore!==null ? bonesFor(pr.avgScore) : 0));
-  } else {
-    panel.appendChild(el('div','sk-summary', 'Actividades de esta región aún no disponibles.'));
-  }
-  return panel;
-}
-
-/* ============================================================
    VISTA: NIVEL COMPLETADO
    ============================================================ */
+function starsFor(score){
+  return score>=90?3:score>=70?2:score>=1?1:0;
+}
+function starRow(count){
+  const row=el('div','starrow');
+  for(let i=0;i<3;i++){
+    row.appendChild(el('span','star'+(i<count?' on':''), '★'));
+  }
+  return row;
+}
 
 function viewLevelDone(){
   const mod=MODULES[state.currentModule];
@@ -1634,7 +1296,7 @@ function viewLevelDone(){
   const card=el('div','card');
   card.appendChild(el('div','eyebrow','NIVEL COMPLETADO'));
   card.appendChild(el('h1','', level.title));
-  card.appendChild(boneRow(bonesFor(score)));
+  card.appendChild(starRow(starsFor(score)));
   card.appendChild(el('p','lede', 'Módulo: '+mod.title));
   card.appendChild(timerBadge(mod.id));
 
@@ -1643,8 +1305,6 @@ function viewLevelDone(){
   const s2=el('div','stat'); s2.innerHTML='<div class="slabel">Aciertos</div><div class="sval">'+p.correct+' / '+p.total+'</div>';
   statgrid.appendChild(s1); statgrid.appendChild(s2);
   card.appendChild(statgrid);
-
-  card.appendChild(treePanelModule(mod, {compact:true}));
 
   const hasNext = idx+1 < mod.levels.length;
   if(hasNext){
@@ -1784,7 +1444,7 @@ function viewBossDone(){
   const card=el('div','card');
   card.appendChild(el('div','eyebrow','RESULTADO — BOSS BATTLE'));
   card.appendChild(el('h1','','¡Reto completado!'));
-  card.appendChild(boneRow(bonesFor(score)));
+  card.appendChild(starRow(starsFor(score)));
   const statgrid=el('div','statgrid');
   statgrid.innerHTML =
     '<div class="stat"><div class="slabel">Puntaje</div><div class="sval '+(score>=80?'good':score>=60?'warn':'bad')+'">'+score+'%</div></div>'+
