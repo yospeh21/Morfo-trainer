@@ -5,7 +5,7 @@ Entrenamiento virtual de anatomía ósea para el curso VACS Morfofisiología I
 vanilla, sin frameworks ni paso de build) con backend en Google Sheets vía
 Google Apps Script.
 
-**En producción:** https://TU-SITIO.netlify.app *(actualiza este link)*
+**En producción:** https://morfo-trainer.netlify.app
 
 ## Estructura del proyecto
 
@@ -132,10 +132,18 @@ Acciones soportadas (`?action=`): `ping`, `lookupName`, `getProfile`,
 
 ## Despliegue
 
-El sitio se publica arrastrando `index.html` (y las carpetas `css/`, `js/`)
-a la pestaña **Deploys** del proyecto en Netlify — ver la sección de
-Netlify si vas a automatizar esto conectando un repo de GitHub en vez de
-arrastrar archivos a mano.
+El sitio está conectado a este repo de GitHub en Netlify: **cada `git push`
+a la rama `master` redepliega automáticamente**. No hay que arrastrar
+archivos a mano.
+
+- **Sitio:** https://morfo-trainer.netlify.app
+- **Configuración:** en `netlify.toml` (sin build command, publica la raíz).
+- **Panel:** https://app.netlify.com → proyecto `morfo-trainer` → pestaña
+  **Deploys** para ver el estado de cada despliegue.
+
+El backend (Google Apps Script) es independiente: Netlify solo sirve el
+frontend, y `SHEETS_API_URL` en `js/app.js` sigue apuntando al Web App de
+Apps Script.
 
 ## Principios de diseño a respetar
 
