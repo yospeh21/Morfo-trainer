@@ -1,0 +1,20 @@
+# Configuración de despliegue en Netlify.
+# El sitio es HTML/CSS/JS puro: no hay paso de build.
+
+[build]
+  publish = "."
+  command = ""
+
+# El backend (Google Apps Script) y los .md no son parte del sitio,
+# pero servirlos es inofensivo. Si quieres ocultarlos, descomenta:
+# [[redirects]]
+#   from = "/backend/*"
+#   to = "/index.html"
+#   status = 404
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
