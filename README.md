@@ -133,7 +133,7 @@ Acciones soportadas (`?action=`): `ping`, `lookupName`, `getProfile`,
 ## Despliegue
 
 El sitio está conectado a este repo de GitHub en Netlify: **cada `git push`
-a la rama `master` redepliega automáticamente**. No hay que arrastrar
+a la rama `main` redepliega automáticamente**. No hay que arrastrar
 archivos a mano.
 
 - **Sitio:** https://morfo-trainer.netlify.app
