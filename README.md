@@ -55,6 +55,18 @@ Todo vive en una única IIFE con un patrón de render manual (sin framework):
 - **Backend**: `apiGet()` / `apiPost()` llaman al Web App de Google Apps
   Script (ver `backend/apps-script.js`). Todo el guardado (perfiles,
   resultados, cronómetros) vive en una hoja de Google, no en el navegador.
+- **Esqueleto de progreso** — figura SVG estilizada (`SKELETON_MARKUP`,
+  regiones `<g data-part>`) que se "arma" según el avance. Se recomputa
+  desde `state.progress` en cada render; sin persistencia nueva. Tres
+  escalas, integradas en las pantallas existentes:
+  - `treePanelGlobal()` en `viewCategories` — todos los temas en conjunto.
+  - `treePanelSystem(cat)` en `viewMenu` — un tema; cada módulo regional
+    pinta su región (`SKELETON_REGIONS`) y los módulos "concepto" (A, B)
+    tiñen toda la figura (`conceptProgress`).
+  - `treePanelModule(mod)` en `viewModuleSubmenu` y `viewLevelDone` — un
+    subtema; enfoca sus regiones o, si es concepto, la figura entera.
+  - Calificación con `boneRow()` / `bonesFor()` (1–3 huesos por puntaje),
+    que reemplazó a las estrellas también en `viewLevelDone` / `viewBossDone`.
 
 ## Contenido pendiente / roadmap
 
