@@ -191,6 +191,11 @@ function homeView(){
   return 'welcome';
 }
 
+function levelBackTarget(){
+  const mod = MODULES[state.currentModule];
+  return (mod && mod.subActivities && mod.subActivities.length) ? 'moduleSubmenu' : 'menu';
+}
+
 /* ============================================================
    CRONÓMETRO POR ACTIVIDAD (módulo)
    Reutilizable: cualquier módulo (actual o futuro) obtiene
@@ -346,6 +351,103 @@ async function loadProfile(code){
       saved: String(p.saved).toUpperCase()==='TRUE'
     };
   }catch(e){ console.error('No se pudo cargar el perfil', e); return null; }
+}
+
+/* ============================================================
+   CONTENIDO DINÁMICO DESDE GOOGLE SHEETS
+   Se fusiona con MODULES una sola vez por sesión. Nunca pisa un
+   nivel que ya exista escrito a mano (A y B se quedan intactos).
+   ============================================================ */
+let _dynamicContentLoaded = false;
+
+const DEFAULT_LEVEL_TITLES = {
+  l1:'Reconocimiento', l2:'Identificación', l3:'Relaciones', l4:'Aplicación',
+  mc:'Selección múltiple', match:'Relacionar, completar y otras actividades',
+  sort:'Clasificación', img:'Imágenes anatómicas', cases:'Casos clínicos'
+};
+
+function groupRows(rows, keyFn){
+  const out={};
+  (rows||[]).forEach(r=>{
+    const k=keyFn(r);
+    if(!out[k]) out[k]=[];
+    out[k].push(r);
+  });
+  return out;
+}
+
+function addDynamicLevel(modId, nivelId, meta, buildFn){
+  const mod = MODULES[modId];
+  if(!mod) return; // el módulo no existe en el código, se ignora la fila
+  if(!mod.levels) mod.levels=[];
+  if(mod.levels.some(l=>l.id===nivelId)) return; // ya hay contenido verificado a mano, no se pisa
+  const level = buildFn();
+  level.id = nivelId;
+  level.title = (meta && meta.titulo) || DEFAULT_LEVEL_TITLES[nivelId] || nivelId;
+  mod.levels.push(level);
+  // si el módulo usa sub-botones (C-F), marca el que corresponda como listo para jugar
+  if(mod.subActivities){
+    const sub = mod.subActivities.find(s=>s.id===nivelId);
+    if(sub) sub.ready = true;
+  }
+}
+
+function mergeDynamicContent(data){
+  const metaByKey = {};
+  (data.niveles||[]).forEach(n=>{ metaByKey[n.modulo+'|'+n.nivel] = n; });
+
+  const mcGroups = groupRows(data.mc, r=>r.modulo+'|'+r.nivel);
+  Object.entries(mcGroups).forEach(([key, rows])=>{
+    const [modId, nivelId] = key.split('|');
+    if(!modId || !nivelId) return;
+    addDynamicLevel(modId, nivelId, metaByKey[key], ()=>({
+      type:'mc',
+      questions: rows.map(r=>({
+        q: r.pregunta,
+        opts: [r.opcion_a, r.opcion_b, r.opcion_c, r.opcion_d].filter(o=>o!==undefined && String(o).trim()!==''),
+        correct: 'ABCD'.indexOf(String(r.correcta||'').trim().toUpperCase()),
+        explain: r.explicacion || ''
+      })).filter(q=>q.q && q.opts.length>=2 && q.correct>=0)
+    }));
+  });
+
+  const matchGroups = groupRows(data.match, r=>r.modulo+'|'+r.nivel);
+  Object.entries(matchGroups).forEach(([key, rows])=>{
+    const [modId, nivelId] = key.split('|');
+    if(!modId || !nivelId) return;
+    const meta = metaByKey[key];
+    addDynamicLevel(modId, nivelId, meta, ()=>({
+      type:'match',
+      instructions: (meta && meta.instrucciones) || 'Toca un término y luego su definición correcta.',
+      pairs: rows.filter(r=>r.termino && r.definicion).map(r=>[r.termino, r.definicion])
+    }));
+  });
+
+  const sortGroups = groupRows(data.sort, r=>r.modulo+'|'+r.nivel);
+  Object.entries(sortGroups).forEach(([key, rows])=>{
+    const [modId, nivelId] = key.split('|');
+    if(!modId || !nivelId) return;
+    const meta = metaByKey[key];
+    const validRows = rows.filter(r=>r.item && r.categoria);
+    const cats = [...new Set(validRows.map(r=>r.categoria))];
+    addDynamicLevel(modId, nivelId, meta, ()=>({
+      type:'sort',
+      instructions: (meta && meta.instrucciones) || 'Clasifica cada elemento en su categoría.',
+      buckets: cats.map(c=>({ key:c, label: c.charAt(0).toUpperCase()+c.slice(1) })),
+      items: validRows.map(r=>({ term:r.item, cat:r.categoria }))
+    }));
+  });
+}
+
+async function loadDynamicContent(){
+  if(_dynamicContentLoaded) return;
+  try{
+    const data = await apiGet({action:'getContent'});
+    mergeDynamicContent(data);
+    _dynamicContentLoaded = true;
+  }catch(e){
+    console.error('No se pudo cargar contenido dinámico de Sheets', e);
+  }
 }
 
 async function resetProfile(){
@@ -562,6 +664,7 @@ function viewWelcome(){
     }
     startBtn.textContent='Entrando…';
     try{
+      await loadDynamicContent();
       const existing = await loadProfile(code);
       state.student.code = code;
       state.student.name = name;
@@ -740,14 +843,24 @@ function viewModuleSubmenu(){
 
   function makeSubBtn(sub){
     const subBtn=el('button', sub.standalone? 'btn btn-block' : 'modcard');
+    const doneInfo = state.progress[levelKey(mod.id, sub.id)];
+    const readyTag = sub.ready
+      ? (doneInfo
+          ? '<div class="pct">✓ Completado — '+pct(doneInfo.correct,doneInfo.total)+'%</div>'
+          : '<span class="soontag" style="color:var(--good-dark);border-color:var(--good-dark);background:var(--good-soft);">▶ Listo para jugar</span>')
+      : '<span class="soontag">🔧 Próximamente</span>';
     if(sub.standalone){
       subBtn.innerHTML = sub.icon+'  '+esc(sub.title)+(sub.ready? '' : '  · 🔧 Próximamente');
     } else {
       subBtn.innerHTML =
         '<div class="mhead"><span class="modnum">'+sub.icon+'</span><span class="mtitle">'+esc(sub.title)+'</span></div>'+
-        (sub.ready? '<div class="progressbar"><i style="width:0%"></i></div><div class="pct">0 / 0 niveles completados</div>' : '<span class="soontag">🔧 Próximamente</span>');
+        readyTag;
     }
     subBtn.onclick=()=>{
+      if(sub.ready){
+        const idx = mod.levels.findIndex(l=>l.id===sub.id);
+        if(idx>=0){ goToLevel(mod.id, idx); return; }
+      }
       state.currentSubActivity = sub.id;
       state.view='comingSoon';
       render();
@@ -863,7 +976,7 @@ function viewSort(){
   const mod=MODULES[state.currentModule];
   const level=mod.levels[state.currentLevelIdx];
   const wrap=el('div');
-  wrap.appendChild(backButton('Volver al panel', ()=>{ state.view='menu'; render(); }));
+  wrap.appendChild(backButton('Volver al panel', ()=>{ state.view=levelBackTarget(); render(); }));
 
   const card=el('div','card');
   card.appendChild(levelHeaderRow(mod, level, state.currentLevelIdx));
@@ -1015,7 +1128,7 @@ function viewMatch(){
   const mod=MODULES[state.currentModule];
   const level=mod.levels[state.currentLevelIdx];
   const wrap=el('div');
-  wrap.appendChild(backButton('Volver al panel', ()=>{ state.view='menu'; render(); }));
+  wrap.appendChild(backButton('Volver al panel', ()=>{ state.view=levelBackTarget(); render(); }));
 
   const card=el('div','card');
   card.appendChild(levelHeaderRow(mod, level, state.currentLevelIdx));
@@ -1089,7 +1202,7 @@ function viewMC(){
   const mod=MODULES[state.currentModule];
   const level=mod.levels[state.currentLevelIdx];
   const wrap=el('div');
-  wrap.appendChild(backButton('Volver al panel', ()=>{ state.view='menu'; render(); }));
+  wrap.appendChild(backButton('Volver al panel', ()=>{ state.view=levelBackTarget(); render(); }));
 
   const card=el('div','card');
   card.appendChild(levelHeaderRow(mod, level, state.currentLevelIdx));
@@ -1206,7 +1319,7 @@ function viewLevelDone(){
 
   const menuBtn=el('button','btn btn-ghost btn-block', 'Volver al panel');
   menuBtn.style.marginTop='10px';
-  menuBtn.onclick=()=>{ state.view='menu'; render(); };
+  menuBtn.onclick=()=>{ state.view=levelBackTarget(); render(); };
   card.appendChild(menuBtn);
 
   wrap.appendChild(card);

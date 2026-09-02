@@ -1,10 +1,14 @@
 /**
- * MORFO-TRAINER — backend en Google Apps Script (v6, agrega listProfiles)
+ * MORFO-TRAINER — backend en Google Apps Script (v7, contenido dinámico desde Sheets)
  */
 
 var PERFILES_HEADERS = ['code','name','progress','timers','saved','updated_at'];
 var RESULTADOS_HEADERS = ['code','name','timestamp','overall','totalCorrect','totalQ','rows','boss'];
 var ESTUDIANTES_HEADERS = ['code','name'];
+var MC_HEADERS = ['modulo','nivel','pregunta','opcion_a','opcion_b','opcion_c','opcion_d','correcta','explicacion'];
+var MATCH_HEADERS = ['modulo','nivel','termino','definicion'];
+var SORT_HEADERS = ['modulo','nivel','item','categoria'];
+var NIVELES_HEADERS = ['modulo','nivel','titulo','instrucciones'];
 
 // 🔒 Tu clave de monitor (conserva la misma que ya tenías)
 var MONITOR_PASSWORD = 'cambia-esta-clave';
@@ -40,6 +44,16 @@ function doGet(e) {
       }
       var sheet3 = getOrCreateSheet(ss, 'Perfiles', PERFILES_HEADERS);
       return jsonOut({ ok: true, profiles: allRows(sheet3) });
+    }
+    if (action === 'getContent') {
+      var mc = getOrCreateSheet(ss, 'Preguntas_MC', MC_HEADERS);
+      var mt = getOrCreateSheet(ss, 'Preguntas_Match', MATCH_HEADERS);
+      var so = getOrCreateSheet(ss, 'Preguntas_Sort', SORT_HEADERS);
+      var nv = getOrCreateSheet(ss, 'Niveles_Meta', NIVELES_HEADERS);
+      return jsonOut({
+        ok: true,
+        mc: allRows(mc), match: allRows(mt), sort: allRows(so), niveles: allRows(nv)
+      });
     }
     return jsonOut({ ok: false, error: 'acción GET no reconocida: ' + action });
   } catch (err) {
