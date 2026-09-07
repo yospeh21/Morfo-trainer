@@ -161,6 +161,13 @@ const CATEGORIES = {
   }
 };
 
+// Restricción temporal: solo estos módulos están habilitados; el resto
+// aparece con candado y no se puede entrar. Vaciar el arreglo para
+// reabrir todo. Boss Battle se deshabilita solo si no queda ningún
+// módulo jugable fuera de esta lista.
+const LOCKED_MODULE_IDS = ['A','B','C','D','E','F'];
+function isModuleLocked(modId){ return LOCKED_MODULE_IDS.indexOf(modId) !== -1; }
+
 /* ============================================================
    ESTADO
    ============================================================ */
@@ -761,6 +768,18 @@ function viewMenu(){
   cat.moduleIds.forEach((mid, idx)=>{
     const mod=MODULES[mid]; if(!mod) return;
     const num = String(idx+1).padStart(2,'0');
+
+    if(isModuleLocked(mid)){
+      const lockedBtn=el('button','modcard locked');
+      lockedBtn.disabled=true;
+      lockedBtn.innerHTML =
+        '<div class="mhead"><span class="modnum">'+num+'</span><span class="mtitle">'+esc(mod.title)+'</span></div>'+
+        '<div class="msub">'+esc(mod.subtitle||'')+'</div>'+
+        '<span class="soontag">🔒 No disponible</span>';
+      grid.appendChild(lockedBtn);
+      return;
+    }
+
     const modBtn=el('button','modcard');
 
     if(mod.placeholder){
@@ -794,9 +813,16 @@ function viewMenu(){
   });
   outer.appendChild(grid);
 
-  const bossBtn=el('button','btn btn-block','🏆  Boss Battle — repaso cronometrado (mezcla los módulos de este tema)');
+  const bossPlayable = cat.moduleIds.some(mid=>{
+    const m = MODULES[mid];
+    return m && !isModuleLocked(mid) && m.levels.some(l=>l.type==='mc');
+  });
+  const bossBtn=el('button','btn btn-block', bossPlayable
+    ? '🏆  Boss Battle — repaso cronometrado (mezcla los módulos de este tema)'
+    : '🔒  Boss Battle — no disponible');
   bossBtn.style.marginTop='16px';
-  bossBtn.onclick=startBoss;
+  if(bossPlayable){ bossBtn.onclick=startBoss; }
+  else { bossBtn.disabled=true; }
   outer.appendChild(bossBtn);
 
   const resetZone=el('div','');
