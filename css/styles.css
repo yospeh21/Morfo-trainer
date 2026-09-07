@@ -137,6 +137,8 @@
   .modcard:nth-of-type(4){border-color:var(--good-dark);box-shadow:0 5px 0 var(--good-dark);}
   .modcard:nth-of-type(5){border-color:var(--bad-dark);box-shadow:0 5px 0 var(--bad-dark);}
   .modcard:nth-of-type(6){border-color:var(--secondary-dark);box-shadow:0 5px 0 var(--secondary-dark);}
+  .modcard:nth-of-type(7){border-color:var(--gold-dark);box-shadow:0 5px 0 var(--gold-dark);}
+  .modcard:nth-of-type(8){border-color:var(--good-dark);box-shadow:0 5px 0 var(--good-dark);}
   .modcard .mhead{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
   .modcard .modnum{
     font-family:var(--font-display);font-weight:800;font-size:13px;
@@ -150,6 +152,8 @@
   .modcard:nth-of-type(4) .modnum{background:var(--good);border-color:var(--good-dark);color:#fff;}
   .modcard:nth-of-type(5) .modnum{background:var(--bad);border-color:var(--bad-dark);color:#fff;}
   .modcard:nth-of-type(6) .modnum{background:var(--secondary);border-color:var(--secondary-dark);color:#fff;}
+  .modcard:nth-of-type(7) .modnum{background:var(--gold);border-color:var(--gold-dark);color:var(--ink);}
+  .modcard:nth-of-type(8) .modnum{background:var(--good);border-color:var(--good-dark);color:#fff;}
   .modcard .mtitle{font-family:var(--font-display);font-weight:800;font-size:16px;line-height:1.2;}
   .modcard .msub{color:var(--ink-dim);font-size:13px;margin-bottom:10px;font-weight:600;}
   .progressbar{height:10px;border-radius:20px;background:var(--panel-3);overflow:hidden;margin-top:2px;border:2px solid var(--line-strong);}
