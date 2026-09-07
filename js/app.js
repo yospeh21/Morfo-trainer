@@ -479,9 +479,13 @@ function logout(){
   render();
 }
 
+// Niveles de los módulos ACTIVOS (los bloqueados no cuentan para totales).
 function allLevelsFlat(){
   const out=[];
-  Object.values(MODULES).forEach(m=>m.levels.forEach(l=>out.push({mod:m.id,l})));
+  Object.values(MODULES).forEach(m=>{
+    if(isModuleLocked(m.id)) return;
+    m.levels.forEach(l=>out.push({mod:m.id,l}));
+  });
   return out;
 }
 
@@ -553,8 +557,9 @@ function topStrip(){
   const wrap=el('div','topstrip');
   const brand=el('div','brand','<span class="dot"></span> Morfo-Trainer');
   const readout=el('div','readout');
-  const doneCount = Object.keys(state.progress).length;
-  const totalLevels = allLevelsFlat().length;
+  const flat = allLevelsFlat();
+  const totalLevels = flat.length;
+  const doneCount = flat.filter(x=> !!state.progress[levelKey(x.mod, x.l.id)]).length;
   readout.innerHTML = '<span>'+ (state.student.name? esc(state.student.name):'Invitado') +'</span><span>NIVELES <span class="v">'+doneCount+'/'+totalLevels+'</span></span>';
   wrap.appendChild(brand); wrap.appendChild(readout);
   return wrap;
@@ -722,7 +727,7 @@ function viewCategories(){
   Object.values(CATEGORIES).forEach(cat=>{
     let total=0, done=0, sumPct=0;
     cat.moduleIds.forEach(mid=>{
-      const mod=MODULES[mid]; if(!mod) return;
+      const mod=MODULES[mid]; if(!mod || isModuleLocked(mid)) return;
       mod.levels.forEach(l=>{
         total++;
         const p=state.progress[levelKey(mod.id,l.id)];
@@ -1491,6 +1496,7 @@ function viewBossDone(){
 function computeReport(){
   const rows=[];
   Object.values(MODULES).forEach(mod=>{
+    if(isModuleLocked(mod.id)) return; // los temas bloqueados no entran al informe
     mod.levels.forEach(level=>{
       const p=state.progress[levelKey(mod.id, level.id)];
       if(p) rows.push({ modTitle:mod.title, levelTitle:level.title, correct:p.correct, total:p.total, score:pct(p.correct,p.total) });
