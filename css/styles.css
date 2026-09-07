@@ -157,12 +157,20 @@
   .modcard:nth-of-type(6) .modnum{background:var(--secondary);border-color:var(--secondary-dark);color:#fff;}
   .modcard:nth-of-type(7) .modnum{background:var(--blue);border-color:var(--blue-dark);color:#fff;}
   .modcard:nth-of-type(8) .modnum{background:var(--teal);border-color:var(--teal-dark);color:#fff;}
-  /* módulos bloqueados: candado, atenuado, sin color, no clickeable (gana por orden y especificidad) */
+  /* módulos bloqueados: candado, atenuado, sin color, no clickeable y más compactos */
   .modgrid .modcard.locked{
     opacity:.5;cursor:not-allowed;pointer-events:none;filter:grayscale(0.6);
-    border-color:var(--line-strong);box-shadow:0 5px 0 var(--line-strong);
+    border-color:var(--line-strong);box-shadow:0 3px 0 var(--line-strong);
+    padding:10px 12px;align-self:start;
   }
-  .modgrid .modcard.locked .modnum{background:var(--panel-3);border-color:var(--line-strong);color:var(--ink-dim);}
+  .modgrid .modcard.locked .mhead{margin-bottom:0;gap:8px;}
+  .modgrid .modcard.locked .modnum{
+    background:var(--panel-3);border-color:var(--line-strong);color:var(--ink-dim);
+    width:22px;height:22px;min-width:22px;font-size:11px;
+  }
+  .modgrid .modcard.locked .mtitle{font-size:12.5px;line-height:1.15;}
+  .modgrid .modcard.locked .msub{display:none;}
+  .modgrid .modcard.locked .soontag{font-size:9.5px;padding:2px 7px;margin-top:6px;border-width:1.5px;}
   .modcard .mtitle{font-family:var(--font-display);font-weight:800;font-size:16px;line-height:1.2;}
   .modcard .msub{color:var(--ink-dim);font-size:13px;margin-bottom:10px;font-weight:600;}
   .progressbar{height:10px;border-radius:20px;background:var(--panel-3);overflow:hidden;margin-top:2px;border:2px solid var(--line-strong);}
