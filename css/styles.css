@@ -306,6 +306,17 @@
   .tag-good{color:var(--good-dark);font-family:var(--font-display);font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.03em;}
   .tag-bad{color:var(--bad);font-family:var(--font-display);font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.03em;}
 
+  /* ---------- completar (fill) ---------- */
+  input.fillinput{
+    width:100%;margin:6px 0 0;font-size:16px;font-weight:800;text-align:center;
+    background:var(--panel-2);border:3px solid var(--line-strong);color:var(--ink);
+    padding:14px 16px;border-radius:14px;font-family:var(--font-body);
+  }
+  input.fillinput:focus{outline:none;border-color:var(--secondary);}
+  input.fillinput:disabled{opacity:1;}
+  input.fillinput.ok{border-color:var(--good-dark);background:var(--good-soft);color:var(--good-dark);}
+  input.fillinput.bad{border-color:var(--bad);background:var(--bad-soft);color:var(--bad);}
+
   /* ---------- match game ---------- */
   .matchgrid{display:grid;grid-template-columns:1fr;gap:20px;}
   @media(min-width:560px){ .matchgrid{grid-template-columns:1fr 1fr;} }

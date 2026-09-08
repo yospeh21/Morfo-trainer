@@ -42,7 +42,11 @@ Todo vive en una única IIFE con un patrón de render manual (sin framework):
 - **`MODULES`** / **`CATEGORIES`** — el contenido del curso, organizado en
   categorías macro → módulos (temas) → niveles (actividades). Cada nivel
   tiene un `type`: `'sort'` (arrastrar y clasificar), `'match'` (emparejar
-  términos/definiciones) o `'mc'` (selección múltiple).
+  términos/definiciones), `'mc'` (selección múltiple) o `'completar'`
+  (escribir la respuesta; `viewFill` + `normFill`/`fillMatches` ignoran
+  mayúsculas, tildes, puntuación y las conjunciones "y"/"e"; hoja
+  `Preguntas_Completar`, columnas `modulo·nivel·pregunta·respuestas·
+  explicacion`, con `respuestas` separadas por `/`).
 - **`render()`** — limpia `#app` y vuelve a construir la vista actual según
   `state.view`, usando el mapa `views{}`. Cualquier vista nueva se registra
   ahí.

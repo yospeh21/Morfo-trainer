@@ -9,7 +9,8 @@
 function SUB_ACTIVITY_TEMPLATE(){
   return [
     { id:'mc', title:'Preguntas de selección múltiple', icon:'📝', ready:false },
-    { id:'match', title:'Relacionar, completar y otras actividades', icon:'🔗', ready:false },
+    { id:'match', title:'Relacionar y emparejar', icon:'🔗', ready:false },
+    { id:'completar', title:'Preguntas de completar', icon:'✍️', ready:false },
     { id:'img', title:'Actividades con imágenes anatómicas', icon:'🖼️', ready:false },
     { id:'cases', title:'Resolución de casos clínicos', icon:'🩺', ready:false },
     { id:'mix', title:'Repaso combinado (elige cuántas preguntas)', icon:'🎲', ready:false, isMix:true, standalone:true }
@@ -289,7 +290,7 @@ function stopTimerTick(){
 document.addEventListener('visibilitychange', ()=>{
   if(document.hidden){
     pauseActiveTimer();
-  } else if(state.currentModule && ['sort','match','mc','levelDone'].includes(state.view)){
+  } else if(state.currentModule && MODULE_TIMER_VIEWS.includes(state.view)){
     startModuleTimer(state.currentModule);
   }
 });
@@ -373,7 +374,8 @@ let _dynamicContentLoaded = false;
 
 const DEFAULT_LEVEL_TITLES = {
   l1:'Reconocimiento', l2:'Identificación', l3:'Relaciones', l4:'Aplicación',
-  mc:'Selección múltiple', match:'Relacionar, completar y otras actividades',
+  mc:'Selección múltiple', match:'Relacionar y emparejar',
+  completar:'Preguntas de completar',
   sort:'Clasificación', img:'Imágenes anatómicas', cases:'Casos clínicos'
 };
 
@@ -448,6 +450,22 @@ function mergeDynamicContent(data){
       items: validRows.map(r=>({ term:r.item, cat:r.categoria }))
     }));
   });
+
+  const fillGroups = groupRows(data.completar, r=>r.modulo+'|'+r.nivel);
+  Object.entries(fillGroups).forEach(([key, rows])=>{
+    const [modId, nivelId] = key.split('|');
+    if(!modId || !nivelId) return;
+    const meta = metaByKey[key];
+    addDynamicLevel(modId, nivelId, meta, ()=>({
+      type:'completar',
+      instructions: (meta && meta.instrucciones) || 'Escribe la palabra o palabras que completan cada frase. No importan mayúsculas ni tildes.',
+      questions: rows.map(r=>({
+        q: r.pregunta,
+        answers: String(r.respuestas||'').split('/').map(s=>s.trim()).filter(Boolean),
+        explain: r.explicacion || ''
+      })).filter(q=>q.q && q.answers.length)
+    }));
+  });
 }
 
 async function loadDynamicContent(){
@@ -507,7 +525,7 @@ function shuffle(arr){
 }
 function pct(correct,total){ return total? Math.round((correct/total)*100) : 0; }
 
-const MODULE_TIMER_VIEWS = ['sort','match','mc','levelDone'];
+const MODULE_TIMER_VIEWS = ['sort','match','mc','completar','levelDone'];
 
 function render(){
   if(_activeTimerModule && !(MODULE_TIMER_VIEWS.includes(state.view) && state.currentModule===_activeTimerModule)){
@@ -523,6 +541,7 @@ function render(){
     sort: viewSort,
     match: viewMatch,
     mc: viewMC,
+    completar: viewFill,
     levelDone: viewLevelDone,
     boss: viewBoss,
     bossDone: viewBossDone,
@@ -943,7 +962,7 @@ function goToLevel(modId, idx){
   state.currentLevelIdx=idx;
   const mod=MODULES[modId];
   const level=mod.levels[idx];
-  state.view = level.type; // 'sort' | 'match' | 'mc'
+  state.view = level.type; // 'sort' | 'match' | 'mc' | 'completar'
   state._levelRuntime = null;
   render();
   startModuleTimer(modId);
@@ -1292,6 +1311,101 @@ function viewMC(){
       }
     };
     card.appendChild(nextBtn);
+  }
+
+  wrap.appendChild(card);
+  return wrap;
+}
+
+/* ============================================================
+   VISTA: NIVEL DE COMPLETAR (FILL)
+   El estudiante escribe la respuesta. La comparación ignora
+   mayúsculas, tildes, puntuación y las conjunciones "y"/"e".
+   ============================================================ */
+function normFill(s){
+  return String(s==null?'':s)
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')  // quita tildes/dieresis
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g,' ')                      // quita puntuación
+    .split(/\s+/).filter(w=> w && w!=='y' && w!=='e') // quita conjunciones sueltas
+    .join(' ')
+    .trim();
+}
+function fillMatches(typed, q){
+  const t = normFill(typed);
+  if(!t) return false;
+  return (q.answers||[]).some(a=> normFill(a) === t);
+}
+
+function viewFill(){
+  const mod=MODULES[state.currentModule];
+  const level=mod.levels[state.currentLevelIdx];
+  const wrap=el('div');
+  wrap.appendChild(backButton('Volver al panel', ()=>{ state.view=levelBackTarget(); render(); }));
+
+  const card=el('div','card');
+  card.appendChild(levelHeaderRow(mod, level, state.currentLevelIdx));
+  card.appendChild(practiceBanner(mod.id));
+  card.appendChild(levelNav(mod, level, state.currentLevelIdx));
+  if(level.instructions){ card.appendChild(el('p','', esc(level.instructions))); }
+
+  if(!state._levelRuntime){
+    state._levelRuntime = {
+      qIdx:0, correct:0, answered:false, wasCorrect:false, typed:'',
+      qOrder: shuffle(level.questions.map((_,i)=>i))
+    };
+  }
+  const rt = state._levelRuntime;
+  const q = level.questions[rt.qOrder[rt.qIdx]];
+
+  card.appendChild(questionCounter(rt.qIdx+1, level.questions.length));
+  card.appendChild(el('div','qprompt', esc(q.q)));
+
+  const input=document.createElement('input');
+  input.type='text';
+  input.className='fillinput'+(rt.answered ? (rt.wasCorrect?' ok':' bad') : '');
+  input.placeholder='Escribe tu respuesta…';
+  input.value=rt.typed;
+  input.disabled=rt.answered;
+  card.appendChild(input);
+
+  const mainBtn=el('button','btn btn-primary btn-block',
+    rt.answered ? (rt.qIdx+1<level.questions.length ? 'Siguiente →' : 'Terminar nivel') : 'Comprobar');
+  mainBtn.style.marginTop='12px';
+  card.appendChild(mainBtn);
+
+  if(!rt.answered){
+    input.addEventListener('input', ()=>{ rt.typed = input.value; });
+    input.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); mainBtn.click(); } });
+    mainBtn.onclick=()=>{
+      if(!input.value.trim()) return;
+      rt.typed=input.value;
+      rt.wasCorrect=fillMatches(input.value, q);
+      if(rt.wasCorrect) rt.correct++;
+      rt.answered=true;
+      render();
+    };
+  } else {
+    const box=el('div','explainbox');
+    let html = '<span class="'+(rt.wasCorrect?'tag-good':'tag-bad')+'">'+(rt.wasCorrect?'✓ CORRECTO':'✕ REVISA ESTO')+'</span><br><br>';
+    if(!rt.wasCorrect){
+      html += 'Respuesta: <b>'+esc(q.answers[0])+'</b>';
+      // muestra solo sinónimos reales, no reordenamientos de las mismas palabras
+      const firstSet = normFill(q.answers[0]).split(' ').sort().join(' ');
+      const alts = q.answers.slice(1).filter(a=> normFill(a).split(' ').sort().join(' ') !== firstSet);
+      if(alts.length){ html += ' <span style="opacity:.7">(también válido: '+esc(alts.join(' · '))+')</span>'; }
+      if(q.explain){ html += '<br><br>'; }
+    }
+    if(q.explain){ html += esc(q.explain); }
+    box.innerHTML = html;
+    card.appendChild(box);
+    mainBtn.onclick=()=>{
+      if(rt.qIdx+1<level.questions.length){
+        rt.qIdx++; rt.answered=false; rt.wasCorrect=false; rt.typed=''; render();
+      } else {
+        finishLevel(mod.id, level.id, rt.correct, level.questions.length);
+      }
+    };
   }
 
   wrap.appendChild(card);
