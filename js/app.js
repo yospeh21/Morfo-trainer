@@ -1243,26 +1243,33 @@ function viewMC(){
   card.appendChild(levelNav(mod, level, state.currentLevelIdx));
 
   if(!state._levelRuntime){
-    state._levelRuntime = { qIdx:0, correct:0, answered:false, selected:null };
+    // Cada intento baraja el orden de las preguntas y el de las opciones de cada una.
+    state._levelRuntime = {
+      qIdx:0, correct:0, answered:false, selected:null,
+      qOrder: shuffle(level.questions.map((_,i)=>i)),
+      optOrder: level.questions.map(qq=> shuffle(qq.opts.map((_,i)=>i)))
+    };
   }
   const rt = state._levelRuntime;
-  const q = level.questions[rt.qIdx];
+  const qi = rt.qOrder[rt.qIdx];
+  const q = level.questions[qi];
+  const perm = rt.optOrder[qi]; // índices originales, en el orden barajado a mostrar
 
   card.appendChild(questionCounter(rt.qIdx+1, level.questions.length));
   card.appendChild(el('div','qprompt', esc(q.q)));
 
   const optsWrap=el('div','opts');
-  q.opts.forEach((optText, i)=>{
-    const btn=buildOptionBtn(optText, i);
+  perm.forEach((origIdx, displayIdx)=>{
+    const btn=buildOptionBtn(q.opts[origIdx], displayIdx);
     if(rt.answered){
       btn.disabled=true;
-      if(i===q.correct) btn.classList.add('correct');
-      else if(i===rt.selected) btn.classList.add('wrong');
+      if(origIdx===q.correct) btn.classList.add('correct');
+      else if(origIdx===rt.selected) btn.classList.add('wrong');
     }
     btn.onclick=()=>{
       if(rt.answered) return;
-      rt.answered=true; rt.selected=i;
-      if(i===q.correct) rt.correct++;
+      rt.answered=true; rt.selected=origIdx;
+      if(origIdx===q.correct) rt.correct++;
       render();
     };
     optsWrap.appendChild(btn);
@@ -1370,7 +1377,15 @@ function buildBossPool(moduleIds){
     if(!mod) return;
     mod.levels.forEach(level=>{
       if(level.type==='mc'){
-        level.questions.forEach(q=>pool.push({ q:q.q, opts:q.opts, correct:q.correct, explain:q.explain }));
+        level.questions.forEach(q=>{
+          const perm = shuffle(q.opts.map((_,i)=>i)); // baraja opciones
+          pool.push({
+            q:q.q,
+            opts: perm.map(i=>q.opts[i]),
+            correct: perm.indexOf(q.correct),
+            explain:q.explain
+          });
+        });
       }
     });
   });
