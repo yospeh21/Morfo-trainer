@@ -324,14 +324,16 @@ async function apiPost(body){
   return data;
 }
 
-async function checkStorageDiag(diagEl){
+async function checkStorageDiag(badgeEl){
   try{
     await apiGet({action:'ping'});
-    diagEl.textContent = '✅ Guardado conectado a tu hoja de Google Sheets.';
-    diagEl.style.borderColor='var(--good-dark)'; diagEl.style.background='var(--good-soft)'; diagEl.style.color='var(--good-dark)';
+    badgeEl.className = 'connbadge ok';
+    badgeEl.innerHTML = '<span class="dot"></span> Conectado';
+    badgeEl.title = 'Guardado conectado a tu hoja de Google Sheets.';
   }catch(err){
-    diagEl.textContent = '⚠️ No se pudo conectar con la hoja de Google. Detalle: '+(err&&err.message?err.message:String(err));
-    diagEl.style.borderColor='var(--bad)'; diagEl.style.background='var(--bad-soft)'; diagEl.style.color='var(--bad)';
+    badgeEl.className = 'connbadge err';
+    badgeEl.innerHTML = '<span class="dot"></span> Sin conexión';
+    badgeEl.title = 'No se pudo conectar con la hoja de Google. Detalle: '+(err&&err.message?err.message:String(err));
     console.error('Backend diag error', err);
   }
 }
@@ -602,11 +604,9 @@ function viewWelcome(){
   card.appendChild(el('h1','','Morfo-Trainer'));
   card.appendChild(el('p','lede','Entrenamiento virtual de anatomía ósea. Ingresa con tu código estudiantil para empezar o continuar donde dejaste.'));
 
-  const diag=el('div','');
-  diag.style.cssText='border:2.5px solid var(--line-strong);border-radius:12px;padding:10px 12px;margin-bottom:16px;font-size:12.5px;font-weight:700;';
-  diag.textContent='Comprobando guardado…';
-  card.appendChild(diag);
-  checkStorageDiag(diag);
+  const conn=el('div','connbadge','<span class="dot"></span> Comprobando…');
+  wrap.appendChild(conn);
+  checkStorageDiag(conn);
 
   const codeLabel=el('label','','Código estudiantil');
   const codeInput=document.createElement('input');
