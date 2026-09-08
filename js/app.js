@@ -605,7 +605,7 @@ function viewWelcome(){
   card.appendChild(el('p','lede','Entrenamiento virtual de anatomía ósea. Ingresa con tu código estudiantil para empezar o continuar donde dejaste.'));
 
   const conn=el('div','connbadge','<span class="dot"></span> Comprobando…');
-  wrap.appendChild(conn);
+  card.appendChild(conn);
   checkStorageDiag(conn);
 
   const codeLabel=el('label','','Código estudiantil');
