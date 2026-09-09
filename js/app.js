@@ -1188,57 +1188,52 @@ function beginActivity(opts){
 function viewSort(){
   const mod=MODULES[state.currentModule];
   const level=mod.levels[state.currentLevelIdx];
-  const wrap=el('div');
-  wrap.appendChild(backButton('Volver al panel', ()=>{ state.view=levelBackTarget(); render(); }));
-
-  const card=el('div','card');
-  card.appendChild(levelHeaderRow(mod, level, state.currentLevelIdx));
-  card.appendChild(practiceBanner(mod.id));
-  card.appendChild(levelNav(mod, level, state.currentLevelIdx));
-  card.appendChild(el('p','', level.instructions));
+  const idx=state.currentLevelIdx;
 
   if(!state._levelRuntime){
     state._levelRuntime = { remaining: shuffle(level.items), placed:{}, correct:0, wrong:0, selectedChip:null };
     level.buckets.forEach(b=> state._levelRuntime.placed[b.key]=[]);
   }
   const rt = state._levelRuntime;
+  const totalItems = level.items.length;
+  const done = totalItems - rt.remaining.length;
 
-  const sortwrap=el('div','sortwrap');
-  const bank=el('div','bank');
-  if(rt.remaining.length===0){ bank.appendChild(el('div','',''));  }
-  rt.remaining.forEach((item, idx)=>{
+  const A = beginActivity({ mod:mod, level:level, idx:idx,
+    progress:{ label: done+' de '+totalItems+' clasificadas', frac: done/totalItems } });
+
+  if(level.instructions){ A.content.appendChild(el('p','act-instr', esc(level.instructions))); }
+
+  const bank=el('div','sort-bank');
+  rt.remaining.forEach((item, i)=>{
     const chip=el('div','chip', esc(item.term));
-    chip.dataset.idx=idx;
+    chip.dataset.idx=i;
     attachChipInteractions(chip, item, level, rt, mod);
     bank.appendChild(chip);
   });
-  sortwrap.appendChild(bank);
+  if(rt.remaining.length===0){ bank.appendChild(el('div','sort-bank-empty','✓ Todo clasificado')); }
+  A.content.appendChild(bank);
 
-  const bucketsWrap=el('div','buckets');
+  const bucketsWrap=el('div','sort-buckets');
   level.buckets.forEach(b=>{
     const bucketEl=el('div','bucket');
     bucketEl.dataset.cat=b.key;
-    bucketEl.appendChild(el('span','blabel', b.label));
+    bucketEl.appendChild(el('span','blabel', esc(b.label)));
     const placedWrap=el('div','placed');
     (rt.placed[b.key]||[]).forEach(term=>{
-      placedWrap.appendChild(el('div','chip', esc(term)));
+      placedWrap.appendChild(el('div','chip is-placed', esc(term)));
     });
     bucketEl.appendChild(placedWrap);
     bucketEl.appendChild(el('div','scanflash'));
     attachBucketDropTarget(bucketEl, b, level, rt, mod);
     bucketsWrap.appendChild(bucketEl);
   });
-  sortwrap.appendChild(bucketsWrap);
+  A.content.appendChild(bucketsWrap);
 
-  card.appendChild(sortwrap);
-
-  const status=el('p','');
-  status.style.marginTop='14px';
-  status.innerHTML = '<span class="tag-good">'+rt.correct+' correctas</span>' + (rt.wrong? '  ·  <span class="tag-bad">'+rt.wrong+' errores</span>':'');
-  card.appendChild(status);
-
-  wrap.appendChild(card);
-  return wrap;
+  if(rt.wrong>0){
+    A.feedback({ ok:false, title:'Sigue intentando',
+      body: '<b>'+rt.wrong+'</b> '+(rt.wrong===1?'ubicación incorrecta':'ubicaciones incorrectas')+' hasta ahora.' });
+  }
+  return A.root;
 }
 
 function attachChipInteractions(chip, item, level, rt, mod){
@@ -1340,14 +1335,7 @@ function cssEsc(s){ return String(s).replace(/"/g,'\\"'); }
 function viewMatch(){
   const mod=MODULES[state.currentModule];
   const level=mod.levels[state.currentLevelIdx];
-  const wrap=el('div');
-  wrap.appendChild(backButton('Volver al panel', ()=>{ state.view=levelBackTarget(); render(); }));
-
-  const card=el('div','card');
-  card.appendChild(levelHeaderRow(mod, level, state.currentLevelIdx));
-  card.appendChild(practiceBanner(mod.id));
-  card.appendChild(levelNav(mod, level, state.currentLevelIdx));
-  card.appendChild(el('p','', level.instructions));
+  const idx=state.currentLevelIdx;
 
   if(!state._levelRuntime){
     const terms = level.pairs.map((p,i)=>({text:p[0], pairId:i}));
@@ -1358,34 +1346,40 @@ function viewMatch(){
     };
   }
   const rt = state._levelRuntime;
+  const totalPairs = level.pairs.length;
 
-  const grid=el('div','matchgrid');
-  const colA=el('div','matchcol');
-  rt.terms.forEach(t=>{
-    const isMatched = rt.matched.has(t.pairId);
-    const btn=el('button','mitem term'+(isMatched?' matched':'')+(rt.selectedTerm===t?' selected':''), esc(t.text));
+  const A = beginActivity({ mod:mod, level:level, idx:idx,
+    progress:{ label: rt.matched.size+' de '+totalPairs+' emparejados', frac: rt.matched.size/totalPairs } });
+
+  if(level.instructions){ A.content.appendChild(el('p','act-instr', esc(level.instructions))); }
+
+  const grid=el('div','match-grid');
+  const colA=el('div','match-col');
+  rt.terms.forEach(tm=>{
+    const isMatched = rt.matched.has(tm.pairId);
+    const btn=el('button','match-item is-term'+(isMatched?' is-matched':'')+(rt.selectedTerm===tm?' is-selected':''), esc(tm.text));
+    btn.type='button';
     btn.disabled=isMatched;
-    btn.onclick=()=>{ rt.selectedTerm=t; afterMatchInteraction(rt, level, mod); };
+    btn.onclick=()=>{ rt.selectedTerm=tm; afterMatchInteraction(rt, level, mod); };
     colA.appendChild(btn);
   });
-  const colB=el('div','matchcol');
+  const colB=el('div','match-col');
   rt.defs.forEach(d=>{
     const isMatched = rt.matched.has(d.pairId);
-    const btn=el('button','mitem'+(isMatched?' matched':'')+(rt.selectedDef===d?' selected':''), esc(d.text));
+    const btn=el('button','match-item'+(isMatched?' is-matched':'')+(rt.selectedDef===d?' is-selected':''), esc(d.text));
+    btn.type='button';
     btn.disabled=isMatched;
     btn.onclick=()=>{ rt.selectedDef=d; afterMatchInteraction(rt, level, mod); };
     colB.appendChild(btn);
   });
   grid.appendChild(colA); grid.appendChild(colB);
-  card.appendChild(grid);
+  A.content.appendChild(grid);
 
-  const status=el('p','');
-  status.style.marginTop='14px';
-  status.innerHTML = '<span class="tag-good">'+rt.matched.size+' / '+level.pairs.length+' emparejados</span>'+(rt.wrong? '  ·  <span class="tag-bad">'+rt.wrong+' errores</span>':'');
-  card.appendChild(status);
-
-  wrap.appendChild(card);
-  return wrap;
+  if(rt.wrong>0){
+    A.feedback({ ok:false, title:'Sigue intentando',
+      body: '<b>'+rt.wrong+'</b> '+(rt.wrong===1?'intento fallido':'intentos fallidos')+'.' });
+  }
+  return A.root;
 }
 
 function tryMatch(rt, level){
@@ -1703,7 +1697,7 @@ function clearResume(modId, levelId){
 }
 
 /* ============================================================
-   VISTA: NIVEL COMPLETADO
+   VISTA: NIVEL COMPLETADO (resultado)
    ============================================================ */
 function starsFor(score){
   return score>=90?3:score>=70?2:score>=1?1:0;
@@ -1716,45 +1710,66 @@ function starRow(count){
   return row;
 }
 
+const RESULT_TIERS = [
+  { min:90, label:'¡Excelente!', cls:'good' },
+  { min:70, label:'¡Muy bien!', cls:'good' },
+  { min:50, label:'Vas bien — sigue practicando', cls:'warn' },
+  { min:0,  label:'Repasa este tema y vuelve a intentarlo', cls:'bad' }
+];
+function resultTier(score){
+  for(let i=0;i<RESULT_TIERS.length;i++){ if(score>=RESULT_TIERS[i].min) return RESULT_TIERS[i]; }
+  return RESULT_TIERS[RESULT_TIERS.length-1];
+}
+
 function viewLevelDone(){
   const mod=MODULES[state.currentModule];
   const idx=state.currentLevelIdx;
   const level=mod.levels[idx];
   const p=state.progress[levelKey(mod.id, level.id)];
-  const score=pct(p.correct,p.total);
+  const score=pct(p.correct, p.total);
+  const tier=resultTier(score);
+  const multi = mod.levels.length > 1 && !mod.subActivities;
+  const t = ensureTimer(mod.id);
 
-  const wrap=el('div');
-  const card=el('div','card');
-  card.appendChild(el('div','eyebrow','NIVEL COMPLETADO'));
-  card.appendChild(el('h1','', level.title));
-  card.appendChild(starRow(starsFor(score)));
-  card.appendChild(el('p','lede', 'Módulo: '+mod.title));
-  card.appendChild(timerBadge(mod.id));
+  const root = el('div','act');
+  const back = el('button','act-back','← Volver al panel');
+  back.type='button';
+  back.onclick=()=>{ state.view=levelBackTarget(); render(); };
+  root.appendChild(back);
 
-  const statgrid=el('div','statgrid');
-  const s1=el('div','stat'); s1.innerHTML='<div class="slabel">Puntaje</div><div class="sval '+(score>=80?'good':score>=60?'warn':'bad')+'">'+score+'%</div>';
-  const s2=el('div','stat'); s2.innerHTML='<div class="slabel">Aciertos</div><div class="sval">'+p.correct+' / '+p.total+'</div>';
-  statgrid.appendChild(s1); statgrid.appendChild(s2);
-  card.appendChild(statgrid);
+  const card = el('div','act-card result-card');
+  card.appendChild(el('div','act-topic', esc(String(mod.title).toUpperCase())));
+  card.appendChild(el('div','result-eyebrow','Actividad completada'));
+  card.appendChild(el('div','act-type',
+    multi ? ('Nivel '+(idx+1)+' · '+esc(level.title))
+          : esc(ACTIVITY_TYPE_LABEL[level.type] || level.title || 'Actividad')));
 
-  const hasNext = idx+1 < mod.levels.length;
+  card.appendChild(el('div','result-score '+tier.cls, score+'%'));
+  card.appendChild(el('div','result-label', tier.label));
+
+  const stats = el('div','result-stats');
+  stats.innerHTML =
+    '<span><b>'+p.correct+'</b> de <b>'+p.total+'</b> aciertos</span>'+
+    '<span>⏱ '+formatClock(currentElapsed(mod.id))+(t.status==='completed'?' · tiempo final':'')+'</span>';
+  card.appendChild(stats);
+
+  const actions = el('div','act-actions');
+  const hasNext = multi && idx+1 < mod.levels.length;
   if(hasNext){
-    const nextBtn=el('button','btn btn-primary btn-block', 'Siguiente nivel: '+mod.levels[idx+1].title+' →');
+    const nextBtn = el('button','act-btn', 'Siguiente: '+esc(mod.levels[idx+1].title)+' →');
+    nextBtn.type='button';
     nextBtn.onclick=()=>{ goToLevel(mod.id, idx+1); };
-    card.appendChild(nextBtn);
-  } else {
-    const doneMsg=el('p','', '¡Completaste todos los niveles de este módulo!');
-    doneMsg.style.color='var(--good)'; doneMsg.style.marginTop='16px';
-    card.appendChild(doneMsg);
+    actions.appendChild(nextBtn);
   }
-
-  const menuBtn=el('button','btn btn-ghost btn-block', 'Volver al panel');
-  menuBtn.style.marginTop='10px';
+  const backLabel = levelBackTarget()==='moduleSubmenu' ? 'Volver a las actividades' : 'Volver al panel';
+  const menuBtn = el('button', hasNext ? 'act-btn is-ghost' : 'act-btn', backLabel);
+  menuBtn.type='button';
   menuBtn.onclick=()=>{ state.view=levelBackTarget(); render(); };
-  card.appendChild(menuBtn);
+  actions.appendChild(menuBtn);
+  card.appendChild(actions);
 
-  wrap.appendChild(card);
-  return wrap;
+  root.appendChild(card);
+  return root;
 }
 
 /* ============================================================

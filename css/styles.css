@@ -242,41 +242,36 @@
   .levelchip.done{border-color:var(--good-dark);color:var(--good-dark);background:var(--good-soft);}
   .levelchip.active{border-color:var(--secondary);color:var(--secondary);background:var(--secondary-soft);}
 
-  /* ---------- sort game ---------- */
-  .sortwrap{margin-top:8px;}
-  .bank{display:flex;flex-wrap:wrap;gap:10px;padding:14px;border:3px dashed var(--line-strong);border-radius:16px;min-height:64px;margin-bottom:14px;background:var(--panel-2);}
+  /* ---------- clasificar (sort) ---------- */
+  .sort-bank{
+    display:flex;flex-wrap:wrap;gap:var(--s-2);
+    padding:var(--s-3);border:1.5px dashed var(--hairline-strong);border-radius:var(--r-2);
+    min-height:54px;background:var(--surface-sunken);
+  }
+  .sort-bank-empty{color:var(--state-correct);font-weight:800;font-size:var(--fs-body);align-self:center;}
   .chip{
-    font-family:var(--font-body);font-weight:800;font-size:13.5px;background:var(--panel);border:2.5px solid var(--line-strong);
-    color:var(--ink);padding:9px 15px;border-radius:20px;user-select:none;touch-action:none;
-    cursor:grab;transition:box-shadow .15s, border-color .15s;
-    box-shadow:0 3px 0 var(--line-strong);
+    font-family:var(--font-body);font-weight:800;font-size:14px;
+    background:var(--surface);border:1.5px solid var(--hairline-strong);color:var(--text);
+    padding:8px 14px;border-radius:var(--r-pill);user-select:none;touch-action:none;cursor:grab;
+    transition:border-color .12s, box-shadow .12s;
   }
-  .chip.selected{border-color:var(--secondary);box-shadow:0 0 0 4px var(--secondary-soft);}
-  .chip.dragging{position:fixed;z-index:999;pointer-events:none;box-shadow:0 8px 20px rgba(27,16,63,0.35);}
-  .buckets{display:grid;gap:12px;grid-template-columns:repeat(auto-fit, minmax(140px,1fr));}
+  .chip.selected{border-color:var(--accent-brand);box-shadow:0 0 0 3px var(--accent-brand-soft);}
+  .chip.dragging{position:fixed;z-index:999;pointer-events:none;box-shadow:var(--elev-2);}
+  .chip.is-placed{cursor:default;background:var(--surface-sunken);}
+  .sort-buckets{display:grid;gap:var(--s-3);grid-template-columns:repeat(auto-fit, minmax(150px,1fr));}
   .bucket{
-    border:3px solid var(--line-strong);border-radius:18px;padding:12px;min-height:110px;
-    background:var(--panel-2);position:relative;overflow:hidden;
+    border:1.5px solid var(--hairline-strong);border-radius:var(--r-3);padding:var(--s-3);min-height:92px;
+    background:var(--surface);position:relative;overflow:hidden;
+    transition:border-color .12s, background .12s;
   }
-  .bucket:nth-of-type(5n+1){border-color:var(--primary);}
-  .bucket:nth-of-type(5n+2){border-color:var(--secondary);}
-  .bucket:nth-of-type(5n+3){border-color:var(--good-dark);}
-  .bucket:nth-of-type(5n+4){border-color:var(--gold-dark);}
-  .bucket:nth-of-type(5n+5){border-color:var(--bad);}
-  .bucket .blabel{font-family:var(--font-display);font-weight:700;font-size:12.5px;color:var(--ink);margin-bottom:8px;display:block;}
-  .bucket.hover{background:var(--panel-3);}
+  .bucket .blabel{font-family:var(--font-display);font-weight:800;font-size:13px;color:var(--text);margin-bottom:var(--s-2);display:block;}
+  .bucket.hover{border-color:var(--accent-brand);background:var(--surface-sunken);}
   .bucket .placed{display:flex;flex-wrap:wrap;gap:6px;}
-  .bucket .placed .chip{cursor:default;box-shadow:none;}
-  .scanflash{position:absolute;inset:0;pointer-events:none;
-    background:
-      radial-gradient(circle at 30% 30%, var(--gold) 0, transparent 22%),
-      radial-gradient(circle at 70% 25%, var(--primary) 0, transparent 20%),
-      radial-gradient(circle at 50% 70%, var(--secondary) 0, transparent 22%),
-      radial-gradient(circle at 80% 75%, var(--good) 0, transparent 18%);
-    opacity:0;transform:scale(0.3);
+  .scanflash{position:absolute;inset:0;pointer-events:none;opacity:0;
+    background:radial-gradient(circle at 50% 50%, var(--state-correct-soft), transparent 70%);
   }
-  .scanflash.play{animation:burst .55s ease-out;}
-  @keyframes burst{ 0%{opacity:0;transform:scale(0.2);} 35%{opacity:.85;transform:scale(1.05);} 100%{opacity:0;transform:scale(1.5);} }
+  .scanflash.play{animation:sflash .5s ease-out;}
+  @keyframes sflash{ 0%{opacity:0;} 40%{opacity:1;} 100%{opacity:0;} }
   .shake{animation:shake .3s;}
   @keyframes shake{ 10%,90%{transform:translateX(-2px);} 20%,80%{transform:translateX(3px);} 30%,50%,70%{transform:translateX(-5px);} 40%,60%{transform:translateX(5px);} }
   @keyframes pop{ 0%{transform:scale(0.85);} 55%{transform:scale(1.05);} 100%{transform:scale(1);} }
@@ -338,18 +333,22 @@
   input.fillinline.ok{border-color:var(--good-dark);background:var(--good-soft);color:var(--good-dark);}
   input.fillinline.bad{border-color:var(--bad);background:var(--bad-soft);color:var(--bad);}
 
-  /* ---------- match game ---------- */
-  .matchgrid{display:grid;grid-template-columns:1fr;gap:20px;}
-  @media(min-width:560px){ .matchgrid{grid-template-columns:1fr 1fr;} }
-  .matchcol .mitem{
-    width:100%;text-align:left;border:2.5px solid var(--line-strong);background:var(--panel-2);color:var(--ink);
-    padding:11px 14px;border-radius:12px;font-size:13.5px;font-weight:700;margin-bottom:8px;
-    box-shadow:0 3px 0 var(--line-strong);
+  /* ---------- relacionar (match) ---------- */
+  .match-grid{display:grid;grid-template-columns:1fr;gap:var(--s-4);}
+  @media(min-width:560px){ .match-grid{grid-template-columns:1fr 1fr;} }
+  .match-col{display:flex;flex-direction:column;gap:var(--s-2);}
+  .match-item{
+    width:100%;text-align:left;cursor:pointer;
+    border:1.5px solid var(--hairline-strong);border-radius:var(--r-2);
+    background:var(--surface);color:var(--text);
+    padding:12px 14px;font-family:var(--font-body);font-weight:700;font-size:14px;line-height:1.35;
+    transition:border-color .12s, background .12s, box-shadow .12s;
   }
-  .matchcol .mitem.term{font-family:var(--font-display);font-weight:700;color:var(--secondary-dark);}
-  .matchcol .mitem.selected{border-color:var(--secondary);box-shadow:0 0 0 4px var(--secondary-soft);}
-  .matchcol .mitem.matched{border-color:var(--good-dark);background:var(--good-soft);opacity:.6;box-shadow:none;animation:pop .35s ease;}
-  .matchcol .mitem.wrongflash{border-color:var(--bad);background:var(--bad-soft);}
+  .match-item.is-term{font-family:var(--font-display);color:var(--accent-brand-dark);}
+  .match-item:hover:not(:disabled){border-color:var(--accent-brand);background:var(--surface-sunken);}
+  .match-item.is-selected{border-color:var(--accent-brand);box-shadow:0 0 0 3px var(--accent-brand-soft);}
+  .match-item.is-matched{border-color:var(--state-correct);background:var(--state-correct-soft);color:var(--state-correct);opacity:.7;cursor:default;}
+  .match-item:focus-visible{outline:none;box-shadow:var(--focus-ring);}
 
   /* ---------- boss battle ---------- */
   .bosshead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
@@ -621,6 +620,28 @@
   .act-reset:hover{color:var(--state-wrong);}
   .act-reset:focus-visible{outline:none;box-shadow:var(--focus-ring);}
   .act-reset.is-armed{color:var(--state-wrong);}
+
+  /* ---- pantalla de resultado ---- */
+  .result-card{align-items:center;text-align:center;gap:var(--s-3);}
+  .result-card .act-topic,.result-card .act-type{align-self:center;text-align:center;}
+  .result-eyebrow{
+    font-family:var(--font-body);font-weight:800;font-size:var(--fs-eyebrow);
+    letter-spacing:.09em;text-transform:uppercase;color:var(--text-soft);
+  }
+  .result-score{
+    font-family:var(--font-display);font-weight:800;line-height:1;margin-top:var(--s-2);
+    font-size:clamp(48px, 16vw, 66px);
+  }
+  .result-score.good{color:var(--state-correct);}
+  .result-score.warn{color:var(--gold-dark);}
+  .result-score.bad{color:var(--state-wrong);}
+  .result-label{font-family:var(--font-display);font-weight:800;font-size:var(--fs-h);color:var(--text);line-height:1.25;}
+  .result-stats{
+    display:flex;flex-wrap:wrap;justify-content:center;gap:var(--s-2) var(--s-5);
+    color:var(--text-soft);font-weight:700;font-size:var(--fs-body);
+  }
+  .result-stats b{color:var(--text);}
+  .result-card .act-actions{align-self:stretch;border-top:none;padding-top:var(--s-3);}
 
   /* ---- opciones (selección múltiple / verdadero-falso) ---- */
   .act-options{display:grid;gap:var(--s-2);}
