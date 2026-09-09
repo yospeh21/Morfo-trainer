@@ -1021,6 +1021,107 @@ function practiceBanner(modId){
 }
 
 /* ============================================================
+   ACTIVITY LAYOUT — contenedor común para todas las actividades
+   Devuelve { root, content, actions, feedback }.
+   Cada view* solo llena content/actions; header, progreso,
+   feedback y acciones comparten estructura y estilos.
+   ============================================================ */
+const ACTIVITY_TYPE_LABEL = {
+  mc:'Selección múltiple',
+  completar:'Preguntas de completar',
+  sort:'Clasificar',
+  match:'Relacionar',
+  truefalse:'Verdadero o falso',
+  label:'Identificar estructuras',
+  hotspot:'Señala la estructura'
+};
+
+function beginActivity(opts){
+  const mod = opts.mod, level = opts.level, idx = opts.idx;
+  const root = el('div','act');
+
+  const back = el('button','act-back','← Volver al panel');
+  back.type = 'button';
+  back.onclick = opts.backTo || (()=>{ state.view = levelBackTarget(); render(); });
+  root.appendChild(back);
+
+  const card = el('div','act-card');
+  root.appendChild(card);
+
+  const head = el('div','act-head');
+
+  const topline = el('div','act-topline');
+  topline.appendChild(el('span','act-topic', esc(String(mod.title).toUpperCase())));
+  const t = ensureTimer(mod.id);
+  const timer = el('span','act-timer'+(t.status==='completed'?' is-done':''));
+  timer.id = 'liveTimerBadge';
+  timer.textContent = (t.status==='completed'?'✓ ':'⏱ ') + formatHMS(currentElapsed(mod.id));
+  topline.appendChild(timer);
+  head.appendChild(topline);
+
+  const multi = mod.levels.length > 1;
+  head.appendChild(el('div','act-type',
+    multi ? ('Nivel '+(idx+1)+' · '+esc(level.title))
+          : esc(ACTIVITY_TYPE_LABEL[level.type] || level.title || 'Actividad')));
+
+  if(multi){
+    const chips = el('div','act-levels');
+    mod.levels.forEach((l,i)=>{
+      const done = !!state.progress[levelKey(mod.id, l.id)];
+      const b = el('button', (done && i!==idx) ? 'done' : '', String(i+1));
+      b.type = 'button';
+      b.title = l.title;
+      if(i===idx){ b.setAttribute('aria-current','true'); b.disabled = true; }
+      else { b.onclick = ()=> goToLevel(mod.id, i); }
+      chips.appendChild(b);
+    });
+    head.appendChild(chips);
+  }
+
+  if(opts.progress){
+    const frac = Math.max(0, Math.min(1, opts.progress.frac || 0));
+    const pr = el('div','act-progress');
+    const row = el('div','act-progress-row');
+    row.appendChild(el('span','', esc(opts.progress.label || '')));
+    row.appendChild(el('span','', Math.round(frac*100)+'%'));
+    pr.appendChild(row);
+    pr.appendChild(el('div','act-bar','<i style="width:'+Math.round(frac*100)+'%"></i>'));
+    head.appendChild(pr);
+  }
+  card.appendChild(head);
+
+  const body = el('div','act-body');
+  card.appendChild(body);
+
+  if(t.status === 'completed'){
+    body.appendChild(el('div','act-note','🔓 Ya completaste esta actividad — puedes practicar libremente; el tiempo ya no cuenta.'));
+  }
+
+  const fb = el('div','act-feedback');
+  fb.hidden = true;
+  card.appendChild(fb);
+
+  const actions = el('div','act-actions');
+  card.appendChild(actions);
+
+  return {
+    root: root,
+    content: body,
+    actions: actions,
+    feedback: function(o){
+      if(!o){ fb.hidden = true; fb.innerHTML = ''; return; }
+      fb.hidden = false;
+      fb.className = 'act-feedback ' + (o.ok ? 'is-correct' : 'is-wrong');
+      fb.innerHTML =
+        '<span class="fx">'+(o.ok?'✓':'✕')+'</span>'+
+        '<div><div class="ft">'+esc(o.title || (o.ok ? '¡Correcto!' : 'No es correcto'))+'</div>'+
+        (o.body ? '<div class="fb">'+o.body+'</div>' : '')+
+        '</div>';
+    }
+  };
+}
+
+/* ============================================================
    VISTA: NIVEL DE ORDENAMIENTO (SORT)
    ============================================================ */
 function viewSort(){
@@ -1252,18 +1353,12 @@ function afterMatchInteraction(rt, level, mod){
 function viewMC(){
   const mod=MODULES[state.currentModule];
   const level=mod.levels[state.currentLevelIdx];
-  const wrap=el('div');
-  wrap.appendChild(backButton('Volver al panel', ()=>{ state.view=levelBackTarget(); render(); }));
-
-  const card=el('div','card');
-  card.appendChild(levelHeaderRow(mod, level, state.currentLevelIdx));
-  card.appendChild(practiceBanner(mod.id));
-  card.appendChild(levelNav(mod, level, state.currentLevelIdx));
+  const idx=state.currentLevelIdx;
 
   if(!state._levelRuntime){
     // Cada intento baraja el orden de las preguntas y el de las opciones de cada una.
     state._levelRuntime = {
-      qIdx:0, correct:0, answered:false, selected:null,
+      qIdx:0, correct:0, answered:false, selected:null, pending:null,
       qOrder: shuffle(level.questions.map((_,i)=>i)),
       optOrder: level.questions.map(qq=> shuffle(qq.opts.map((_,i)=>i)))
     };
@@ -1272,48 +1367,62 @@ function viewMC(){
   const qi = rt.qOrder[rt.qIdx];
   const q = level.questions[qi];
   const perm = rt.optOrder[qi]; // índices originales, en el orden barajado a mostrar
+  const total = level.questions.length;
 
-  card.appendChild(questionCounter(rt.qIdx+1, level.questions.length));
-  card.appendChild(el('div','qprompt', esc(q.q)));
+  const A = beginActivity({ mod:mod, level:level, idx:idx,
+    progress:{ label:'Pregunta '+(rt.qIdx+1)+' de '+total,
+               frac:(rt.qIdx + (rt.answered?1:0)) / total } });
 
-  const optsWrap=el('div','opts');
+  A.content.appendChild(el('p','act-prompt', esc(q.q)));
+
+  const isTF = q.opts.length === 2;
+  const optsWrap = el('div','act-options '+(isTF ? 'tf' : (q.opts.length>2 ? 'cols-2' : '')));
   perm.forEach((origIdx, displayIdx)=>{
-    const btn=buildOptionBtn(q.opts[origIdx], displayIdx);
+    const btn = el('button','opt2');
+    btn.type = 'button';
+    btn.innerHTML = (isTF ? '' : '<span class="k">'+(OPTION_LETTERS[displayIdx]||(displayIdx+1))+'</span>')
+      + '<span class="t">'+esc(q.opts[origIdx])+'</span>';
     if(rt.answered){
-      btn.disabled=true;
-      if(origIdx===q.correct) btn.classList.add('correct');
-      else if(origIdx===rt.selected) btn.classList.add('wrong');
+      btn.disabled = true;
+      if(origIdx===q.correct) btn.classList.add('is-correct');
+      else if(origIdx===rt.selected) btn.classList.add('is-wrong');
+    } else if(rt.pending===origIdx){
+      btn.classList.add('is-selected');
+      btn.setAttribute('aria-pressed','true');
     }
-    btn.onclick=()=>{
-      if(rt.answered) return;
-      rt.answered=true; rt.selected=origIdx;
-      if(origIdx===q.correct) rt.correct++;
-      render();
-    };
+    if(!rt.answered){
+      btn.onclick = ()=>{ rt.pending = origIdx; render(); };
+    }
     optsWrap.appendChild(btn);
   });
-  card.appendChild(optsWrap);
+  A.content.appendChild(optsWrap);
+
+  const last = rt.qIdx+1 >= total;
+  const mainBtn = el('button','act-btn',
+    rt.answered ? (last ? 'Finalizar actividad →' : 'Continuar →') : 'Comprobar respuesta →');
+  if(!rt.answered){
+    mainBtn.disabled = (rt.pending===null);
+    mainBtn.onclick = ()=>{
+      if(rt.pending===null) return;
+      rt.selected = rt.pending;
+      rt.answered = true;
+      if(rt.selected===q.correct) rt.correct++;
+      render();
+    };
+  } else {
+    mainBtn.onclick = ()=>{
+      if(last){ finishLevel(mod.id, level.id, rt.correct, total); }
+      else { rt.qIdx++; rt.answered=false; rt.selected=null; rt.pending=null; render(); }
+    };
+  }
+  A.actions.appendChild(mainBtn);
 
   if(rt.answered){
-    const isCorrect = rt.selected===q.correct;
-    const box=el('div','explainbox');
-    box.innerHTML = '<span class="'+(isCorrect?'tag-good':'tag-bad')+'">'+(isCorrect?'✓ CORRECTO':'✕ REVISA ESTO')+'</span><br><br>'+esc(q.explain);
-    card.appendChild(box);
-
-    const nextBtn=el('button','btn btn-primary btn-block', rt.qIdx+1<level.questions.length? 'Siguiente pregunta →' : 'Terminar nivel');
-    nextBtn.style.marginTop='16px';
-    nextBtn.onclick=()=>{
-      if(rt.qIdx+1<level.questions.length){
-        rt.qIdx++; rt.answered=false; rt.selected=null; render();
-      } else {
-        finishLevel(mod.id, level.id, rt.correct, level.questions.length);
-      }
-    };
-    card.appendChild(nextBtn);
+    const ok = rt.selected===q.correct;
+    A.feedback({ ok:ok, body: q.explain ? esc(q.explain) : (ok ? 'Respuesta correcta.' : '') });
   }
 
-  wrap.appendChild(card);
-  return wrap;
+  return A.root;
 }
 
 /* ============================================================
@@ -1339,14 +1448,7 @@ function fillMatches(typed, q){
 function viewFill(){
   const mod=MODULES[state.currentModule];
   const level=mod.levels[state.currentLevelIdx];
-  const wrap=el('div');
-  wrap.appendChild(backButton('Volver al panel', ()=>{ state.view=levelBackTarget(); render(); }));
-
-  const card=el('div','card');
-  card.appendChild(levelHeaderRow(mod, level, state.currentLevelIdx));
-  card.appendChild(practiceBanner(mod.id));
-  card.appendChild(levelNav(mod, level, state.currentLevelIdx));
-  if(level.instructions){ card.appendChild(el('p','', esc(level.instructions))); }
+  const idx=state.currentLevelIdx;
 
   if(!state._levelRuntime){
     state._levelRuntime = {
@@ -1356,10 +1458,14 @@ function viewFill(){
   }
   const rt = state._levelRuntime;
   const q = level.questions[rt.qOrder[rt.qIdx]];
-
+  const total = level.questions.length;
   if(!Array.isArray(rt.typed)) rt.typed = [];
 
-  card.appendChild(questionCounter(rt.qIdx+1, level.questions.length));
+  const A = beginActivity({ mod:mod, level:level, idx:idx,
+    progress:{ label:'Pregunta '+(rt.qIdx+1)+' de '+total,
+               frac:(rt.qIdx + (rt.answered?1:0)) / total } });
+  const card = A.content;
+  if(level.instructions){ card.appendChild(el('p','act-instr', esc(level.instructions))); }
 
   // --- enunciado con el/los huecos convertidos en campos de texto en línea ---
   const stateCls = rt.answered ? (rt.wasCorrect ? ' ok' : ' bad') : '';
@@ -1383,7 +1489,7 @@ function viewFill(){
     return inp;
   }
 
-  const prompt = el('div','qprompt');
+  const prompt = el('div','act-prompt');
   if(parts.length < 2){
     // enunciado sin hueco marcado: campo al final
     prompt.appendChild(document.createTextNode(q.q + ' '));
@@ -1405,10 +1511,9 @@ function viewFill(){
   }
   card.appendChild(prompt);
 
-  const mainBtn=el('button','btn btn-primary btn-block',
-    rt.answered ? (rt.qIdx+1<level.questions.length ? 'Siguiente →' : 'Terminar nivel') : 'Comprobar');
-  mainBtn.style.marginTop='16px';
-  card.appendChild(mainBtn);
+  const last = rt.qIdx+1 >= total;
+  const mainBtn = el('button','act-btn',
+    rt.answered ? (last ? 'Finalizar actividad →' : 'Continuar →') : 'Comprobar respuesta →');
 
   function submit(){
     const vals = inputs.map(x=>x.value);
@@ -1424,30 +1529,24 @@ function viewFill(){
     mainBtn.onclick = submit;
     setTimeout(()=>{ try{ if(inputs[0]) inputs[0].focus(); }catch(e){} }, 0);
   } else {
-    const box=el('div','explainbox');
-    let html = '<span class="'+(rt.wasCorrect?'tag-good':'tag-bad')+'">'+(rt.wasCorrect?'✓ CORRECTO':'✕ REVISA ESTO')+'</span><br><br>';
+    let body = '';
     if(!rt.wasCorrect){
-      html += 'Respuesta: <b>'+esc(q.answers[0])+'</b>';
-      // muestra solo sinónimos reales, no reordenamientos de las mismas palabras
+      body += 'La respuesta es <b>'+esc(q.answers[0])+'</b>';
       const firstSet = normFill(q.answers[0]).split(' ').sort().join(' ');
       const alts = q.answers.slice(1).filter(a=> normFill(a).split(' ').sort().join(' ') !== firstSet);
-      if(alts.length){ html += ' <span style="opacity:.7">(también válido: '+esc(alts.join(' · '))+')</span>'; }
-      if(q.explain){ html += '<br><br>'; }
+      if(alts.length){ body += ' <span style="opacity:.75">(también: '+esc(alts.join(', '))+')</span>'; }
+      if(q.explain){ body += '<br>'; }
     }
-    if(q.explain){ html += esc(q.explain); }
-    box.innerHTML = html;
-    card.appendChild(box);
+    if(q.explain){ body += esc(q.explain); }
+    A.feedback({ ok:rt.wasCorrect, body: body || (rt.wasCorrect ? 'Respuesta correcta.' : '') });
     mainBtn.onclick=()=>{
-      if(rt.qIdx+1<level.questions.length){
-        rt.qIdx++; rt.answered=false; rt.wasCorrect=false; rt.typed=[]; render();
-      } else {
-        finishLevel(mod.id, level.id, rt.correct, level.questions.length);
-      }
+      if(last){ finishLevel(mod.id, level.id, rt.correct, total); }
+      else { rt.qIdx++; rt.answered=false; rt.wasCorrect=false; rt.typed=[]; render(); }
     };
   }
+  A.actions.appendChild(mainBtn);
 
-  wrap.appendChild(card);
-  return wrap;
+  return A.root;
 }
 
 function finishLevel(modId, levelId, correct, total){
