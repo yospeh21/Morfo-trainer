@@ -586,17 +586,16 @@ function render(){
 }
 
 function errorCard(err){
-  const wrap=el('div');
-  const card=el('div','card');
-  card.style.borderColor='var(--bad)';
-  card.appendChild(el('div','eyebrow','⚠️ ALGO SALIÓ MAL'));
+  const card=el('div','notice-card');
+  card.style.borderColor='var(--state-wrong)';
+  card.appendChild(el('div','n-eyebrow','⚠️ Algo salió mal'));
   card.appendChild(el('h1','','No se pudo mostrar esta pantalla'));
-  card.appendChild(el('p','','Detalle técnico: '+esc(err && err.message ? err.message : String(err))));
-  const homeBtn=el('button','btn btn-primary btn-block','Volver al inicio');
+  card.appendChild(el('p','n-body','Detalle técnico: '+esc(err && err.message ? err.message : String(err))));
+  const homeBtn=el('button','act-btn','Volver al inicio');
+  homeBtn.type='button';
   homeBtn.onclick=()=>{ state.view=homeView(); render(); };
   card.appendChild(homeBtn);
-  wrap.appendChild(card);
-  return wrap;
+  return card;
 }
 
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -1169,52 +1168,7 @@ function goToLevel(modId, idx){
   startModuleTimer(modId);
 }
 
-function levelNav(mod, level, idx){
-  const nav=el('div','levelrow');
-  mod.levels.forEach((l,i)=>{
-    const done = !!state.progress[levelKey(mod.id,l.id)];
-    const cls='levelchip'+(done?' done':'')+(i===idx?' active':'');
-    const chip=el('button',cls, (i+1)+' · '+l.title);
-    if(i!==idx){ chip.onclick=()=>{ goToLevel(mod.id, i); }; }
-    else { chip.disabled=true; }
-    nav.appendChild(chip);
-  });
-  return nav;
-}
-
 const OPTION_LETTERS = ['A','B','C','D','E','F'];
-
-function questionCounter(current, total){
-  const box=el('div','qcounter');
-  const label=el('span','qcounter-label','PREGUNTA '+current+' / '+total);
-  box.appendChild(label);
-  return box;
-}
-
-function timerBadge(modId){
-  const t = ensureTimer(modId);
-  const badge = el('div','timerbadge'+(t.status==='completed'?' done':''));
-  badge.id='liveTimerBadge';
-  badge.textContent = (t.status==='completed'?'✓ ':'⏱ ') + formatHMS(currentElapsed(modId)) + (t.status==='completed'?' (tiempo final)':'');
-  return badge;
-}
-
-function levelHeaderRow(mod, level, idx){
-  const row = el('div','levelheader');
-  const left = el('div','lhtitle');
-  left.appendChild(el('div','eyebrow','<span class="num">0'+(idx+1)+'</span> '+mod.title.toUpperCase()));
-  left.appendChild(el('h2','', level.title));
-  row.appendChild(left);
-  row.appendChild(timerBadge(mod.id));
-  return row;
-}
-
-function practiceBanner(modId){
-  const t = ensureTimer(modId);
-  if(t.status!=='completed') return el('div','');
-  const box = el('div','practicebanner','🔓 Ya completaste esta actividad — practica los niveles que quieras, las veces que quieras. El tiempo ya no se contabiliza.');
-  return box;
-}
 
 /* ============================================================
    ACTIVITY LAYOUT — contenedor común para todas las actividades
@@ -2128,55 +2082,60 @@ async function autoSaveResult(){
 
 function viewReport(){
   const rep = computeReport();
-  const wrap=el('div');
-  wrap.appendChild(backButton('Volver', ()=>{ state.view=homeView(); render(); }));
+  const root = el('div','act');
 
-  const card=el('div','card');
-  card.appendChild(el('div','eyebrow','INFORME INDIVIDUAL'));
-  card.appendChild(el('h1','', esc(state.student.name)));
+  const back = el('button','act-back','← Volver');
+  back.type = 'button';
+  back.onclick = ()=>{ state.view=homeView(); render(); };
+  root.appendChild(back);
+
+  const card = el('div','act-card');
+  root.appendChild(card);
+  card.appendChild(el('div','act-topic','Informe individual'));
+  card.appendChild(el('div','act-type', esc(state.student.name)));
+
   if(rep.rows.length===0){
     card.appendChild(el('p','','Aún no has completado ningún nivel. Entrena al menos un módulo para generar tu informe.'));
-    wrap.appendChild(card);
-    return wrap;
+    return root;
   }
 
-  card.appendChild(el('p','lede', 'Completaste '+rep.rows.length+' de '+allLevelsFlat().length+' niveles, con un desempeño general de <b style="color:var(--ink)">'+rep.overall+'%</b> ('+rep.totalCorrect+' de '+rep.totalQ+' respuestas correctas).'+(rep.boss? ' En el Boss Battle obtuviste '+pct(rep.boss.correct,rep.boss.total)+'%.':'')));
+  card.appendChild(el('p','lede', 'Completaste '+rep.rows.length+' de '+allLevelsFlat().length+' niveles, con un desempeño general de <b style="color:var(--text)">'+rep.overall+'%</b> ('+rep.totalCorrect+' de '+rep.totalQ+' respuestas correctas).'+(rep.boss? ' En el Boss Battle obtuviste '+pct(rep.boss.correct,rep.boss.total)+'%.':'')));
 
-  const statgrid=el('div','statgrid');
+  const statgrid=el('div','stat-grid');
   statgrid.innerHTML =
-    '<div class="stat"><div class="slabel">General</div><div class="sval '+(rep.overall>=80?'good':rep.overall>=60?'warn':'bad')+'">'+rep.overall+'%</div></div>'+
-    '<div class="stat"><div class="slabel">Fortalezas</div><div class="sval good">'+rep.strengths.length+'</div></div>'+
-    '<div class="stat"><div class="slabel">A reforzar</div><div class="sval '+(rep.weak.length? 'bad':'good')+'">'+rep.weak.length+'</div></div>';
+    '<div class="stat-box"><div class="slabel">General</div><div class="sval '+(rep.overall>=80?'good':rep.overall>=60?'warn':'bad')+'">'+rep.overall+'%</div></div>'+
+    '<div class="stat-box"><div class="slabel">Fortalezas</div><div class="sval good">'+rep.strengths.length+'</div></div>'+
+    '<div class="stat-box"><div class="slabel">A reforzar</div><div class="sval '+(rep.weak.length? 'bad':'good')+'">'+rep.weak.length+'</div></div>';
   card.appendChild(statgrid);
 
   if(rep.strengths.length){
-    card.appendChild(el('div','section-title','Fortalezas'));
+    card.appendChild(el('div','panel-section','Fortalezas'));
     const ul=el('ul','plain'); rep.strengths.forEach(s=>ul.appendChild(el('li','',esc(s)))); card.appendChild(ul);
   }
   if(rep.developing.length){
-    card.appendChild(el('div','section-title','En desarrollo'));
+    card.appendChild(el('div','panel-section','En desarrollo'));
     const ul=el('ul','plain'); rep.developing.forEach(s=>ul.appendChild(el('li','',esc(s)))); card.appendChild(ul);
   }
   if(rep.weak.length){
-    card.appendChild(el('div','section-title','Temas prioritarios para reforzar'));
+    card.appendChild(el('div','panel-section','Temas prioritarios para reforzar'));
     const ul=el('ul','plain'); rep.weak.forEach(s=>ul.appendChild(el('li','',esc(s)))); card.appendChild(ul);
   } else if(rep.rows.length>0){
-    card.appendChild(el('div','section-title','Recomendación'));
+    card.appendChild(el('div','panel-section','Recomendación'));
     card.appendChild(el('p','','Buen dominio general. Puedes repasar con el Boss Battle para mantener el nivel bajo presión de tiempo.'));
   }
 
-  const statusBox=el('div','');
-  statusBox.style.cssText='border:2.5px solid '+(state.saved?'var(--good-dark)':'var(--line-strong)')+';border-radius:14px;padding:14px 16px;margin-top:18px;background:'+(state.saved?'var(--good-soft)':'var(--panel-2)')+';font-weight:700;font-size:13.5px;color:'+(state.saved?'var(--good-dark)':'var(--ink-dim)')+';';
+  const statusBox=el('div','act-note'+(state.saved?' is-ok':''));
+  statusBox.style.marginTop='var(--s-4)';
   statusBox.textContent = state.saved
     ? '✓ Este informe se guarda automáticamente cada vez que terminas un nivel — tu monitor ya lo puede ver.'
     : 'Sincronizando con tu monitor…';
   card.appendChild(statusBox);
-  if(!state.saved){ autoSaveResult().then(()=>{ statusBox.textContent='✓ Este informe se guarda automáticamente cada vez que terminas un nivel — tu monitor ya lo puede ver.'; statusBox.style.borderColor='var(--good-dark)'; statusBox.style.background='var(--good-soft)'; statusBox.style.color='var(--good-dark)'; }); }
+  if(!state.saved){ autoSaveResult().then(()=>{ statusBox.textContent='✓ Este informe se guarda automáticamente cada vez que terminas un nivel — tu monitor ya lo puede ver.'; statusBox.classList.add('is-ok'); }); }
 
-  const saveErr=el('p','footnote','');
-  saveErr.style.color='var(--bad)';
-  const syncBtn=el('button','btn btn-ghost btn-block','↻ Sincronizar de nuevo');
-  syncBtn.style.marginTop='10px';
+  const saveErr=el('p','error-text','');
+  const syncBtn=el('button','act-btn is-ghost','↻ Sincronizar de nuevo');
+  syncBtn.type = 'button';
+  syncBtn.style.marginTop='var(--s-3)';
   syncBtn.onclick=async ()=>{
     syncBtn.disabled=true; syncBtn.textContent='Sincronizando…'; saveErr.textContent='';
     try{
@@ -2192,8 +2151,7 @@ function viewReport(){
   card.appendChild(saveErr);
   card.appendChild(el('p','footnote','Este resultado se guarda de forma compartida para que tu monitor pueda verlo en el panel del grupo, junto con tu nombre y código.'));
 
-  wrap.appendChild(card);
-  return wrap;
+  return root;
 }
 
 function slug(s){ return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') || 'anon'; }
@@ -2253,28 +2211,35 @@ function moduleStatsFromProfile(profileRow, modId){
 }
 
 function viewMonitorLogin(){
-  const wrap=el('div');
-  wrap.appendChild(backButton('Volver', ()=>{ state.view = homeView(); render(); }));
+  const root = el('div','act');
 
-  const card=el('div','card');
-  card.appendChild(el('div','eyebrow','ACCESO RESTRINGIDO'));
-  card.appendChild(el('h1','','Panel del monitor'));
+  const back = el('button','act-back','← Volver');
+  back.type = 'button';
+  back.onclick = ()=>{ state.view = homeView(); render(); };
+  root.appendChild(back);
+
+  const card = el('div','act-card');
+  root.appendChild(card);
+  card.appendChild(el('div','act-topic','Acceso restringido'));
+  card.appendChild(el('div','act-type','Panel del monitor'));
   card.appendChild(el('p','','Esta vista es solo para el monitor del curso. Ingresa la clave para continuar.'));
 
-  const passLabel=el('label','','Clave de monitor');
+  const field = el('div','field');
+  field.appendChild(el('label','field-label','Clave de monitor'));
   const passInput=document.createElement('input');
-  passInput.type='password'; passInput.placeholder='••••••';
-  card.appendChild(passLabel); card.appendChild(passInput);
+  passInput.type='password'; passInput.className='field-input'; passInput.placeholder='••••••';
+  field.appendChild(passInput);
+  const errMsg=el('div','field-hint','');
+  field.appendChild(errMsg);
+  card.appendChild(field);
 
-  const errMsg=el('p','footnote','');
-  errMsg.style.color='var(--bad)'; errMsg.style.display='none';
-  card.appendChild(errMsg);
-
-  const goBtn=el('button','btn btn-primary btn-block','Entrar al panel →');
+  const goBtn=el('button','act-btn','Entrar al panel →');
+  goBtn.type = 'button';
+  goBtn.style.marginTop='var(--s-2)';
   goBtn.onclick=async ()=>{
     const pass=passInput.value;
-    if(!pass){ errMsg.textContent='Ingresa la clave.'; errMsg.style.display='block'; return; }
-    errMsg.style.display='none';
+    if(!pass){ errMsg.textContent='Ingresa la clave.'; errMsg.className='field-hint is-error'; return; }
+    errMsg.textContent=''; errMsg.className='field-hint';
     goBtn.disabled=true; goBtn.textContent='Verificando…';
     try{
       const [resData, profData] = await Promise.all([
@@ -2292,14 +2257,13 @@ function viewMonitorLogin(){
     }catch(e){
       goBtn.disabled=false; goBtn.textContent='Entrar al panel →';
       errMsg.textContent='Clave incorrecta. Detalle: '+(e&&e.message?e.message:String(e));
-      errMsg.style.display='block';
+      errMsg.className='field-hint is-error';
     }
   };
   passInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); goBtn.click(); } });
-  card.appendChild(el('div','', '')).appendChild(goBtn);
+  card.appendChild(goBtn);
 
-  wrap.appendChild(card);
-  return wrap;
+  return root;
 }
 
 async function loadDashboard(){
@@ -2323,49 +2287,51 @@ async function loadDashboard(){
 const STATUS_LABEL = { not_started:'No iniciada', in_progress:'En progreso', completed:'Completada' };
 
 function viewDashboard(){
-  const wrap=el('div');
-  wrap.appendChild(backButton('Salir del panel del monitor', ()=>{
+  const root = el('div','act');
+
+  const back = el('button','act-back','← Salir del panel del monitor');
+  back.type = 'button';
+  back.onclick = ()=>{
     state.monitorAuthed=false;
     state.monitorPass='';
     state.dashboardRows=null;
     state.dashboardProfiles=null;
     state.view = homeView();
     render();
-  }));
+  };
+  root.appendChild(back);
 
-  const card=el('div','card');
-  card.appendChild(el('div','eyebrow','PANEL DEL MONITOR'));
-  card.appendChild(el('h1','','Resultados del grupo'));
+  const card = el('div','act-card');
+  root.appendChild(card);
+  card.appendChild(el('div','act-topic','Panel del monitor'));
+  card.appendChild(el('div','act-type','Resultados del grupo'));
   card.appendChild(el('p','','Vista general de todos los estudiantes, y el detalle de cada actividad con puntaje y tiempo invertido.'));
 
   if(state.dashboardRows===null || state.dashboardProfiles===null){
     card.appendChild(el('p','','Cargando…'));
-    wrap.appendChild(card);
     loadDashboard();
-    return wrap;
+    return root;
   }
 
   const rows=state.dashboardRows;
   const profiles=state.dashboardProfiles;
-  const refreshBtn=el('button','btn btn-ghost','↻ Actualizar');
+  const refreshBtn=el('button','btn-sm','↻ Actualizar');
+  refreshBtn.type = 'button';
   refreshBtn.onclick=()=>{ state.dashboardRows=null; state.dashboardProfiles=null; render(); };
   card.appendChild(refreshBtn);
 
   if(rows.length===0 && profiles.length===0){
     if(state.dashboardError){
-      const errBox=el('p','footnote', 'No se pudieron cargar los datos. Detalle: '+esc(state.dashboardError));
-      errBox.style.color='var(--bad)';
-      card.appendChild(errBox);
+      card.appendChild(el('p','error-text', 'No se pudieron cargar los datos. Detalle: '+esc(state.dashboardError)));
     } else {
       card.appendChild(el('p','','Todavía no hay actividad registrada.'));
     }
-    wrap.appendChild(card);
-    return wrap;
+    return root;
   }
 
   // ---- Botones por actividad (con puntaje + tiempo por estudiante al entrar) ----
-  card.appendChild(el('div','section-title','Actividades'));
-  const grid=el('div','modgrid');
+  card.appendChild(el('div','panel-section','Actividades'));
+  const grid=el('div','course-grid');
   Object.values(CATEGORIES).forEach(cat=>{
     cat.moduleIds.forEach((mid,idx)=>{
       const mod=MODULES[mid];
@@ -2382,11 +2348,12 @@ function viewDashboard(){
       const avg = scoredCount? Math.round(sumScore/scoredCount) : null;
       const avgTime = touched? sumTime/touched : 0;
 
-      const actBtn=el('button','modcard');
+      const actBtn=el('button','course-card');
+      actBtn.type = 'button';
       actBtn.innerHTML =
-        '<div class="mhead"><span class="modnum">'+num+'</span><span class="mtitle">'+esc(mod.title)+'</span></div>'+
-        '<div class="msub">'+touched+' estudiante'+(touched===1?'':'s')+' con actividad'+(avg!==null? ' · promedio '+avg+'%':'')+'</div>'+
-        (touched? '<div class="modtime">⏱ prom. '+formatHMS(avgTime)+'</div>' : '<span class="soontag">Sin datos aún</span>');
+        '<div class="course-head"><span class="mod-num">'+num+'</span><span class="course-title">'+esc(mod.title)+'</span></div>'+
+        '<p class="course-desc">'+touched+' estudiante'+(touched===1?'':'s')+' con actividad'+(avg!==null? ' · promedio '+avg+'%':'')+'</p>'+
+        (touched? '<div class="mod-meta">⏱ prom. '+formatHMS(avgTime)+'</div>' : '<span class="badge badge--locked" style="align-self:flex-start">Sin datos aún</span>');
       actBtn.onclick=()=>{ state.dashboardActivityId=mid; state.view='dashboardActivity'; render(); };
       grid.appendChild(actBtn);
     });
@@ -2394,41 +2361,48 @@ function viewDashboard(){
   card.appendChild(grid);
 
   // ---- Resumen general por estudiante ----
-  card.appendChild(el('div','section-title','Resumen general ('+rows.length+' informes enviados)'));
+  card.appendChild(el('div','panel-section','Resumen general ('+rows.length+' informes enviados)'));
   if(rows.length===0){
     card.appendChild(el('p','','Ningún estudiante ha enviado su informe todavía (se envía automáticamente al completar un nivel).'));
   } else {
     const table=document.createElement('table');
+    table.className='data-table';
     table.innerHTML = '<thead><tr><th>Nombre</th><th>Código</th><th class="mono">General</th><th class="mono">Fecha</th></tr></thead>';
     const tbody=document.createElement('tbody');
     rows.forEach(r=>{
       const tr=document.createElement('tr');
-      const color = r.overall>=80?'var(--good-soft)': r.overall>=60?'var(--amber-soft)':'var(--bad-soft)';
-      const fg = r.overall>=80?'var(--good)': r.overall>=60?'var(--amber)':'var(--bad)';
+      const bg = r.overall>=80?'var(--state-correct-soft)': r.overall>=60?'var(--gold-soft)':'var(--state-wrong-soft)';
+      const fg = r.overall>=80?'var(--state-correct)': r.overall>=60?'var(--gold-dark)':'var(--state-wrong)';
       const date = r.timestamp? new Date(r.timestamp).toLocaleString('es-CO',{dateStyle:'short',timeStyle:'short'}) : '—';
       tr.innerHTML = '<td>'+esc(r.name||'—')+'</td><td class="mono">'+esc(r.code||'—')+'</td>'+
-        '<td class="mono"><span class="pillscore" style="background:'+color+';color:'+fg+'">'+r.overall+'%</span></td>'+
+        '<td class="mono"><span class="score-pill" style="background:'+bg+';color:'+fg+'">'+r.overall+'%</span></td>'+
         '<td class="mono">'+date+'</td>';
       tbody.appendChild(tr);
     });
     table.appendChild(tbody);
-    card.appendChild(table);
+    const scroll = el('div','table-scroll');
+    scroll.appendChild(table);
+    card.appendChild(scroll);
   }
 
   card.appendChild(el('p','footnote','Cada estudiante inicia sesión con su código estudiantil, así que cada fila corresponde a una persona (no hay riesgo de duplicados por nombres repetidos).'));
 
-  wrap.appendChild(card);
-  return wrap;
+  return root;
 }
 
 function viewDashboardActivity(){
   const mod = MODULES[state.dashboardActivityId];
-  const wrap=el('div');
-  wrap.appendChild(backButton('Volver al panel del monitor', ()=>{ state.view='dashboard'; render(); }));
+  const root = el('div','act');
 
-  const card=el('div','card');
-  card.appendChild(el('div','eyebrow','DETALLE DE ACTIVIDAD'));
-  card.appendChild(el('h1','', mod? esc(mod.title) : 'Actividad'));
+  const back = el('button','act-back','← Volver al panel del monitor');
+  back.type = 'button';
+  back.onclick = ()=>{ state.view='dashboard'; render(); };
+  root.appendChild(back);
+
+  const card = el('div','act-card');
+  root.appendChild(card);
+  card.appendChild(el('div','act-topic','Detalle de actividad'));
+  card.appendChild(el('div','act-type', mod? esc(mod.title) : 'Actividad'));
 
   const profiles = state.dashboardProfiles || [];
   const students=[];
@@ -2439,8 +2413,7 @@ function viewDashboardActivity(){
 
   if(students.length===0){
     card.appendChild(el('p','','Todavía ningún estudiante ha comenzado esta actividad.'));
-    wrap.appendChild(card);
-    return wrap;
+    return root;
   }
 
   students.sort((a,b)=> b.elapsedSec - a.elapsedSec);
@@ -2451,23 +2424,24 @@ function viewDashboardActivity(){
   const scored = students.filter(s=>s.avgScore!==null);
   const avgScore = scored.length? Math.round(scored.reduce((a,s)=>a+s.avgScore,0)/scored.length) : null;
 
-  const statgrid=el('div','statgrid');
+  const statgrid=el('div','stat-grid');
   statgrid.innerHTML =
-    '<div class="stat"><div class="slabel">Estudiantes</div><div class="sval">'+total+'</div></div>'+
-    '<div class="stat"><div class="slabel">Completaron</div><div class="sval '+(completed===total?'good':'warn')+'">'+completed+' / '+total+'</div></div>'+
-    '<div class="stat"><div class="slabel">Tiempo prom.</div><div class="sval">'+formatHMS(avgTime)+'</div></div>';
+    '<div class="stat-box"><div class="slabel">Estudiantes</div><div class="sval">'+total+'</div></div>'+
+    '<div class="stat-box"><div class="slabel">Completaron</div><div class="sval '+(completed===total?'good':'warn')+'">'+completed+' / '+total+'</div></div>'+
+    '<div class="stat-box"><div class="slabel">Tiempo prom.</div><div class="sval">'+formatHMS(avgTime)+'</div></div>';
   card.appendChild(statgrid);
   if(avgScore!==null){
-    card.appendChild(el('p','footnote','Puntaje promedio del grupo en esta actividad: <b style="color:var(--ink)">'+avgScore+'%</b>'));
+    card.appendChild(el('p','footnote','Puntaje promedio del grupo en esta actividad: <b style="color:var(--text)">'+avgScore+'%</b>'));
   }
 
-  card.appendChild(el('div','section-title','Por estudiante (ordenado por tiempo, de mayor a menor)'));
+  card.appendChild(el('div','panel-section','Por estudiante (ordenado por tiempo, de mayor a menor)'));
   const table=document.createElement('table');
+  table.className='data-table';
   table.innerHTML = '<thead><tr><th>Nombre</th><th>Código</th><th>Estado</th><th class="mono">Puntaje</th><th class="mono">Tiempo</th></tr></thead>';
   const tbody=document.createElement('tbody');
   students.forEach(s=>{
     const tr=document.createElement('tr');
-    const statusColor = s.status==='completed'?'var(--good-dark)': 'var(--gold-dark)';
+    const statusColor = s.status==='completed'?'var(--state-correct)': 'var(--gold-dark)';
     const scoreTxt = s.avgScore!==null ? s.avgScore+'% ('+s.done+'/'+s.total+')' : (s.done+'/'+s.total+' niveles');
     tr.innerHTML =
       '<td>'+esc(s.name||'—')+'</td>'+
@@ -2478,10 +2452,11 @@ function viewDashboardActivity(){
     tbody.appendChild(tr);
   });
   table.appendChild(tbody);
-  card.appendChild(table);
+  const scroll = el('div','table-scroll');
+  scroll.appendChild(table);
+  card.appendChild(scroll);
 
-  wrap.appendChild(card);
-  return wrap;
+  return root;
 }
 
 /* ============================================================
