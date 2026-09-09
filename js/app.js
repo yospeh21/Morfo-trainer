@@ -9,7 +9,6 @@
 function SUB_ACTIVITY_TEMPLATE(){
   return [
     { id:'mc', title:'Preguntas de selección múltiple', icon:'📝', ready:false },
-    { id:'match', title:'Relacionar y emparejar', icon:'🔗', ready:false },
     { id:'completar', title:'Preguntas de completar', icon:'✍️', ready:false },
     { id:'img', title:'Actividades con imágenes anatómicas', icon:'🖼️', ready:false },
     { id:'cases', title:'Resolución de casos clínicos', icon:'🩺', ready:false },
@@ -1351,40 +1350,79 @@ function viewFill(){
 
   if(!state._levelRuntime){
     state._levelRuntime = {
-      qIdx:0, correct:0, answered:false, wasCorrect:false, typed:'',
+      qIdx:0, correct:0, answered:false, wasCorrect:false, typed:[],
       qOrder: shuffle(level.questions.map((_,i)=>i))
     };
   }
   const rt = state._levelRuntime;
   const q = level.questions[rt.qOrder[rt.qIdx]];
 
-  card.appendChild(questionCounter(rt.qIdx+1, level.questions.length));
-  card.appendChild(el('div','qprompt', esc(q.q)));
+  if(!Array.isArray(rt.typed)) rt.typed = [];
 
-  const input=document.createElement('input');
-  input.type='text';
-  input.className='fillinput'+(rt.answered ? (rt.wasCorrect?' ok':' bad') : '');
-  input.placeholder='Escribe tu respuesta…';
-  input.value=rt.typed;
-  input.disabled=rt.answered;
-  card.appendChild(input);
+  card.appendChild(questionCounter(rt.qIdx+1, level.questions.length));
+
+  // --- enunciado con el/los huecos convertidos en campos de texto en línea ---
+  const stateCls = rt.answered ? (rt.wasCorrect ? ' ok' : ' bad') : '';
+  const parts = String(q.q).split(/_{2,}/);
+  const blanks = Math.max(1, parts.length - 1);
+  const inputs = [];
+
+  function fitInline(inp, base){ inp.size = Math.max(base, (inp.value||'').length + 2); }
+  function makeInput(i, base){
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.className = 'fillinline' + stateCls;
+    inp.value = rt.typed[i] || '';
+    inp.disabled = rt.answered;
+    inp.setAttribute('aria-label', 'Respuesta '+(i+1));
+    fitInline(inp, base);
+    if(!rt.answered){
+      inp.addEventListener('input', ()=>{ rt.typed[i] = inp.value; fitInline(inp, base); });
+      inp.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); submit(); } });
+    }
+    return inp;
+  }
+
+  const prompt = el('div','qprompt');
+  if(parts.length < 2){
+    // enunciado sin hueco marcado: campo al final
+    prompt.appendChild(document.createTextNode(q.q + ' '));
+    const inp = makeInput(0, 16);
+    inputs.push(inp);
+    prompt.appendChild(inp);
+  } else {
+    const base = blanks === 1
+      ? Math.min(24, Math.max(11, Math.max.apply(null, q.answers.map(a=>a.length)) + 3))
+      : 10;
+    parts.forEach((txt, i)=>{
+      if(txt) prompt.appendChild(document.createTextNode(txt));
+      if(i < parts.length - 1){
+        const inp = makeInput(inputs.length, base);
+        inputs.push(inp);
+        prompt.appendChild(inp);
+      }
+    });
+  }
+  card.appendChild(prompt);
 
   const mainBtn=el('button','btn btn-primary btn-block',
     rt.answered ? (rt.qIdx+1<level.questions.length ? 'Siguiente →' : 'Terminar nivel') : 'Comprobar');
-  mainBtn.style.marginTop='12px';
+  mainBtn.style.marginTop='16px';
   card.appendChild(mainBtn);
 
+  function submit(){
+    const vals = inputs.map(x=>x.value);
+    if(!vals.join('').trim()) return;
+    rt.typed = vals;
+    rt.wasCorrect = fillMatches(vals.join(' '), q);
+    if(rt.wasCorrect) rt.correct++;
+    rt.answered = true;
+    render();
+  }
+
   if(!rt.answered){
-    input.addEventListener('input', ()=>{ rt.typed = input.value; });
-    input.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); mainBtn.click(); } });
-    mainBtn.onclick=()=>{
-      if(!input.value.trim()) return;
-      rt.typed=input.value;
-      rt.wasCorrect=fillMatches(input.value, q);
-      if(rt.wasCorrect) rt.correct++;
-      rt.answered=true;
-      render();
-    };
+    mainBtn.onclick = submit;
+    setTimeout(()=>{ try{ if(inputs[0]) inputs[0].focus(); }catch(e){} }, 0);
   } else {
     const box=el('div','explainbox');
     let html = '<span class="'+(rt.wasCorrect?'tag-good':'tag-bad')+'">'+(rt.wasCorrect?'✓ CORRECTO':'✕ REVISA ESTO')+'</span><br><br>';
@@ -1401,7 +1439,7 @@ function viewFill(){
     card.appendChild(box);
     mainBtn.onclick=()=>{
       if(rt.qIdx+1<level.questions.length){
-        rt.qIdx++; rt.answered=false; rt.wasCorrect=false; rt.typed=''; render();
+        rt.qIdx++; rt.answered=false; rt.wasCorrect=false; rt.typed=[]; render();
       } else {
         finishLevel(mod.id, level.id, rt.correct, level.questions.length);
       }

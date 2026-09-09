@@ -306,16 +306,19 @@
   .tag-good{color:var(--good-dark);font-family:var(--font-display);font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.03em;}
   .tag-bad{color:var(--bad);font-family:var(--font-display);font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.03em;}
 
-  /* ---------- completar (fill) ---------- */
-  input.fillinput{
-    width:100%;margin:6px 0 0;font-size:16px;font-weight:800;text-align:center;
-    background:var(--panel-2);border:3px solid var(--line-strong);color:var(--ink);
-    padding:14px 16px;border-radius:14px;font-family:var(--font-body);
+  /* ---------- completar (fill): campo en línea dentro del enunciado ---------- */
+  input.fillinline{
+    display:inline-block;width:auto;min-width:78px;max-width:100%;
+    font-family:var(--font-body);font-weight:800;font-size:15.5px;text-align:center;
+    color:var(--secondary-dark);vertical-align:baseline;
+    background:var(--panel-2);border:2.5px solid var(--secondary);border-radius:10px;
+    padding:3px 8px;margin:2px 4px;
   }
-  input.fillinput:focus{outline:none;border-color:var(--secondary);}
-  input.fillinput:disabled{opacity:1;}
-  input.fillinput.ok{border-color:var(--good-dark);background:var(--good-soft);color:var(--good-dark);}
-  input.fillinput.bad{border-color:var(--bad);background:var(--bad-soft);color:var(--bad);}
+  input.fillinline::placeholder{color:var(--ink-dim);font-weight:700;}
+  input.fillinline:focus{outline:none;border-color:var(--secondary-dark);background:var(--panel-3);}
+  input.fillinline:disabled{opacity:1;}
+  input.fillinline.ok{border-color:var(--good-dark);background:var(--good-soft);color:var(--good-dark);}
+  input.fillinline.bad{border-color:var(--bad);background:var(--bad-soft);color:var(--bad);}
 
   /* ---------- match game ---------- */
   .matchgrid{display:grid;grid-template-columns:1fr;gap:20px;}
