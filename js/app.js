@@ -627,60 +627,90 @@ function progressBar(done, total, opts){
   return wrap;
 }
 
+/* ============================================================
+   ENCABEZADO FIJO — marca · identidad · cerrar sesión · menú
+   Aparece en todas las vistas menos "welcome". Concentra la
+   navegación rápida entre pantallas.
+   ============================================================ */
 function topStrip(){
   const h = el('div','app-header');
+
+  const bar = el('div','app-bar');
 
   const brand = el('div','app-brand');
   brand.appendChild(brandMark('sm'));
   brand.appendChild(el('span','name','Morfo-Trainer'));
-  h.appendChild(brand);
+  bar.appendChild(brand);
 
   if(state.student.code){
-    const meta = el('div','app-headmeta');
     const su = parseStudent();
-    const who = el('div','who');
+    const user = el('div','app-user');
+    const who = el('div','app-who');
     who.appendChild(el('span','nm', esc(su.name || 'Invitado')));
     if(su.role) who.appendChild(badge(su.role, 'role'));
-    meta.appendChild(who);
+    who.appendChild(el('span','code', esc(state.student.code)));
+    user.appendChild(who);
+    const out = el('button','app-logout','Cerrar sesión');
+    out.type = 'button';
+    out.onclick = ()=>{ logout(); };
+    user.appendChild(out);
+    bar.appendChild(user);
+  } else {
+    const out = el('button','app-logout','Salir');
+    out.type = 'button';
+    out.onclick = ()=>{ logout(); };
+    bar.appendChild(out);
+  }
+  h.appendChild(bar);
 
+  if(state.student.code || state.monitorAuthed){ h.appendChild(navRow()); }
+  return h;
+}
+
+// Menú de navegación rápida (fila de pestañas dentro del encabezado).
+function navRow(){
+  const nav = el('nav','app-nav');
+  nav.setAttribute('aria-label','Navegación');
+  const v = state.view;
+  const inTheme = ['menu','moduleSubmenu','comingSoon','sort','match','mc','completar','levelDone','boss','bossDone'].indexOf(v) !== -1;
+  const inDash = ['dashboard','monitorLogin','dashboardActivity'].indexOf(v) !== -1;
+
+  function link(label, active, onClick){
+    const b = el('button','app-nav-link' + (active ? ' is-active' : ''), esc(label));
+    b.type = 'button';
+    if(active) b.setAttribute('aria-current','page');
+    b.onclick = onClick;
+    return b;
+  }
+
+  if(state.student.code){
+    nav.appendChild(link('Temas', v === 'categories', ()=>{
+      state.currentCategory = null; state.view = 'categories'; render();
+    }));
+    if(state.currentCategory){
+      nav.appendChild(link('Módulos', inTheme, ()=>{ state.view = 'menu'; render(); }));
+    }
+    nav.appendChild(link('Mi informe', v === 'report', ()=>{ state.view = 'report'; render(); }));
+  }
+
+  if(parseStudent().role === 'Monitor' || state.monitorAuthed){
+    nav.appendChild(link('Panel del grupo', inDash, ()=>{ goToDashboard(); }));
+  }
+
+  if(state.student.code){
     const flat = allLevelsFlat();
     const total = flat.length;
     const doneC = flat.filter(x=> !!state.progress[levelKey(x.mod, x.l.id)]).length;
-    const mp = el('div','app-mini-progress');
-    mp.innerHTML = '<span class="track"><i style="width:'+(total? Math.round(doneC/total*100):0)+'%"></i></span>'+
-      '<span>'+doneC+'/'+total+' niveles</span>';
-    meta.appendChild(mp);
-    h.appendChild(meta);
+    const prog = el('span','app-nav-progress', doneC + '/' + total + ' niveles');
+    nav.appendChild(prog);
   }
-  return h;
+  return nav;
 }
 
 function backButton(label, cb){
   const b=el('button','backlink backlink-invert','← '+label);
   b.onclick=cb;
   return b;
-}
-
-// Resumen de usuario compacto (nombre · rol · cerrar sesión).
-function sessionBar(){
-  const su = parseStudent();
-  const bar = el('div','user-summary');
-  const initial = (su.name || '?').trim().charAt(0).toUpperCase() || '?';
-  bar.appendChild(el('div','avatar', esc(initial)));
-
-  const info = el('div','info');
-  const nm = el('div','nm');
-  nm.appendChild(document.createTextNode(su.name || 'Invitado'));
-  if(su.role) nm.appendChild(badge(su.role, 'role'));
-  info.appendChild(nm);
-  info.appendChild(el('div','sub', 'Código ' + esc(state.student.code)));
-  bar.appendChild(info);
-
-  const out = el('button','logout','Cerrar sesión');
-  out.type = 'button';
-  out.onclick = ()=>{ logout(); };
-  bar.appendChild(out);
-  return bar;
 }
 
 /* ============================================================
@@ -902,8 +932,6 @@ function viewCategories(){
   head.appendChild(el('p','','Elige un tema para empezar tu entrenamiento.'));
   wrap.appendChild(head);
 
-  wrap.appendChild(sessionBar());
-
   const grid = el('div','course-grid');
   Object.values(CATEGORIES).forEach(cat=> grid.appendChild(courseCard(cat)));
   wrap.appendChild(grid);
@@ -965,14 +993,10 @@ function viewMenu(){
 
   const wrap = el('div','home');
 
-  wrap.appendChild(backButton('Cambiar de tema', ()=>{ state.currentCategory=null; state.view='categories'; render(); }));
-
   const head = el('div','home-head');
   head.appendChild(el('h1','', esc(cat.title)));
   head.appendChild(el('p','','Elige un módulo para entrenar. Tu avance se guarda automáticamente.'));
   wrap.appendChild(head);
-
-  wrap.appendChild(sessionBar());
 
   const unlocked = [], locked = [];
   cat.moduleIds.forEach((mid, idx)=>{
@@ -2105,7 +2129,7 @@ async function autoSaveResult(){
 function viewReport(){
   const rep = computeReport();
   const wrap=el('div');
-  wrap.appendChild(backButton('Volver al panel', ()=>{ state.view='menu'; render(); }));
+  wrap.appendChild(backButton('Volver', ()=>{ state.view=homeView(); render(); }));
 
   const card=el('div','card');
   card.appendChild(el('div','eyebrow','INFORME INDIVIDUAL'));
