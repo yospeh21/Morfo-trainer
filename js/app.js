@@ -911,164 +911,196 @@ function viewCategories(){
   return wrap;
 }
 
+function moduleCard(mod, num){
+  // módulo real con niveles (A/B): tarjeta con progreso
+  if(!mod.placeholder){
+    const total = mod.levels.length;
+    let done = 0, sumPct = 0;
+    mod.levels.forEach(l=>{ const p = state.progress[levelKey(mod.id, l.id)]; if(p){ done++; sumPct += pct(p.correct, p.total); } });
+    const avg = done ? Math.round(sumPct / done) : 0;
+    const kind = done >= total ? 'is-done' : done > 0 ? 'is-progress' : '';
+    const timerT = state.timers[mod.id];
+    const timeLabel = timerT && (timerT.elapsedSec > 0 || timerT.status !== 'not_started')
+      ? '⏱ ' + formatHMS(currentElapsed(mod.id)) + (timerT.status === 'completed' ? ' · tiempo final' : '') : '';
+
+    const card = el('button','mod-card' + (kind ? ' ' + kind : ''));
+    card.type = 'button';
+    const head = el('div','mod-head');
+    head.appendChild(el('span','mod-num', esc(num)));
+    head.appendChild(el('span','mod-title2', esc(mod.title)));
+    card.appendChild(head);
+    if(mod.subtitle) card.appendChild(el('p','mod-sub', esc(mod.subtitle)));
+    card.appendChild(progressBar(done, total, { avg: avg }));
+    if(timeLabel) card.appendChild(el('div','mod-meta', timeLabel));
+    card.onclick = ()=>{ goToLevel(mod.id, firstIncompleteLevelIdx(mod)); };
+    return card;
+  }
+
+  // módulo con sub-actividades (C–H)
+  const subs = mod.subActivities || [];
+  const anyReady = subs.some(s=> s.ready);
+  const readyCount = subs.filter(s=> s.ready).length;
+  const card = el('button','mod-card' + (anyReady ? ' is-ready' : ''));
+  card.type = 'button';
+  const head = el('div','mod-head');
+  head.appendChild(el('span','mod-num', esc(num)));
+  head.appendChild(el('span','mod-title2', esc(mod.title)));
+  if(anyReady) head.appendChild(badge(readyCount + (readyCount === 1 ? ' actividad' : ' actividades'), 'progress'));
+  card.appendChild(head);
+  card.appendChild(el('p','mod-sub', anyReady
+    ? 'Elige el tipo de actividad para practicar.'
+    : 'Tu profesor irá habilitando las actividades de este módulo.'));
+  card.onclick = ()=>{
+    state.currentModule = mod.id;
+    state.currentSubActivity = null;
+    state.view = (subs.length) ? 'moduleSubmenu' : 'comingSoon';
+    render();
+  };
+  return card;
+}
+
 function viewMenu(){
   const cat = CATEGORIES[state.currentCategory];
   if(!cat){ state.view='categories'; return viewCategories(); }
 
-  const wrap=el('div');
+  const wrap = el('div','home');
+
   wrap.appendChild(backButton('Cambiar de tema', ()=>{ state.currentCategory=null; state.view='categories'; render(); }));
 
-  const infoCard=el('div','card');
-  infoCard.style.marginBottom='16px';
-  infoCard.appendChild(el('div','eyebrow', cat.emoji+' '+cat.title.toUpperCase()));
-  infoCard.appendChild(el('h1','','Panel de entrenamiento'));
-  infoCard.appendChild(el('p','','Elige un módulo. Cada uno avanza en cuatro niveles: reconocimiento, identificación, relaciones y aplicación.'));
-  infoCard.appendChild(sessionBar());
-  wrap.appendChild(infoCard);
+  const head = el('div','home-head');
+  head.appendChild(el('h1','', esc(cat.title)));
+  head.appendChild(el('p','','Elige un módulo para entrenar. Tu avance se guarda automáticamente.'));
+  wrap.appendChild(head);
 
-  const outer=el('div','card');
-  outer.appendChild(el('div','section-title','Temas'));
+  wrap.appendChild(sessionBar());
 
-  const grid=el('div','modgrid');
+  const unlocked = [], locked = [];
   cat.moduleIds.forEach((mid, idx)=>{
-    const mod=MODULES[mid]; if(!mod) return;
-    const num = String(idx+1).padStart(2,'0');
-
-    if(isModuleLocked(mid)){
-      const lockedBtn=el('button','modcard locked');
-      lockedBtn.disabled=true;
-      lockedBtn.innerHTML =
-        '<div class="mhead"><span class="modnum">'+num+'</span><span class="mtitle">'+esc(mod.title)+'</span></div>'+
-        '<div class="msub">'+esc(mod.subtitle||'')+'</div>'+
-        '<span class="soontag">🔒 No disponible</span>';
-      grid.appendChild(lockedBtn);
-      return;
-    }
-
-    const modBtn=el('button','modcard');
-
-    if(mod.placeholder){
-      modBtn.innerHTML =
-        '<div class="mhead"><span class="modnum">'+num+'</span><span class="mtitle">'+esc(mod.title)+'</span></div>'+
-        '<div class="msub">'+esc(mod.subtitle)+'</div>'+
-        '<span class="soontag">🔧 Próximamente</span>';
-      modBtn.onclick=()=>{
-        state.currentModule=mod.id;
-        state.currentSubActivity=null;
-        state.view = (mod.subActivities && mod.subActivities.length) ? 'moduleSubmenu' : 'comingSoon';
-        render();
-      };
-    } else {
-      const total=mod.levels.length;
-      let done=0, sumPct=0;
-      mod.levels.forEach(l=>{ const p=state.progress[levelKey(mod.id,l.id)]; if(p){done++; sumPct+=pct(p.correct,p.total);} });
-      const avg = done? Math.round(sumPct/done):0;
-      const timerT = state.timers[mid];
-      const timeLabel = timerT && (timerT.elapsedSec>0 || timerT.status!=='not_started') ? '⏱ '+formatHMS(currentElapsed(mid))+(timerT.status==='completed'?' (final)':'') : '';
-
-      modBtn.innerHTML =
-        '<div class="mhead"><span class="modnum">'+num+'</span><span class="mtitle">'+esc(mod.title)+'</span></div>'+
-        '<div class="msub">'+esc(mod.subtitle)+'</div>'+
-        '<div class="progressbar"><i style="width:'+(done/total*100)+'%"></i></div>'+
-        '<div class="pct">'+done+' / '+total+' niveles completados'+(done? ' · promedio '+avg+'%':'')+'</div>'+
-        (timeLabel? '<div class="modtime">'+timeLabel+'</div>':'');
-      modBtn.onclick=()=>{ goToLevel(mod.id, firstIncompleteLevelIdx(mod)); };
-    }
-    grid.appendChild(modBtn);
+    const mod = MODULES[mid];
+    if(!mod) return;
+    const num = String(idx + 1).padStart(2, '0');
+    (isModuleLocked(mid) ? locked : unlocked).push({ mod, mid, num });
   });
-  outer.appendChild(grid);
+
+  if(unlocked.length){
+    const list = el('div','mod-list');
+    unlocked.forEach(({mod, num})=> list.appendChild(moduleCard(mod, num)));
+    wrap.appendChild(list);
+  }
 
   const bossPlayable = cat.moduleIds.some(mid=>{
     const m = MODULES[mid];
     return m && !isModuleLocked(mid) && m.levels.some(l=>l.type==='mc');
   });
-  const bossBtn=el('button','btn btn-block', bossPlayable
-    ? '🏆  Boss Battle — repaso cronometrado (mezcla los módulos de este tema)'
-    : '🔒  Boss Battle — no disponible');
-  bossBtn.style.marginTop='16px';
-  if(bossPlayable){ bossBtn.onclick=startBoss; }
-  else { bossBtn.disabled=true; }
-  outer.appendChild(bossBtn);
-
-  const resetZone=el('div','');
-  resetZone.style.marginTop='18px';
-  if(!state._confirmingReset){
-    const resetBtn=el('button','btn btn-ghost btn-block','↻  Reiniciar mis actividades (borra todo mi progreso)');
-    resetBtn.style.borderColor='var(--bad)'; resetBtn.style.color='var(--bad)';
-    resetBtn.onclick=()=>{ state._confirmingReset=true; render(); };
-    resetZone.appendChild(resetBtn);
-  } else {
-    const warn=el('div','');
-    warn.style.border='3px solid var(--bad)';
-    warn.style.borderRadius='16px';
-    warn.style.padding='16px';
-    warn.style.background='var(--bad-soft)';
-    warn.innerHTML='<p class="lede" style="margin-bottom:14px;">¿Seguro que quieres borrar <b>todo</b> tu progreso ('+esc(state.student.name)+', código '+esc(state.student.code)+') y empezar de nuevo?</p>';
-    const row=el('div','row');
-    const yesBtn=el('button','btn btn-primary', 'Sí, borrar y empezar de nuevo');
-    yesBtn.style.background='var(--bad)'; yesBtn.style.borderColor='var(--bad-dark)'; yesBtn.style.boxShadow='0 5px 0 var(--bad-dark)';
-    yesBtn.onclick=()=>{ state._confirmingReset=false; resetProfile(); };
-    const noBtn=el('button','btn btn-ghost', 'Cancelar');
-    noBtn.onclick=()=>{ state._confirmingReset=false; render(); };
-    row.appendChild(yesBtn); row.appendChild(noBtn);
-    warn.appendChild(row);
-    resetZone.appendChild(warn);
+  if(bossPlayable){
+    const boss = el('button','boss-cta');
+    boss.type = 'button';
+    boss.innerHTML = '<span class="bc-title">🏆 Boss Battle</span>' +
+      '<span class="bc-sub">Repaso cronometrado que mezcla las preguntas de los módulos de este tema.</span>';
+    boss.onclick = startBoss;
+    wrap.appendChild(boss);
   }
-  outer.appendChild(resetZone);
 
-  wrap.appendChild(outer);
+  if(locked.length){
+    wrap.appendChild(el('div','menu-label','Aún no disponibles'));
+    const list = el('div','mod-list');
+    locked.forEach(({mod, num})=>{
+      const card = el('div','mod-card is-locked');
+      const hd = el('div','mod-head');
+      hd.appendChild(el('span','mod-num','🔒'));
+      hd.appendChild(el('span','mod-title2', esc(num + ' · ' + mod.title)));
+      card.appendChild(hd);
+      list.appendChild(card);
+    });
+    wrap.appendChild(list);
+  }
+
+  wrap.appendChild(resetZone());
   return wrap;
+}
+
+// Zona de reinicio de progreso (compartida por el panel del tema).
+function resetZone(){
+  const zone = el('div','reset-zone');
+  if(!state._confirmingReset){
+    const btn = el('button','reset-link','↻ Reiniciar mi progreso de todos los temas');
+    btn.type = 'button';
+    btn.onclick = ()=>{ state._confirmingReset = true; render(); };
+    zone.appendChild(btn);
+    return zone;
+  }
+  const box = el('div','reset-confirm');
+  box.appendChild(el('p','',
+    '¿Seguro que quieres borrar <b>todo</b> tu progreso (' + esc(state.student.name) +
+    ', código ' + esc(state.student.code) + ') y empezar de nuevo? Esta acción no se puede deshacer.'));
+  const row = el('div','row');
+  const yes = el('button','act-btn danger','Sí, borrar y empezar de nuevo');
+  yes.type = 'button';
+  yes.onclick = ()=>{ state._confirmingReset = false; resetProfile(); };
+  const no = el('button','act-btn is-ghost','Cancelar');
+  no.type = 'button';
+  no.onclick = ()=>{ state._confirmingReset = false; render(); };
+  row.appendChild(yes); row.appendChild(no);
+  box.appendChild(row);
+  zone.appendChild(box);
+  return zone;
 }
 
 function viewModuleSubmenu(){
   const mod = MODULES[state.currentModule];
-  const wrap=el('div');
+  const wrap = el('div','home');
   wrap.appendChild(backButton('Volver al panel', ()=>{ state.view='menu'; render(); }));
 
-  const card=el('div','card');
-  card.appendChild(el('div','eyebrow','🔧 EN CONSTRUCCIÓN'));
-  card.appendChild(el('h1','', mod? esc(mod.title) : 'Actividad'));
-  card.appendChild(el('p','','Elige el tipo de actividad. Tu profesor las va habilitando una por una.'));
+  const head = el('div','home-head');
+  head.appendChild(el('h1','', mod ? esc(mod.title) : 'Actividad'));
+  head.appendChild(el('p','','Elige el tipo de actividad. Tu profesor las habilita una por una.'));
+  wrap.appendChild(head);
 
-  const grid=el('div','modgrid');
-  const standaloneWrap=el('div','');
-  standaloneWrap.style.marginTop='16px';
+  const subs = (mod && mod.subActivities) || [];
+  const regular = subs.filter(s=> !s.standalone);
+  const standalone = subs.filter(s=> s.standalone);
 
-  function makeSubBtn(sub){
-    const subBtn=el('button', sub.standalone? 'btn btn-block' : 'modcard');
+  function subCard(sub){
     const doneInfo = state.progress[levelKey(mod.id, sub.id)];
-    const readyTag = sub.ready
-      ? (doneInfo
-          ? '<div class="pct">✓ Completado — '+pct(doneInfo.correct,doneInfo.total)+'%</div>'
-          : '<span class="soontag" style="color:var(--good-dark);border-color:var(--good-dark);background:var(--good-soft);">▶ Listo para jugar</span>')
-      : '<span class="soontag">🔧 Próximamente</span>';
-    if(sub.standalone){
-      subBtn.innerHTML = sub.icon+'  '+esc(sub.title)+(sub.ready? '' : '  · 🔧 Próximamente');
-    } else {
-      subBtn.innerHTML =
-        '<div class="mhead"><span class="modnum">'+sub.icon+'</span><span class="mtitle">'+esc(sub.title)+'</span></div>'+
-        readyTag;
+    const kind = !sub.ready ? 'is-soon' : doneInfo ? 'is-done' : 'is-ready';
+    const card = el('button','mod-card ' + kind);
+    card.type = 'button';
+    const hd = el('div','mod-head');
+    hd.appendChild(el('span','mod-num', esc(sub.icon || '•')));
+    hd.appendChild(el('span','mod-title2', esc(sub.title)));
+    if(!sub.ready) hd.appendChild(badge('Próximamente','locked'));
+    else if(doneInfo) hd.appendChild(badge('Completado','done'));
+    else hd.appendChild(badge('Disponible','progress'));
+    card.appendChild(hd);
+    if(sub.ready && doneInfo){
+      card.appendChild(el('div','mod-meta','✓ ' + pct(doneInfo.correct, doneInfo.total) + '% en tu último intento'));
+    } else if(!sub.ready){
+      card.appendChild(el('p','mod-sub','Todavía no tiene contenido cargado.'));
     }
-    subBtn.onclick=()=>{
+    card.onclick = ()=>{
       if(sub.ready){
-        const idx = mod.levels.findIndex(l=>l.id===sub.id);
-        if(idx>=0){ goToLevel(mod.id, idx); return; }
+        const idx = mod.levels.findIndex(l=> l.id === sub.id);
+        if(idx >= 0){ goToLevel(mod.id, idx); return; }
       }
       state.currentSubActivity = sub.id;
-      state.view='comingSoon';
+      state.view = 'comingSoon';
       render();
     };
-    return subBtn;
+    return card;
   }
 
-  (mod.subActivities||[]).forEach(sub=>{
-    if(sub.standalone){ standaloneWrap.appendChild(makeSubBtn(sub)); }
-    else { grid.appendChild(makeSubBtn(sub)); }
-  });
-  card.appendChild(grid);
-  card.appendChild(standaloneWrap);
+  if(regular.length){
+    const list = el('div','mod-list');
+    regular.forEach(sub=> list.appendChild(subCard(sub)));
+    wrap.appendChild(list);
+  }
+  if(standalone.length){
+    wrap.appendChild(el('div','menu-label','Repaso'));
+    const list = el('div','mod-list');
+    standalone.forEach(sub=> list.appendChild(subCard(sub)));
+    wrap.appendChild(list);
+  }
 
-  wrap.appendChild(card);
   return wrap;
 }
 
@@ -1076,17 +1108,21 @@ function viewComingSoon(){
   const mod = MODULES[state.currentModule];
   const sub = mod && mod.subActivities ? mod.subActivities.find(s=>s.id===state.currentSubActivity) : null;
   const backTarget = (mod && mod.subActivities && mod.subActivities.length) ? 'moduleSubmenu' : 'menu';
+  const backLabel = backTarget === 'moduleSubmenu' ? 'Volver a las actividades' : 'Volver al panel';
 
-  const wrap=el('div');
-  wrap.appendChild(backButton(backTarget==='moduleSubmenu'?'Volver a las actividades':'Volver al panel', ()=>{ state.view=backTarget; render(); }));
-  const card=el('div','card');
-  card.appendChild(el('div','eyebrow','🔧 PENDIENTE DE CONFIGURACIÓN'));
-  card.appendChild(el('h1','', sub? esc(sub.title) : (mod? esc(mod.title) : 'Actividad')));
-  if(sub){ card.appendChild(el('p','lede', esc(mod.title))); }
-  card.appendChild(el('p','','Esta actividad todavía no tiene contenido cargado. Tu profesor la va a habilitar próximamente — vuelve a intentarlo más adelante.'));
-  const backBtn=el('button','btn btn-primary btn-block', backTarget==='moduleSubmenu'?'Volver a las actividades':'Volver al panel');
-  backBtn.onclick=()=>{ state.view=backTarget; render(); };
-  card.appendChild(backBtn);
+  const wrap = el('div','home');
+  wrap.appendChild(backButton(backLabel, ()=>{ state.view = backTarget; render(); }));
+
+  const card = el('div','notice-card');
+  card.appendChild(el('div','n-eyebrow','Pendiente de configuración'));
+  card.appendChild(el('h1','', sub ? esc(sub.title) : (mod ? esc(mod.title) : 'Actividad')));
+  if(sub && mod) card.appendChild(el('p','n-sub', esc(mod.title)));
+  card.appendChild(el('p','n-body','Esta actividad todavía no tiene contenido cargado. Tu profesor la habilitará próximamente — vuelve a intentarlo más adelante.'));
+  const btn = el('button','act-btn', backLabel);
+  btn.type = 'button';
+  btn.onclick = ()=>{ state.view = backTarget; render(); };
+  card.appendChild(btn);
+
   wrap.appendChild(card);
   return wrap;
 }
