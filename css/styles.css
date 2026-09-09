@@ -141,34 +141,20 @@
   .row.end{justify-content:flex-end;}
   .row.between{justify-content:space-between;align-items:center;}
 
-  /* ---------- welcome ---------- */
-  .logo-mark{
-    width:60px;height:60px;border-radius:18px;border:3px solid var(--line-strong);
-    display:flex;align-items:center;justify-content:center;font-size:28px;background:var(--gold-soft);margin-bottom:16px;
-    animation:bob 2.4s ease-in-out infinite;
+  /* ---------- inputs de texto (design system) ---------- */
+  input[type=text], input[type=password]{
+    width:100%;background:var(--surface-sunken);border:1.5px solid var(--hairline-strong);color:var(--text);
+    padding:13px 15px;border-radius:var(--r-2);
+    font-family:var(--font-body);font-weight:700;font-size:16px;margin-bottom:12px;
+    transition:border-color .15s, box-shadow .15s, background .15s;
   }
-  @keyframes bob{ 0%,100%{transform:translateY(0) rotate(-3deg);} 50%{transform:translateY(-6px) rotate(3deg);} }
-  input[type=text]{
-    width:100%;background:var(--panel-2);border:3px solid var(--line-strong);color:var(--ink);
-    padding:12px 14px;border-radius:12px;font-family:var(--font-body);font-weight:700;font-size:14.5px;margin-bottom:12px;
+  input[type=text]::placeholder, input[type=password]::placeholder{color:var(--text-soft);font-weight:600;}
+  input[type=text]:focus, input[type=password]:focus{
+    outline:none;border-color:var(--accent-brand);background:var(--surface);
+    box-shadow:0 0 0 3px var(--accent-brand-soft);
   }
-  input[type=text]:focus{outline:none;border-color:var(--secondary);}
-  label{display:block;font-family:var(--font-body);font-weight:800;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-dim);margin-bottom:6px;}
-
-  /* ---------- indicador de conexión (esquina superior derecha de la card) ---------- */
-  .connbadge{
-    position:absolute;top:16px;right:16px;z-index:5;
-    display:inline-flex;align-items:center;gap:7px;
-    font-family:var(--font-body);font-weight:800;font-size:11px;letter-spacing:.02em;
-    color:var(--ink-dim);background:var(--panel-2);
-    border:2.5px solid var(--line-strong);border-radius:20px;
-    padding:5px 11px;box-shadow:0 2px 0 rgba(27,16,63,0.15);
-  }
-  .connbadge .dot{width:8px;height:8px;min-width:8px;border-radius:50%;background:var(--ink-dim);}
-  .connbadge.ok{color:var(--good-dark);border-color:var(--good-dark);background:var(--good-soft);}
-  .connbadge.ok .dot{background:var(--good);}
-  .connbadge.err{color:var(--bad);border-color:var(--bad);background:var(--bad-soft);}
-  .connbadge.err .dot{background:var(--bad);}
+  input[type=text]:disabled, input[type=password]:disabled{opacity:.6;cursor:not-allowed;}
+  label{display:block;font-family:var(--font-body);font-weight:800;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-soft);margin-bottom:6px;}
 
   /* ---------- menu ---------- */
   .modgrid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px;}
@@ -434,6 +420,81 @@
   ::selection{background:var(--accent-soft);}
 
   /* =========================================================
+     PANTALLA DE INGRESO  ·  auth
+     Marca protagonista, formulario mínimo, acción de monitor
+     discreta, estado de conexión discreto (visible sólo si falla).
+     ========================================================= */
+  .auth{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:var(--s-4);padding:var(--s-6) 0;
+  }
+  .auth-card{
+    width:100%;max-width:420px;
+    background:var(--surface);border:1px solid var(--hairline-strong);
+    border-radius:var(--r-4);box-shadow:var(--elev-2);
+    padding:var(--s-6) var(--s-5);
+    display:flex;flex-direction:column;gap:var(--s-5);
+  }
+  @media(min-width:480px){ .auth-card{padding:var(--s-7) var(--s-6);} }
+
+  .auth-brand{display:flex;flex-direction:column;align-items:center;text-align:center;gap:var(--s-2);}
+  .brandmark{
+    width:60px;height:60px;border-radius:var(--r-3);flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(150deg, var(--accent-action), #FF9068);
+    box-shadow:0 6px 20px rgba(255,107,69,0.32);
+    animation:bm-float 4.5s ease-in-out infinite;
+  }
+  .brandmark svg{width:34px;height:34px;display:block;}
+  .brandmark svg rect, .brandmark svg circle{fill:#fff;}
+  @keyframes bm-float{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-4px);} }
+  @media(prefers-reduced-motion:reduce){ .brandmark{animation:none;} }
+  .auth-eyebrow{
+    margin:var(--s-2) 0 0;font-family:var(--font-body);font-weight:800;
+    font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-soft);
+  }
+  .auth-wordmark{
+    margin:0;font-family:var(--font-display);font-weight:800;
+    font-size:34px;line-height:1;letter-spacing:-0.02em;color:var(--text);
+  }
+  @media(min-width:480px){ .auth-wordmark{font-size:40px;} }
+  .auth-tagline{margin:2px 0 0;font-size:var(--fs-body);color:var(--text-soft);line-height:1.5;max-width:32ch;}
+
+  .auth-form{display:flex;flex-direction:column;gap:var(--s-4);}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field-label{
+    margin:0;font-family:var(--font-body);font-weight:800;font-size:11px;letter-spacing:.05em;
+    text-transform:uppercase;color:var(--text-soft);
+  }
+  .field .field-input{margin-bottom:0;}
+  .field-hint{font-size:12px;color:var(--text-soft);line-height:1.45;min-height:1.2em;}
+  .field-hint.is-ok{color:var(--state-correct);font-weight:800;}
+  .field-hint.is-ok::before{content:"✓ ";}
+  .field-hint.is-error{color:var(--state-wrong);font-weight:800;}
+  .field-hint.is-error::before{content:"✕ ";}
+  .field.has-error .field-input{border-color:var(--state-wrong);box-shadow:0 0 0 3px var(--state-wrong-soft);}
+
+  .auth-link{
+    align-self:center;background:none;border:none;cursor:pointer;
+    font-family:var(--font-body);font-weight:800;font-size:13px;
+    color:var(--accent-brand);padding:6px 8px;border-radius:var(--r-1);
+  }
+  .auth-link:hover{color:var(--accent-brand-dark);text-decoration:underline;text-underline-offset:3px;}
+  .auth-link:focus-visible{outline:none;box-shadow:var(--focus-ring);}
+
+  .auth-conn{
+    display:inline-flex;align-items:center;gap:6px;align-self:center;
+    font-family:var(--font-body);font-weight:700;font-size:11.5px;
+    color:rgba(255,255,255,0.45);
+  }
+  .auth-conn .dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+  .auth-conn.is-ok{color:rgba(255,255,255,0.42);}
+  .auth-conn.is-err{
+    color:#fff;background:var(--state-wrong);font-weight:800;font-size:12px;
+    padding:7px 13px;border-radius:var(--r-pill);box-shadow:var(--elev-1);text-align:center;
+  }
+
+  /* =========================================================
      SISTEMA DE ACTIVIDADES  ·  ActivityLayout
      Estructura común: back · card(header · progreso · cuerpo ·
      feedback · acciones). Lo único que cambia entre tipos de
@@ -527,18 +588,26 @@
     border-top:1px solid var(--hairline);padding-top:var(--s-5);
     display:flex;flex-direction:column;gap:var(--s-2);
   }
-  .act-btn{
-    appearance:none;width:100%;cursor:pointer;
+  /* botón de acción principal — compartido por actividades y login (.btn-cta) */
+  .act-btn, .btn-cta{
+    appearance:none;width:100%;cursor:pointer;position:relative;
     font-family:var(--font-display);font-weight:800;font-size:16px;
     padding:15px 20px;border-radius:var(--r-3);border:none;
     background:var(--accent-action);color:#fff;
     box-shadow:0 2px 0 var(--accent-action-dark), var(--elev-1);
     transition:transform .12s ease, box-shadow .12s ease, background .15s ease;
   }
-  .act-btn:hover:not(:disabled){background:#FF7D57;}
-  .act-btn:active:not(:disabled){transform:translateY(2px);box-shadow:0 0 0 var(--accent-action-dark);}
-  .act-btn:focus-visible{outline:none;box-shadow:var(--focus-ring);}
-  .act-btn:disabled{opacity:.45;cursor:not-allowed;}
+  .act-btn:hover:not(:disabled), .btn-cta:hover:not(:disabled){background:#FF7D57;}
+  .act-btn:active:not(:disabled), .btn-cta:active:not(:disabled){transform:translateY(2px);box-shadow:0 0 0 var(--accent-action-dark);}
+  .act-btn:focus-visible, .btn-cta:focus-visible{outline:none;box-shadow:var(--focus-ring);}
+  .act-btn:disabled, .btn-cta:disabled{opacity:.42;cursor:not-allowed;}
+  .btn-cta.is-loading{color:transparent;pointer-events:none;}
+  .btn-cta.is-loading::after{
+    content:"";position:absolute;inset:0;margin:auto;width:18px;height:18px;
+    border:2.5px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;
+    animation:spin .7s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
   .act-btn.is-ghost{
     background:transparent;color:var(--text-soft);box-shadow:none;
     border:1px solid var(--hairline-strong);

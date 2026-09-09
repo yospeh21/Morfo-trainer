@@ -335,13 +335,15 @@ async function apiPost(body){
 async function checkStorageDiag(badgeEl){
   try{
     await apiGet({action:'ping'});
-    badgeEl.className = 'connbadge ok';
+    badgeEl.className = 'auth-conn is-ok';
     badgeEl.innerHTML = '<span class="dot"></span> Conectado';
-    badgeEl.title = 'Guardado conectado a tu hoja de Google Sheets.';
+    badgeEl.title = 'Tu progreso se guarda en la hoja de Google Sheets del curso.';
+    badgeEl.removeAttribute('role');
   }catch(err){
-    badgeEl.className = 'connbadge err';
-    badgeEl.innerHTML = '<span class="dot"></span> Sin conexión';
+    badgeEl.className = 'auth-conn is-err';
+    badgeEl.innerHTML = '<span class="dot"></span> Sin conexión con el servidor — tu progreso no se guardará';
     badgeEl.title = 'No se pudo conectar con la hoja de Google. Detalle: '+(err&&err.message?err.message:String(err));
+    badgeEl.setAttribute('role','alert');
     console.error('Backend diag error', err);
   }
 }
@@ -620,89 +622,144 @@ function sessionBar(){
 }
 
 /* ============================================================
-   VISTA: BIENVENIDA
+   MARCA — bone-mark reutilizable (login, topStrip, etc.)
+   ============================================================ */
+function brandMark(cls){
+  const m = el('div', 'brandmark' + (cls ? ' ' + cls : ''));
+  m.setAttribute('aria-hidden','true');
+  m.innerHTML =
+    '<svg viewBox="0 0 48 48" focusable="false"><g transform="rotate(45 24 24)">'+
+    '<rect x="12" y="19" width="24" height="10" rx="4"/>'+
+    '<circle cx="14" cy="17" r="6"/><circle cx="14" cy="31" r="6"/>'+
+    '<circle cx="34" cy="17" r="6"/><circle cx="34" cy="31" r="6"/>'+
+    '</g></svg>';
+  return m;
+}
+
+/* ============================================================
+   VISTA: BIENVENIDA / INGRESO
+   Estructura: marca → formulario (código + CTA) → acción de
+   monitor (discreta) → estado de conexión (discreto si todo OK).
+   La lógica de autenticación es idéntica a la anterior.
    ============================================================ */
 function viewWelcome(){
-  const wrap=el('div');
-  const card=el('div','card');
-  card.appendChild(el('div','logo-mark','🦴'));
-  card.appendChild(el('div','eyebrow','MORFOFISIOLOGÍA I · VACS'));
-  card.appendChild(el('h1','','Morfo-Trainer'));
-  card.appendChild(el('p','lede','Entrenamiento virtual de anatomía ósea. Ingresa con tu código estudiantil para empezar o continuar donde dejaste.'));
+  const wrap = el('div','auth');
+  const card = el('div','auth-card');
 
-  const conn=el('div','connbadge','<span class="dot"></span> Comprobando…');
-  card.appendChild(conn);
+  // --- marca ---
+  const brand = el('div','auth-brand');
+  brand.appendChild(brandMark());
+  brand.appendChild(el('p','auth-eyebrow','Morfofisiología I · VACS'));
+  brand.appendChild(el('h1','auth-wordmark','Morfo-Trainer'));
+  brand.appendChild(el('p','auth-tagline','Entrena la anatomía del sistema óseo con ejercicios interactivos.'));
+  card.appendChild(brand);
+
+  // --- formulario ---
+  const form = el('form','auth-form');
+  form.setAttribute('novalidate','');
+
+  const field = el('div','field');
+  const lbl = el('label','field-label','Código estudiantil');
+  lbl.htmlFor = 'authCode';
+  const codeInput = document.createElement('input');
+  codeInput.type = 'text';
+  codeInput.id = 'authCode';
+  codeInput.className = 'field-input';
+  codeInput.placeholder = 'Ej. 2025262056';
+  codeInput.value = state.student.code || '';
+  codeInput.autocomplete = 'off';
+  codeInput.autocapitalize = 'off';
+  codeInput.spellcheck = false;
+  codeInput.setAttribute('inputmode','numeric');
+  codeInput.setAttribute('aria-describedby','authHint');
+  const hint = el('div','field-hint');
+  hint.id = 'authHint';
+  hint.setAttribute('aria-live','polite');
+  hint.textContent = 'Te identifica en la lista del curso y autocompleta tu nombre.';
+  field.appendChild(lbl);
+  field.appendChild(codeInput);
+  field.appendChild(hint);
+  form.appendChild(field);
+
+  const startBtn = el('button','btn-cta','Continuar entrenamiento →');
+  startBtn.type = 'submit';
+  form.appendChild(startBtn);
+  card.appendChild(form);
+
+  // --- acción de monitor (discreta) ---
+  const dashBtn = el('button','auth-link','¿Eres monitor? Ver el panel del grupo →');
+  dashBtn.type = 'button';
+  dashBtn.onclick = ()=>{ goToDashboard(); };
+  card.appendChild(dashBtn);
+
+  wrap.appendChild(card);
+
+  // --- estado de conexión (whisper si todo OK, alerta si falla) ---
+  const conn = el('div','auth-conn is-checking','<span class="dot"></span> Comprobando conexión…');
+  wrap.appendChild(conn);
   checkStorageDiag(conn);
 
-  const codeLabel=el('label','','Código estudiantil');
-  const codeInput=document.createElement('input');
-  codeInput.type='text'; codeInput.placeholder='Ej. 2025262056'; codeInput.value=state.student.code;
-  card.appendChild(codeLabel); card.appendChild(codeInput);
+  /* ---------- lógica (sin cambios) ---------- */
+  let confirmedName = null;
+  let lastLookupCode = null;
 
-  const nameDisplay=el('div','');
-  nameDisplay.style.cssText='min-height:20px;margin:2px 0 16px;font-weight:800;font-size:14.5px;';
-  card.appendChild(nameDisplay);
-
-  const errMsg=el('p','footnote','');
-  errMsg.style.color='var(--bad)'; errMsg.style.display='none';
-  card.appendChild(errMsg);
-
-  const startBtn=el('button','btn btn-primary btn-block','Ingresar →');
-
-  let confirmedName=null;
-  let lastLookupCode=null;
+  function setHint(text, kind){
+    hint.textContent = text;
+    hint.className = 'field-hint' + (kind === 'ok' ? ' is-ok' : kind === 'error' ? ' is-error' : '');
+    field.classList.toggle('has-error', kind === 'error');
+  }
+  function setBusy(on, label){
+    startBtn.disabled = on || !codeInput.value.trim();
+    startBtn.classList.toggle('is-loading', !!on);
+    startBtn.setAttribute('aria-busy', on ? 'true' : 'false');
+    if(label) startBtn.textContent = label;
+    else if(!on) startBtn.textContent = 'Continuar entrenamiento →';
+  }
 
   async function doLookup(){
-    const code=codeInput.value.trim();
-    if(!code){ confirmedName=null; lastLookupCode=null; nameDisplay.textContent=''; return null; }
+    const code = codeInput.value.trim();
+    if(!code){ confirmedName=null; lastLookupCode=null; setHint('Te identifica en la lista del curso y autocompleta tu nombre.', ''); return null; }
     if(code===lastLookupCode) return confirmedName;
-    nameDisplay.textContent='Buscando tu nombre en la lista del curso…';
-    nameDisplay.style.color='var(--ink-dim)';
+    setHint('Buscando tu nombre en la lista del curso…', '');
     try{
-      const data=await apiGet({action:'lookupName', code});
+      const data = await apiGet({action:'lookupName', code});
       if(code!==codeInput.value.trim()) return confirmedName; // el código cambió mientras esperábamos
-      lastLookupCode=code;
+      lastLookupCode = code;
       if(data.name){
-        confirmedName=data.name;
-        nameDisplay.textContent='👋 '+data.name;
-        nameDisplay.style.color='var(--good-dark)';
+        confirmedName = data.name;
+        setHint('Hola, ' + data.name + '.', 'ok');
       } else {
-        confirmedName=null;
-        nameDisplay.textContent='⚠️ Ese código no está en la lista del curso. Verifica que esté bien escrito, o avísale a tu profesor.';
-        nameDisplay.style.color='var(--bad)';
+        confirmedName = null;
+        setHint('Ese código no está en la lista del curso. Verifica que esté bien escrito o avísale a tu profesor.', 'error');
       }
       return confirmedName;
     }catch(e){
-      lastLookupCode=null;
-      nameDisplay.textContent='⚠️ No se pudo verificar el código ahora mismo. Intenta de nuevo.';
-      nameDisplay.style.color='var(--bad)';
+      lastLookupCode = null;
+      setHint('No se pudo verificar el código ahora mismo. Intenta de nuevo.', 'error');
       return null;
     }
   }
 
   codeInput.addEventListener('blur', doLookup);
-  codeInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); startBtn.click(); } });
   codeInput.addEventListener('input', ()=>{
-    confirmedName=null; lastLookupCode=null; nameDisplay.textContent='';
+    confirmedName = null; lastLookupCode = null;
+    setHint('Te identifica en la lista del curso y autocompleta tu nombre.', '');
+    startBtn.disabled = !codeInput.value.trim();
   });
+  startBtn.disabled = !codeInput.value.trim();
 
-  startBtn.onclick=async ()=>{
-    const code=codeInput.value.trim();
-    if(!code){
-      errMsg.textContent='Ingresa tu código estudiantil para continuar.';
-      errMsg.style.display='block';
-      return;
-    }
-    errMsg.style.display='none';
-    startBtn.disabled=true; startBtn.textContent='Verificando…';
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const code = codeInput.value.trim();
+    if(!code){ setHint('Escribe tu código estudiantil para continuar.', 'error'); codeInput.focus(); return; }
+    setBusy(true, 'Verificando…');
     const name = await doLookup();
     if(!name){
-      startBtn.disabled=false; startBtn.textContent='Ingresar →';
-      errMsg.textContent='Ese código no está en la lista del curso. Verifica que esté bien escrito.';
-      errMsg.style.display='block';
+      setBusy(false);
+      if(!field.classList.contains('has-error')) setHint('Ese código no está en la lista del curso. Verifica que esté bien escrito.', 'error');
       return;
     }
-    startBtn.textContent='Entrando…';
+    startBtn.textContent = 'Entrando…';
     try{
       await loadDynamicContent();
       const existing = await loadProfile(code);
@@ -717,24 +774,16 @@ function viewWelcome(){
         state.timers = {};
         state.saved = false;
       }
-      state.currentCategory=null;
-      state.view='categories';
+      state.currentCategory = null;
+      state.view = 'categories';
       render();
       saveProfile();
-    }catch(e){
-      startBtn.disabled=false; startBtn.textContent='Ingresar →';
-      errMsg.textContent='No se pudo verificar tu perfil. Detalle: '+(e&&e.message?e.message:String(e));
-      errMsg.style.display='block';
+    }catch(err){
+      setBusy(false);
+      setHint('No se pudo cargar tu perfil. Detalle: ' + (err && err.message ? err.message : String(err)), 'error');
     }
-  };
-  card.appendChild(el('div','', '')).appendChild(startBtn);
+  });
 
-  const dashBtn=el('button','btn btn-ghost btn-block','Soy el monitor — ver panel del grupo');
-  dashBtn.style.marginTop='10px';
-  dashBtn.onclick=()=>{ goToDashboard(); };
-  card.appendChild(dashBtn);
-
-  wrap.appendChild(card);
   return wrap;
 }
 
