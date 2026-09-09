@@ -1873,10 +1873,14 @@ function removeDoubt(k){
 function appendDoubtControl(A, ctx){
   const k = doubtKey(ctx.mod.id, ctx.level.id, ctx.origQIdx);
   const marked = isDoubtMarked(k);
+  const d = marked ? getDoubts()[k] : null;
+  const solved = !!(d && d.resuelta);
 
-  const wrap = el('div','act-doubt' + (marked ? ' is-on' : ''));
+  const wrap = el('div','act-doubt' + (marked ? ' is-on' : '') + (solved ? ' is-resolved' : ''));
   const btn = el('button','act-doubt-toggle',
-    marked ? '✓ Duda marcada — la verá tu monitor' : '🚩 No entiendo esta pregunta');
+    solved ? '✓ Tu monitor marcó esta duda como resuelta'
+    : marked ? '✓ Duda marcada — la verá tu monitor'
+    : '🚩 No entiendo esta pregunta');
   btn.type = 'button';
   btn.setAttribute('aria-pressed', marked ? 'true' : 'false');
   btn.onclick = ()=>{
@@ -1898,7 +1902,6 @@ function appendDoubtControl(A, ctx){
   wrap.appendChild(btn);
 
   if(marked){
-    const d = getDoubts()[k];
     const ta = document.createElement('textarea');
     ta.className = 'act-doubt-note';
     ta.rows = 2;
@@ -1925,6 +1928,26 @@ function collectDoubts(profiles){
   });
   out.sort((a,b)=> String(b.rec.t || '').localeCompare(String(a.rec.t || '')));
   return out;
+}
+
+// El monitor marca/reabre una duda. Actualización optimista + POST al backend.
+async function setDoubtResolved(code, key, resolved, rec){
+  const prevR = rec.resuelta, prevAt = rec.resueltaAt;
+  if(resolved){ rec.resuelta = true; rec.resueltaAt = new Date().toISOString(); }
+  else { delete rec.resuelta; delete rec.resueltaAt; }
+  state._doubtError = null;
+  render();
+  try{
+    await apiPost({ action:'resolveDoubt', pass: state.monitorPass, code: code, key: key, resolved: !!resolved });
+  }catch(e){
+    if(prevR){ rec.resuelta = prevR; rec.resueltaAt = prevAt; }
+    else { delete rec.resuelta; delete rec.resueltaAt; }
+    state._doubtError = 'No se pudo actualizar la duda. ' +
+      (String(e && e.message || e).indexOf('reconocida') !== -1
+        ? 'Falta actualizar el backend (acción resolveDoubt).'
+        : 'Detalle: ' + (e && e.message ? e.message : String(e)));
+    render();
+  }
 }
 
 /* ============================================================
@@ -2405,6 +2428,7 @@ async function loadDashboard(){
     state.dashboardRows = mapResultsRows(resData.results);
     state.dashboardProfiles = mapProfilesRows(profData.profiles);
     state.dashboardError = null;
+    state._doubtError = null;
   }catch(err){
     state.dashboardRows = [];
     state.dashboardProfiles = [];
@@ -2459,28 +2483,54 @@ function viewDashboard(){
 
   // ---- Dudas marcadas por los estudiantes ----
   const doubts = collectDoubts(profiles);
-  card.appendChild(el('div','section-title','Dudas marcadas' + (doubts.length ? ' (' + doubts.length + ')' : '')));
+  const pending = doubts.filter(function(d){ return !d.rec.resuelta; });
+  const resolved = doubts.filter(function(d){ return d.rec.resuelta; });
+  card.appendChild(el('div','section-title','Dudas marcadas' +
+    (pending.length ? ' (' + pending.length + ' pendiente' + (pending.length === 1 ? '' : 's') + ')' : '')));
+
+  if(state._doubtError){
+    const eb = el('p','footnote', esc(state._doubtError));
+    eb.style.color = 'var(--bad)';
+    card.appendChild(eb);
+  }
+
+  function doubtItem(entry, isResolved){
+    const rec = entry.rec;
+    const item = el('div','doubt-item' + (isResolved ? ' is-resolved' : ''));
+    const meta = el('div','doubt-meta');
+    meta.appendChild(el('span','doubt-tag', esc(rec.modT || rec.mod || 'Módulo')));
+    if(rec.lvlT) meta.appendChild(el('span','', esc(rec.lvlT)));
+    if(rec.t){
+      meta.appendChild(el('span','doubt-when',
+        new Date(rec.t).toLocaleString('es-CO', { dateStyle:'short', timeStyle:'short' })));
+    }
+    item.appendChild(meta);
+    item.appendChild(el('p','doubt-q', '“' + esc(rec.q) + '”'));
+    if(rec.nota) item.appendChild(el('p','doubt-note', esc(rec.nota)));
+    item.appendChild(el('div','doubt-who', esc(entry.student) + ' · ' + esc(entry.code)));
+    const btn = el('button','doubt-resolve', isResolved ? '↺ Reabrir' : '✓ Marcar como resuelta');
+    btn.type = 'button';
+    btn.onclick = function(){ setDoubtResolved(entry.code, entry.key, !isResolved, rec); };
+    item.appendChild(btn);
+    return item;
+  }
+
   if(!doubts.length){
     card.appendChild(el('p','','Ningún estudiante ha marcado preguntas con dudas todavía. Aparecen aquí cuando alguien toca "No entiendo esta pregunta" durante una actividad.'));
   } else {
-    const list = el('div','doubt-list');
-    doubts.forEach(function(entry){
-      const rec = entry.rec;
-      const item = el('div','doubt-item');
-      const meta = el('div','doubt-meta');
-      meta.appendChild(el('span','doubt-tag', esc(rec.modT || rec.mod || 'Módulo')));
-      if(rec.lvlT) meta.appendChild(el('span','', esc(rec.lvlT)));
-      if(rec.t){
-        const when = new Date(rec.t).toLocaleString('es-CO', { dateStyle:'short', timeStyle:'short' });
-        meta.appendChild(el('span','doubt-when', when));
-      }
-      item.appendChild(meta);
-      item.appendChild(el('p','doubt-q', '“' + esc(rec.q) + '”'));
-      if(rec.nota) item.appendChild(el('p','doubt-note', esc(rec.nota)));
-      item.appendChild(el('div','doubt-who', esc(entry.student) + ' · ' + esc(entry.code)));
-      list.appendChild(item);
-    });
-    card.appendChild(list);
+    if(pending.length){
+      const list = el('div','doubt-list');
+      pending.forEach(function(e){ list.appendChild(doubtItem(e, false)); });
+      card.appendChild(list);
+    } else {
+      card.appendChild(el('p','','No hay dudas pendientes. 🎉'));
+    }
+    if(resolved.length){
+      card.appendChild(el('div','doubt-resolved-label', 'Resueltas (' + resolved.length + ')'));
+      const rlist = el('div','doubt-list');
+      resolved.forEach(function(e){ rlist.appendChild(doubtItem(e, true)); });
+      card.appendChild(rlist);
+    }
   }
 
   // ---- Botones por actividad (con puntaje + tiempo por estudiante al entrar) ----

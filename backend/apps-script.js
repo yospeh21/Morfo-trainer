@@ -1,5 +1,5 @@
 /**
- * MORFO-TRAINER — backend en Google Apps Script (v8, + preguntas de completar)
+ * MORFO-TRAINER — backend en Google Apps Script (v9, + resolver dudas del monitor)
  */
 
 var PERFILES_HEADERS = ['code','name','progress','timers','saved','updated_at'];
@@ -88,6 +88,37 @@ function doPost(e) {
         rows: JSON.stringify(body.rows || []),
         boss: JSON.stringify(body.boss || null)
       });
+      return jsonOut({ ok: true });
+    }
+    if (body.action === 'resolveDoubt') {
+      if ((body.pass || '') !== MONITOR_PASSWORD) {
+        return jsonOut({ ok: false, error: 'Clave de monitor incorrecta.' });
+      }
+      var psheet = getOrCreateSheet(ss, 'Perfiles', PERFILES_HEADERS);
+      var pdata = psheet.getDataRange().getValues();
+      var phead = pdata[0];
+      var cIdx = phead.indexOf('code');
+      var gIdx = phead.indexOf('progress');
+      var rowNum = -1, progress = {};
+      for (var i = 1; i < pdata.length; i++) {
+        if (String(pdata[i][cIdx]) === String(body.code || '')) {
+          rowNum = i + 1;
+          try { progress = JSON.parse(pdata[i][gIdx] || '{}'); } catch (e) { progress = {}; }
+          break;
+        }
+      }
+      if (rowNum === -1) return jsonOut({ ok: false, error: 'No se encontró el perfil.' });
+      var dudas = progress['@dudas'];
+      if (dudas && dudas[body.key]) {
+        if (body.resolved) {
+          dudas[body.key].resuelta = true;
+          dudas[body.key].resueltaAt = new Date().toISOString();
+        } else {
+          delete dudas[body.key].resuelta;
+          delete dudas[body.key].resueltaAt;
+        }
+        psheet.getRange(rowNum, gIdx + 1).setValue(JSON.stringify(progress));
+      }
       return jsonOut({ ok: true });
     }
     return jsonOut({ ok: false, error: 'acción POST no reconocida: ' + body.action });
