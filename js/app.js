@@ -158,6 +158,20 @@ const CATEGORIES = {
     title:'Estructuras y funciones del sistema óseo',
     subtitle:'Divisiones del esqueleto, clasificación ósea, accidentes óseos y más',
     moduleIds:['A','B','C','D','E','F','G','H']
+  },
+  muscular: {
+    id:'muscular',
+    emoji:'💪',
+    title:'Estructuras y funciones del sistema muscular',
+    subtitle:'Tipos de músculo, componentes del músculo esquelético, grupos musculares y acciones',
+    moduleIds:[]
+  },
+  nervioso: {
+    id:'nervioso',
+    emoji:'🧠',
+    title:'Estructuras y funciones del sistema nervioso',
+    subtitle:'Organización del SNC y del SNP, neurona y neuroglía, vías y reflejos',
+    moduleIds:[]
   }
 };
 
@@ -585,19 +599,61 @@ function errorCard(err){
   return wrap;
 }
 
-function topStrip(){
-  const wrap=el('div','topstrip');
-  const brand=el('div','brand','<span class="dot"></span> Morfo-Trainer');
-  const readout=el('div','readout');
-  const flat = allLevelsFlat();
-  const totalLevels = flat.length;
-  const doneCount = flat.filter(x=> !!state.progress[levelKey(x.mod, x.l.id)]).length;
-  readout.innerHTML = '<span>'+ (state.student.name? esc(state.student.name):'Invitado') +'</span><span>NIVELES <span class="v">'+doneCount+'/'+totalLevels+'</span></span>';
-  wrap.appendChild(brand); wrap.appendChild(readout);
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// El nombre en la hoja del curso puede venir como "Nombre - MONITOR".
+function parseStudent(){
+  const raw = String(state.student.name || '').trim();
+  const m = raw.match(/^(.*?)\s*[-–·|]\s*(monitor)\s*$/i);
+  if(m) return { name: m[1].trim() || raw, role: 'Monitor' };
+  return { name: raw, role: null };
+}
+
+function badge(text, variant){
+  return el('span', 'badge' + (variant ? ' badge--'+variant : ''), esc(text));
+}
+
+// Barra de progreso reutilizable. opts: { unit, avg, hideMeta }
+function progressBar(done, total, opts){
+  opts = opts || {};
+  const frac = total ? Math.max(0, Math.min(1, done/total)) : 0;
+  const isDone = total > 0 && done >= total;
+  const wrap = el('div','progress');
+  wrap.innerHTML =
+    '<div class="track"><i class="'+(isDone?'is-done':'')+'" style="width:'+Math.round(frac*100)+'%"></i></div>' +
+    (opts.hideMeta ? '' :
+      '<div class="meta"><b>'+done+'</b> de <b>'+total+'</b> '+esc(opts.unit || 'niveles')+
+      (opts.avg!=null && done>0 ? ' · promedio '+opts.avg+'%' : '')+'</div>');
   return wrap;
 }
 
-function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function topStrip(){
+  const h = el('div','app-header');
+
+  const brand = el('div','app-brand');
+  brand.appendChild(brandMark('sm'));
+  brand.appendChild(el('span','name','Morfo-Trainer'));
+  h.appendChild(brand);
+
+  if(state.student.code){
+    const meta = el('div','app-headmeta');
+    const su = parseStudent();
+    const who = el('div','who');
+    who.appendChild(el('span','nm', esc(su.name || 'Invitado')));
+    if(su.role) who.appendChild(badge(su.role, 'role'));
+    meta.appendChild(who);
+
+    const flat = allLevelsFlat();
+    const total = flat.length;
+    const doneC = flat.filter(x=> !!state.progress[levelKey(x.mod, x.l.id)]).length;
+    const mp = el('div','app-mini-progress');
+    mp.innerHTML = '<span class="track"><i style="width:'+(total? Math.round(doneC/total*100):0)+'%"></i></span>'+
+      '<span>'+doneC+'/'+total+' niveles</span>';
+    meta.appendChild(mp);
+    h.appendChild(meta);
+  }
+  return h;
+}
 
 function backButton(label, cb){
   const b=el('button','backlink backlink-invert','← '+label);
@@ -605,21 +661,25 @@ function backButton(label, cb){
   return b;
 }
 
+// Resumen de usuario compacto (nombre · rol · cerrar sesión).
 function sessionBar(){
-  const bar=el('div','sessionbar');
-  const initial = (state.student.name||'?').trim().charAt(0).toUpperCase() || '?';
+  const su = parseStudent();
+  const bar = el('div','user-summary');
+  const initial = (su.name || '?').trim().charAt(0).toUpperCase() || '?';
+  bar.appendChild(el('div','avatar', esc(initial)));
 
-  const left=el('div','sleft');
-  left.appendChild(el('div','savatar', esc(initial)));
-  const info=el('div','sinfo');
-  info.innerHTML = '<div class="sname">'+esc(state.student.name)+'</div><div class="scode">Código '+esc(state.student.code)+'</div>';
-  left.appendChild(info);
-  bar.appendChild(left);
+  const info = el('div','info');
+  const nm = el('div','nm');
+  nm.appendChild(document.createTextNode(su.name || 'Invitado'));
+  if(su.role) nm.appendChild(badge(su.role, 'role'));
+  info.appendChild(nm);
+  info.appendChild(el('div','sub', 'Código ' + esc(state.student.code)));
+  bar.appendChild(info);
 
-  const logoutBtn=el('button','btn slogout','Cerrar sesión');
-  logoutBtn.onclick=()=>{ logout(); };
-  bar.appendChild(logoutBtn);
-
+  const out = el('button','logout','Cerrar sesión');
+  out.type = 'button';
+  out.onclick = ()=>{ logout(); };
+  bar.appendChild(out);
   return bar;
 }
 
@@ -689,12 +749,12 @@ function viewWelcome(){
   dashBtn.onclick = ()=>{ goToDashboard(); };
   card.appendChild(dashBtn);
 
-  wrap.appendChild(card);
-
-  // --- estado de conexión (whisper si todo OK, alerta si falla) ---
+  // --- estado de conexión: dentro de la tarjeta, verde si todo OK ---
   const conn = el('div','auth-conn is-checking','<span class="dot"></span> Comprobando conexión…');
-  wrap.appendChild(conn);
+  card.appendChild(conn);
   checkStorageDiag(conn);
+
+  wrap.appendChild(card);
 
   /* ---------- lógica (sin cambios) ---------- */
   let confirmedName = null;
@@ -785,41 +845,69 @@ function viewWelcome(){
 }
 
 /* ============================================================
-   VISTA: MENÚ DE MÓDULOS
+   VISTA: SELECCIÓN DE TEMA (home)
    ============================================================ */
-function viewCategories(){
-  const wrap=el('div');
-  const outer=el('div','card');
-
-  outer.appendChild(el('h1','','¿Qué quieres entrenar?'));
-  outer.appendChild(el('p','','Elige un tema del curso para ver sus actividades.'));
-  outer.appendChild(sessionBar());
-
-  const grid=el('div','modgrid');
-  Object.values(CATEGORIES).forEach(cat=>{
-    let total=0, done=0, sumPct=0;
-    cat.moduleIds.forEach(mid=>{
-      const mod=MODULES[mid]; if(!mod || isModuleLocked(mid)) return;
-      mod.levels.forEach(l=>{
-        total++;
-        const p=state.progress[levelKey(mod.id,l.id)];
-        if(p){ done++; sumPct+=pct(p.correct,p.total); }
-      });
+function categoryStats(cat){
+  let total=0, done=0, sumPct=0, hasContent=false;
+  cat.moduleIds.forEach(mid=>{
+    const mod=MODULES[mid];
+    if(!mod || isModuleLocked(mid)) return;
+    hasContent = true;
+    mod.levels.forEach(l=>{
+      total++;
+      const p=state.progress[levelKey(mod.id,l.id)];
+      if(p){ done++; sumPct+=pct(p.correct,p.total); }
     });
-    const avg = done? Math.round(sumPct/done):0;
-
-    const catBtn=el('button','modcard');
-    catBtn.innerHTML =
-      '<div class="mtitle">'+cat.emoji+' '+esc(cat.title)+'</div>'+
-      '<div class="msub">'+esc(cat.subtitle)+'</div>'+
-      '<div class="progressbar"><i style="width:'+(total? done/total*100:0)+'%"></i></div>'+
-      '<div class="pct">'+done+' / '+total+' niveles completados'+(done? ' · promedio '+avg+'%':'')+'</div>';
-    catBtn.onclick=()=>{ state.currentCategory=cat.id; state.view='menu'; render(); };
-    grid.appendChild(catBtn);
   });
-  outer.appendChild(grid);
+  return {
+    total, done,
+    avg: done ? Math.round(sumPct/done) : 0,
+    hasContent,
+    locked: !hasContent || total===0,
+    completed: total>0 && done>=total,
+    inProgress: done>0 && done<total
+  };
+}
 
-  wrap.appendChild(outer);
+function courseCard(cat){
+  const s = categoryStats(cat);
+  const kind = s.locked ? 'locked' : s.completed ? 'done' : s.inProgress ? 'progress' : 'default';
+  const card = el(s.locked ? 'div' : 'button', 'course-card is-'+kind);
+  if(!s.locked){ card.type = 'button'; }
+
+  const head = el('div','course-head');
+  head.appendChild(el('div','course-icon', cat.emoji || '📚'));
+  if(s.locked) head.appendChild(badge('Próximamente','locked'));
+  else if(s.completed) head.appendChild(badge('Completado','done'));
+  else if(s.inProgress) head.appendChild(badge('En curso','progress'));
+  card.appendChild(head);
+
+  card.appendChild(el('div','course-title', esc(cat.title)));
+  card.appendChild(el('p','course-desc', esc(cat.subtitle)));
+
+  if(s.locked){
+    card.appendChild(el('p','course-desc','Este tema todavía no tiene actividades disponibles.'));
+  } else {
+    card.appendChild(progressBar(s.done, s.total, { avg: s.avg }));
+    card.onclick = ()=>{ state.currentCategory = cat.id; state.view = 'menu'; render(); };
+  }
+  return card;
+}
+
+function viewCategories(){
+  const wrap = el('div','home');
+
+  const head = el('div','home-head');
+  head.appendChild(el('h1','','¿Qué quieres entrenar?'));
+  head.appendChild(el('p','','Elige un tema para empezar tu entrenamiento.'));
+  wrap.appendChild(head);
+
+  wrap.appendChild(sessionBar());
+
+  const grid = el('div','course-grid');
+  Object.values(CATEGORIES).forEach(cat=> grid.appendChild(courseCard(cat)));
+  wrap.appendChild(grid);
+
   return wrap;
 }
 
