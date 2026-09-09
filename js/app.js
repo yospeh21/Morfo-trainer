@@ -1590,6 +1590,8 @@ function viewMC(){
   });
   A.content.appendChild(optsWrap);
 
+  appendDoubtControl(A, { mod:mod, level:level, origQIdx:qi, qText:q.q });
+
   const last = rt.qIdx+1 >= total;
   const mainBtn = el('button','act-btn',
     rt.answered ? (last ? 'Finalizar actividad →' : 'Continuar →') : 'Comprobar respuesta →');
@@ -1730,6 +1732,8 @@ function viewFill(){
   }
   card.appendChild(prompt);
 
+  appendDoubtControl(A, { mod:mod, level:level, origQIdx:rt.qOrder[rt.qIdx], qText:q.q });
+
   const last = rt.qIdx+1 >= total;
   const mainBtn = el('button','act-btn',
     rt.answered ? (last ? 'Finalizar actividad →' : 'Continuar →') : 'Comprobar respuesta →');
@@ -1831,6 +1835,96 @@ function saveResume(modId, levelId, type, rt){
 function clearResume(modId, levelId){
   delete state.progress[resumeKey(modId, levelId)];
   saveProfile();
+}
+
+/* ============================================================
+   DUDAS DEL ESTUDIANTE (preguntas marcadas para el monitor)
+   Se guardan dentro de state.progress con la clave "@dudas"
+   (un objeto por pregunta), así viajan con el perfil sin tocar
+   el backend. El monitor las lee desde el perfil de cada quien.
+   ============================================================ */
+function doubtKey(modId, levelId, origQIdx){ return modId + '|' + levelId + '|' + origQIdx; }
+
+function getDoubts(){
+  const d = state.progress['@dudas'];
+  return (d && typeof d === 'object') ? d : null;
+}
+function isDoubtMarked(k){ const d = getDoubts(); return !!(d && d[k]); }
+function addDoubt(k, rec){
+  if(!state.progress['@dudas'] || typeof state.progress['@dudas'] !== 'object') state.progress['@dudas'] = {};
+  state.progress['@dudas'][k] = rec;
+  saveProfile();
+}
+function updateDoubtNote(k, nota){
+  const d = getDoubts();
+  if(d && d[k] && d[k].nota !== nota){ d[k].nota = nota; saveProfile(); }
+}
+function removeDoubt(k){
+  const d = getDoubts();
+  if(d && d[k]){
+    delete d[k];
+    if(!Object.keys(d).length) delete state.progress['@dudas'];
+    saveProfile();
+  }
+}
+
+// Control "no entiendo esta pregunta" para actividades por preguntas.
+// ctx: { mod, level, origQIdx, qText }
+function appendDoubtControl(A, ctx){
+  const k = doubtKey(ctx.mod.id, ctx.level.id, ctx.origQIdx);
+  const marked = isDoubtMarked(k);
+
+  const wrap = el('div','act-doubt' + (marked ? ' is-on' : ''));
+  const btn = el('button','act-doubt-toggle',
+    marked ? '✓ Duda marcada — la verá tu monitor' : '🚩 No entiendo esta pregunta');
+  btn.type = 'button';
+  btn.setAttribute('aria-pressed', marked ? 'true' : 'false');
+  btn.onclick = ()=>{
+    if(isDoubtMarked(k)){
+      removeDoubt(k);
+    } else {
+      addDoubt(k, {
+        q: String(ctx.qText || '').slice(0, 500),
+        nota: '',
+        mod: ctx.mod.id,
+        modT: ctx.mod.title || '',
+        lvlT: ctx.level.title || '',
+        tipo: ctx.level.type || '',
+        t: new Date().toISOString()
+      });
+    }
+    render();
+  };
+  wrap.appendChild(btn);
+
+  if(marked){
+    const d = getDoubts()[k];
+    const ta = document.createElement('textarea');
+    ta.className = 'act-doubt-note';
+    ta.rows = 2;
+    ta.maxLength = 600;
+    ta.placeholder = '¿Qué parte no te queda clara? (opcional)';
+    ta.value = (d && d.nota) || '';
+    ta.addEventListener('blur', ()=>{ updateDoubtNote(k, ta.value.trim()); });
+    wrap.appendChild(ta);
+  }
+  A.content.appendChild(wrap);
+}
+
+// Reúne todas las dudas marcadas de todos los perfiles (panel del monitor).
+function collectDoubts(profiles){
+  const out = [];
+  (profiles || []).forEach(p=>{
+    const d = p.progress && p.progress['@dudas'];
+    if(d && typeof d === 'object'){
+      Object.keys(d).forEach(key=>{
+        const rec = d[key];
+        if(rec && rec.q){ out.push({ student: p.name || '—', code: p.code || '—', key: key, rec: rec }); }
+      });
+    }
+  });
+  out.sort((a,b)=> String(b.rec.t || '').localeCompare(String(a.rec.t || '')));
+  return out;
 }
 
 /* ============================================================
@@ -2361,6 +2455,32 @@ function viewDashboard(){
     }
     wrap.appendChild(card);
     return wrap;
+  }
+
+  // ---- Dudas marcadas por los estudiantes ----
+  const doubts = collectDoubts(profiles);
+  card.appendChild(el('div','section-title','Dudas marcadas' + (doubts.length ? ' (' + doubts.length + ')' : '')));
+  if(!doubts.length){
+    card.appendChild(el('p','','Ningún estudiante ha marcado preguntas con dudas todavía. Aparecen aquí cuando alguien toca "No entiendo esta pregunta" durante una actividad.'));
+  } else {
+    const list = el('div','doubt-list');
+    doubts.forEach(function(entry){
+      const rec = entry.rec;
+      const item = el('div','doubt-item');
+      const meta = el('div','doubt-meta');
+      meta.appendChild(el('span','doubt-tag', esc(rec.modT || rec.mod || 'Módulo')));
+      if(rec.lvlT) meta.appendChild(el('span','', esc(rec.lvlT)));
+      if(rec.t){
+        const when = new Date(rec.t).toLocaleString('es-CO', { dateStyle:'short', timeStyle:'short' });
+        meta.appendChild(el('span','doubt-when', when));
+      }
+      item.appendChild(meta);
+      item.appendChild(el('p','doubt-q', '“' + esc(rec.q) + '”'));
+      if(rec.nota) item.appendChild(el('p','doubt-note', esc(rec.nota)));
+      item.appendChild(el('div','doubt-who', esc(entry.student) + ' · ' + esc(entry.code)));
+      list.appendChild(item);
+    });
+    card.appendChild(list);
   }
 
   // ---- Botones por actividad (con puntaje + tiempo por estudiante al entrar) ----
