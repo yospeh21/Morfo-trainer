@@ -503,6 +503,8 @@ function logout(){
   state.timers={};
   state.saved=false;
   state.currentCategory=null;
+  state.currentModule=null;
+  state._levelRuntime=null;
   state._confirmingReset=false;
   state.view='welcome';
   render();
@@ -1415,8 +1417,9 @@ function viewMC(){
   const idx=state.currentLevelIdx;
 
   if(!state._levelRuntime){
-    // Cada intento baraja el orden de las preguntas y el de las opciones de cada una.
-    state._levelRuntime = {
+    // Reanuda el avance parcial si lo hay; si no, nuevo intento
+    // (baraja el orden de las preguntas y el de las opciones de cada una).
+    state._levelRuntime = loadResume(mod.id, level.id, 'mc', level) || {
       qIdx:0, correct:0, answered:false, selected:null, pending:null,
       qOrder: shuffle(level.questions.map((_,i)=>i)),
       optOrder: level.questions.map(qq=> shuffle(qq.opts.map((_,i)=>i)))
@@ -1471,10 +1474,15 @@ function viewMC(){
   } else {
     mainBtn.onclick = ()=>{
       if(last){ finishLevel(mod.id, level.id, rt.correct, total); }
-      else { rt.qIdx++; rt.answered=false; rt.selected=null; rt.pending=null; render(); }
+      else {
+        rt.qIdx++; rt.answered=false; rt.selected=null; rt.pending=null;
+        saveResume(mod.id, level.id, 'mc', rt);
+        render();
+      }
     };
   }
   A.actions.appendChild(mainBtn);
+  appendResetControl(A, mod, level, rt);
 
   if(rt.answered){
     const ok = rt.selected===q.correct;
@@ -1482,6 +1490,27 @@ function viewMC(){
   }
 
   return A.root;
+}
+
+// Botón discreto "reiniciar" al final de una actividad por preguntas;
+// aparece sólo cuando hay avance que reiniciar. Doble toque para confirmar.
+function appendResetControl(A, mod, level, rt){
+  if(rt.qIdx <= 0 && !rt.answered) return;
+  const btn = el('button','act-reset','↻ Reiniciar y empezar de nuevo');
+  btn.type = 'button';
+  btn.onclick = ()=>{
+    if(btn._armed){
+      clearResume(mod.id, level.id);
+      state._levelRuntime = null;
+      render();
+      return;
+    }
+    btn._armed = true;
+    btn.textContent = 'Toca otra vez para reiniciar el avance';
+    btn.classList.add('is-armed');
+    setTimeout(()=>{ btn._armed = false; btn.textContent = '↻ Reiniciar y empezar de nuevo'; btn.classList.remove('is-armed'); }, 3500);
+  };
+  A.actions.appendChild(btn);
 }
 
 /* ============================================================
@@ -1510,7 +1539,7 @@ function viewFill(){
   const idx=state.currentLevelIdx;
 
   if(!state._levelRuntime){
-    state._levelRuntime = {
+    state._levelRuntime = loadResume(mod.id, level.id, 'completar', level) || {
       qIdx:0, correct:0, answered:false, wasCorrect:false, typed:[],
       qOrder: shuffle(level.questions.map((_,i)=>i))
     };
@@ -1600,10 +1629,15 @@ function viewFill(){
     A.feedback({ ok:rt.wasCorrect, body: body || (rt.wasCorrect ? 'Respuesta correcta.' : '') });
     mainBtn.onclick=()=>{
       if(last){ finishLevel(mod.id, level.id, rt.correct, total); }
-      else { rt.qIdx++; rt.answered=false; rt.wasCorrect=false; rt.typed=[]; render(); }
+      else {
+        rt.qIdx++; rt.answered=false; rt.wasCorrect=false; rt.typed=[];
+        saveResume(mod.id, level.id, 'completar', rt);
+        render();
+      }
     };
   }
   A.actions.appendChild(mainBtn);
+  appendResetControl(A, mod, level, rt);
 
   return A.root;
 }
@@ -1611,6 +1645,7 @@ function viewFill(){
 function finishLevel(modId, levelId, correct, total){
   const key=levelKey(modId, levelId);
   state.progress[key] = { correct, total };
+  delete state.progress[resumeKey(modId, levelId)]; // ya no hay avance parcial que reanudar
   state._levelRuntime=null;
   state.view='levelDone';
   render();
@@ -1619,6 +1654,52 @@ function finishLevel(modId, levelId, correct, total){
   if(allDone){ completeModuleTimer(modId); }
   saveProfile();
   autoSaveResult();
+}
+
+/* ============================================================
+   REANUDAR AVANCE PARCIAL (dentro de un nivel de preguntas)
+   El snapshot vive dentro de state.progress con clave "@r:<mod>-<lvl>",
+   así se guarda y se restaura junto con el perfil sin tocar el backend.
+   Solo aplica a actividades por preguntas (mc, completar).
+   ============================================================ */
+function resumeKey(modId, levelId){ return '@r:' + modId + '-' + levelId; }
+
+function loadResume(modId, levelId, type, level){
+  if(state.progress[levelKey(modId, levelId)]) return null;     // ya completado
+  const s = state.progress[resumeKey(modId, levelId)];
+  if(!s || s.type !== type) return null;
+  const n = level.questions.length;
+  if(!Array.isArray(s.qOrder) || s.qOrder.length !== n) return null; // el contenido cambió
+  const qIdx = Math.min(Math.max(0, s.qIdx|0), n - 1);
+  if(qIdx <= 0) return null;
+  if(type === 'mc'){
+    if(!Array.isArray(s.optOrder) || s.optOrder.length !== n) return null;
+    return { qIdx:qIdx, correct:s.correct|0, answered:false, selected:null, pending:null,
+             qOrder:s.qOrder, optOrder:s.optOrder };
+  }
+  if(type === 'completar'){
+    return { qIdx:qIdx, correct:s.correct|0, answered:false, wasCorrect:false, typed:[],
+             qOrder:s.qOrder };
+  }
+  return null;
+}
+
+function saveResume(modId, levelId, type, rt){
+  const k = resumeKey(modId, levelId);
+  const n = rt.qOrder ? rt.qOrder.length : 0;
+  if(rt.qIdx <= 0 || rt.qIdx >= n){
+    delete state.progress[k];
+  } else {
+    const s = { type:type, qIdx:rt.qIdx, correct:rt.correct|0, qOrder:rt.qOrder };
+    if(type === 'mc') s.optOrder = rt.optOrder;
+    state.progress[k] = s;
+  }
+  saveProfile();
+}
+
+function clearResume(modId, levelId){
+  delete state.progress[resumeKey(modId, levelId)];
+  saveProfile();
 }
 
 /* ============================================================
