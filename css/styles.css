@@ -494,16 +494,16 @@
     background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-3);
     box-shadow:var(--elev-1);
   }
-  .app-bar{display:flex;align-items:center;justify-content:space-between;gap:var(--s-3);}
-  .app-brand{display:flex;align-items:center;gap:9px;min-width:0;}
+  .app-bar{display:flex;align-items:center;justify-content:space-between;gap:var(--s-2) var(--s-3);flex-wrap:wrap;}
+  .app-brand{display:flex;align-items:center;gap:9px;min-width:0;flex-shrink:0;}
   .app-brand .brandmark{width:30px;height:30px;animation:none;flex-shrink:0;}
   .app-brand .name{
     font-family:var(--font-display);font-weight:800;font-size:15px;color:var(--text);
     letter-spacing:-0.01em;white-space:nowrap;
   }
-  .app-user{display:flex;align-items:center;gap:var(--s-3);min-width:0;}
+  .app-user{display:flex;align-items:center;gap:var(--s-3);min-width:0;margin-left:auto;}
   .app-who{
-    display:flex;align-items:center;gap:7px;min-width:0;
+    display:flex;align-items:center;gap:7px;min-width:0;overflow:hidden;
     font-family:var(--font-body);font-weight:800;font-size:12.5px;color:var(--text);
   }
   .app-who .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:34vw;}
@@ -534,11 +534,17 @@
     margin-left:auto;flex-shrink:0;padding-left:var(--s-3);
     font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--text-soft);white-space:nowrap;
   }
+  @media(max-width:680px){
+    .app-brand .name{display:none;}
+    .app-who .code{display:none;}
+    .app-nav-progress{display:none;}
+  }
   @media(max-width:520px){
     .app-header{padding:9px 12px;}
-    .app-who .code{display:none;}
-    .app-who .nm{max-width:40vw;}
-    .app-nav-progress{display:none;}
+    .app-bar{flex-wrap:nowrap;gap:var(--s-2);}
+    .app-who{gap:5px;}
+    .app-who .nm{max-width:32vw;}
+    .app-logout{padding:5px 9px;font-size:11.5px;}
   }
 
   /* ---- badge ---- */
