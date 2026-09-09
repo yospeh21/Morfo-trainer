@@ -2165,7 +2165,6 @@ function viewDashboardActivity(){
 /* ============================================================
    INIT
    ============================================================ */
-if(typeof window!=='undefined') window.__dbg={state:state,render:render,MODULES:MODULES,goToLevel:goToLevel,loadDynamicContent:loadDynamicContent}; // TEMP preview hook — quitar
 render();
 
 })();
