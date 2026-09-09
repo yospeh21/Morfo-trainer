@@ -708,7 +708,7 @@ function viewWelcome(){
   brand.appendChild(brandMark());
   brand.appendChild(el('p','auth-eyebrow','Morfofisiología I · VACS'));
   brand.appendChild(el('h1','auth-wordmark','Morfo-Trainer'));
-  brand.appendChild(el('p','auth-tagline','Entrena la anatomía del sistema óseo con ejercicios interactivos.'));
+  brand.appendChild(el('p','auth-tagline','Entrena la anatomía de los sistemas óseo, muscular y nervioso con ejercicios interactivos.'));
   card.appendChild(brand);
 
   // --- formulario ---

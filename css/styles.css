@@ -507,19 +507,20 @@
     font-family:var(--font-display);font-weight:800;font-size:15px;color:var(--text);
     letter-spacing:-0.01em;white-space:nowrap;
   }
-  .app-headmeta{display:flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:0;}
+  .app-headmeta{display:flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:0;flex-shrink:1;}
   .app-headmeta .who{
     display:flex;align-items:center;gap:6px;max-width:100%;
     font-family:var(--font-body);font-weight:700;font-size:12px;color:var(--text-soft);
   }
   .app-headmeta .who .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:38vw;}
-  .app-mini-progress{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;color:var(--text-soft);}
-  .app-mini-progress .track{width:52px;height:5px;border-radius:var(--r-pill);background:var(--surface-sunken);overflow:hidden;}
+  .app-mini-progress{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;color:var(--text-soft);white-space:nowrap;flex-shrink:0;}
+  .app-mini-progress .track{width:52px;height:5px;border-radius:var(--r-pill);background:var(--surface-sunken);overflow:hidden;flex-shrink:0;}
   .app-mini-progress .track > i{display:block;height:100%;background:var(--accent-brand);border-radius:var(--r-pill);}
   @media(max-width:520px){
     .app-header{padding:8px 12px;}
     .app-headmeta{flex-direction:row;align-items:center;gap:var(--s-3);}
     .app-headmeta .who .nm{max-width:32vw;}
+    .app-mini-progress{display:none;}
   }
 
   /* ---- badge ---- */
@@ -571,9 +572,9 @@
   .home{display:flex;flex-direction:column;gap:var(--s-5);}
   .home-head h1{
     font-family:var(--font-display);font-weight:800;font-size:clamp(26px, 6vw, 32px);
-    color:var(--text);line-height:1.1;letter-spacing:-0.02em;margin:0 0 var(--s-2);
+    color:var(--panel);line-height:1.1;letter-spacing:-0.02em;margin:0 0 var(--s-2);
   }
-  .home-head p{font-size:var(--fs-lead);color:var(--text-soft);line-height:1.5;margin:0;max-width:44ch;}
+  .home-head p{font-size:var(--fs-lead);color:rgba(255,255,255,0.72);line-height:1.5;margin:0;max-width:44ch;}
 
   /* ---- tarjeta de tema (course-card) ---- */
   .course-grid{
