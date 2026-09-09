@@ -438,15 +438,13 @@
 
   .auth-brand{display:flex;flex-direction:column;align-items:center;text-align:center;gap:var(--s-2);}
   .brandmark{
-    width:60px;height:60px;border-radius:var(--r-3);flex-shrink:0;
+    width:104px;height:104px;flex-shrink:0;
     display:flex;align-items:center;justify-content:center;
-    background:linear-gradient(150deg, var(--accent-action), #FF9068);
-    box-shadow:0 6px 20px rgba(255,107,69,0.32);
-    animation:bm-float 4.5s ease-in-out infinite;
+    animation:bm-float 5s ease-in-out infinite;
   }
-  .brandmark svg{width:34px;height:34px;display:block;}
-  .brandmark svg rect, .brandmark svg circle{fill:#fff;}
-  @keyframes bm-float{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-4px);} }
+  .brandmark img{width:100%;height:100%;object-fit:contain;display:block;}
+  .brandmark.sm{width:34px;height:34px;animation:none;}
+  @keyframes bm-float{ 0%,100%{transform:translateY(0) rotate(-1.5deg);} 50%{transform:translateY(-5px) rotate(1.5deg);} }
   @media(prefers-reduced-motion:reduce){ .brandmark{animation:none;} }
   .auth-eyebrow{
     margin:var(--s-2) 0 0;font-family:var(--font-body);font-weight:800;

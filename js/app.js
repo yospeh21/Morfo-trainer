@@ -629,12 +629,7 @@ function sessionBar(){
 function brandMark(cls){
   const m = el('div', 'brandmark' + (cls ? ' ' + cls : ''));
   m.setAttribute('aria-hidden','true');
-  m.innerHTML =
-    '<svg viewBox="0 0 48 48" focusable="false"><g transform="rotate(45 24 24)">'+
-    '<rect x="12" y="19" width="24" height="10" rx="4"/>'+
-    '<circle cx="14" cy="17" r="6"/><circle cx="14" cy="31" r="6"/>'+
-    '<circle cx="34" cy="17" r="6"/><circle cx="34" cy="31" r="6"/>'+
-    '</g></svg>';
+  m.innerHTML = '<img src="assets/logo.png" alt="" decoding="async">';
   return m;
 }
 
