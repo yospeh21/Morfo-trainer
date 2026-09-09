@@ -226,6 +226,14 @@ function formatHMS(totalSeconds){
   const sec = s%60;
   return [h,m,sec].map(n=>String(n).padStart(2,'0')).join(':');
 }
+// Reloj compacto para la cabecera: MM:SS si es menos de una hora.
+function formatClock(totalSeconds){
+  const s = Math.max(0, Math.floor(totalSeconds));
+  if(s < 3600){
+    return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+  }
+  return formatHMS(s);
+}
 
 function currentElapsed(modId){
   const t = ensureTimer(modId);
@@ -277,7 +285,7 @@ function startTimerTick(){
   _timerTickHandle=setInterval(()=>{
     if(!_activeTimerModule) return;
     const el = document.getElementById('liveTimerBadge');
-    if(el) el.textContent='⏱ '+formatHMS(currentElapsed(_activeTimerModule));
+    if(el) el.textContent='⏱ '+formatClock(currentElapsed(_activeTimerModule));
   }, 1000);
 }
 function stopTimerTick(){
@@ -1055,11 +1063,13 @@ function beginActivity(opts){
   const t = ensureTimer(mod.id);
   const timer = el('span','act-timer'+(t.status==='completed'?' is-done':''));
   timer.id = 'liveTimerBadge';
-  timer.textContent = (t.status==='completed'?'✓ ':'⏱ ') + formatHMS(currentElapsed(mod.id));
+  timer.textContent = (t.status==='completed'?'✓ ':'⏱ ') + formatClock(currentElapsed(mod.id));
   topline.appendChild(timer);
   head.appendChild(topline);
 
-  const multi = mod.levels.length > 1;
+  // "multi": módulos con progresión real de niveles (A/B). Los módulos con
+  // sub-actividades (C–H) tratan cada nivel como una actividad independiente.
+  const multi = mod.levels.length > 1 && !mod.subActivities;
   head.appendChild(el('div','act-type',
     multi ? ('Nivel '+(idx+1)+' · '+esc(level.title))
           : esc(ACTIVITY_TYPE_LABEL[level.type] || level.title || 'Actividad')));
