@@ -371,13 +371,6 @@
   ul.plain li{margin-bottom:4px;}
 
   /* ---------- stars ---------- */
-  .starrow{display:flex;gap:6px;margin:6px 0 4px;}
-  .starrow .star{font-size:30px;filter:grayscale(1) opacity(.25);transform:scale(0.7);display:inline-block;}
-  .starrow .star.on{filter:none;opacity:1;animation:starpop .5s cubic-bezier(.34,1.56,.64,1) forwards;}
-  .starrow .star.on:nth-child(1){animation-delay:.05s;}
-  .starrow .star.on:nth-child(2){animation-delay:.2s;}
-  .starrow .star.on:nth-child(3){animation-delay:.35s;}
-  @keyframes starpop{ 0%{transform:scale(0.4) rotate(-15deg);} 60%{transform:scale(1.25) rotate(8deg);} 100%{transform:scale(1) rotate(0);} }
 
   /* ---------- dashboard ---------- */
   table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;}
@@ -668,6 +661,9 @@
   .act-progress-row b{color:var(--text);font-weight:800;}
   .act-bar{height:8px;border-radius:var(--r-pill);background:var(--surface-sunken);overflow:hidden;}
   .act-bar>i{display:block;height:100%;border-radius:var(--r-pill);background:var(--accent-brand);transition:width .35s ease;}
+  /* cuenta regresiva (Boss Battle): baja rápido y avisa cuando queda poco */
+  .act-bar.is-timer>i{background:var(--gold);transition:width .12s linear;}
+  .act-bar.is-timer.low>i{background:var(--state-wrong);}
 
   /* ---- cuerpo ---- */
   .act-body{

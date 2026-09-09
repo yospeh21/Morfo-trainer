@@ -1131,12 +1131,6 @@ function questionCounter(current, total){
   return box;
 }
 
-function buildOptionBtn(optText, i){
-  const btn=el('button','opt');
-  btn.innerHTML = '<span class="optletter">'+(OPTION_LETTERS[i]||(i+1))+'</span><span class="opttext">'+esc(optText)+'</span>';
-  return btn;
-}
-
 function timerBadge(modId){
   const t = ensureTimer(modId);
   const badge = el('div','timerbadge'+(t.status==='completed'?' done':''));
@@ -1782,17 +1776,6 @@ function clearResume(modId, levelId){
 /* ============================================================
    VISTA: NIVEL COMPLETADO (resultado)
    ============================================================ */
-function starsFor(score){
-  return score>=90?3:score>=70?2:score>=1?1:0;
-}
-function starRow(count){
-  const row=el('div','starrow');
-  for(let i=0;i<3;i++){
-    row.appendChild(el('span','star'+(i<count?' on':''), '★'));
-  }
-  return row;
-}
-
 const RESULT_TIERS = [
   { min:90, label:'¡Excelente!', cls:'good' },
   { min:70, label:'¡Muy bien!', cls:'good' },
@@ -1894,104 +1877,155 @@ function startBoss(){
 
 function startBossTimer(){
   clearInterval(state.bossTimer);
-  state.bossTimeLeft = 15000;
-  const totalTime=15000;
-  const startTs=Date.now();
+  const totalTime = 15000;
+  state.bossTimeLeft = totalTime;
+  const startTs = Date.now();
   state.bossTimer = setInterval(()=>{
-    const elapsed = Date.now()-startTs;
-    state.bossTimeLeft = Math.max(0, totalTime-elapsed);
-    const bar=document.getElementById('bossTimerFill');
-    if(bar) bar.style.width=(state.bossTimeLeft/totalTime*100)+'%';
-    if(state.bossTimeLeft<=0){
+    const elapsed = Date.now() - startTs;
+    state.bossTimeLeft = Math.max(0, totalTime - elapsed);
+    const frac = state.bossTimeLeft / totalTime;
+    const fill = document.getElementById('bossTimerFill');
+    if(fill) fill.style.width = (frac * 100) + '%';
+    const barWrap = document.getElementById('bossTimerBar');
+    if(barWrap) barWrap.classList.toggle('low', frac <= 0.34);
+    const clock = document.getElementById('bossClock');
+    if(clock) clock.textContent = '⏱ ' + Math.ceil(state.bossTimeLeft / 1000) + 's';
+    if(state.bossTimeLeft <= 0){
       clearInterval(state.bossTimer);
-      if(!state.bossAnswered){ state.bossAnswered=true; state.bossSelected=-1; render(); }
+      if(!state.bossAnswered){ state.bossAnswered = true; state.bossSelected = -1; render(); }
     }
   }, 100);
 }
 
 function viewBoss(){
-  const wrap=el('div');
-  wrap.appendChild(backButton('Salir del Boss Battle', ()=>{ clearInterval(state.bossTimer); state.view='menu'; render(); }));
+  const root = el('div','act');
 
-  const card=el('div','card');
-  card.appendChild(el('div','eyebrow','🏆 BOSS BATTLE'));
+  const back = el('button','act-back','← Salir del Boss Battle');
+  back.type = 'button';
+  back.onclick = ()=>{ clearInterval(state.bossTimer); state.view='menu'; render(); };
+  root.appendChild(back);
 
-  const bosshead=el('div','bosshead');
-  bosshead.innerHTML = '<span class="bossscore">PREGUNTA '+(state.bossIdx+1)+' / '+state.bossPool.length+'</span><span class="bossscore">PUNTAJE <b>'+state.bossScore+'</b></span>';
-  card.appendChild(bosshead);
+  const card = el('div','act-card');
+  root.appendChild(card);
 
-  const timerbar=el('div','timerbar');
-  timerbar.appendChild(el('i','',''));
-  timerbar.querySelector('i').id='bossTimerFill';
-  timerbar.querySelector('i').style.width='100%';
-  card.appendChild(timerbar);
+  const q = state.bossPool[state.bossIdx];
+  const total = state.bossPool.length;
+  const timeLeft = state.bossTimeLeft != null ? state.bossTimeLeft : 15000;
 
-  const q=state.bossPool[state.bossIdx];
-  card.appendChild(el('div','qprompt', esc(q.q)));
+  const head = el('div','act-head');
+  const topline = el('div','act-topline');
+  topline.appendChild(el('span','act-topic','🏆 Boss Battle'));
+  const clock = el('span','act-timer');
+  clock.id = 'bossClock';
+  clock.textContent = '⏱ ' + Math.ceil(timeLeft / 1000) + 's';
+  topline.appendChild(clock);
+  head.appendChild(topline);
 
-  const optsWrap=el('div','opts');
-  q.opts.forEach((optText,i)=>{
-    const btn=buildOptionBtn(optText, i);
+  head.appendChild(el('div','act-type','Reto cronometrado'));
+
+  const pr = el('div','act-progress');
+  const prow = el('div','act-progress-row');
+  prow.appendChild(el('span','', 'Pregunta ' + (state.bossIdx + 1) + ' de ' + total));
+  prow.appendChild(el('span','', 'Puntaje <b>' + state.bossScore + '</b>'));
+  pr.appendChild(prow);
+  const bar = el('div','act-bar is-timer');
+  bar.id = 'bossTimerBar';
+  bar.innerHTML = '<i id="bossTimerFill" style="width:' + (timeLeft / 15000 * 100) + '%"></i>';
+  pr.appendChild(bar);
+  head.appendChild(pr);
+  card.appendChild(head);
+
+  const body = el('div','act-body');
+  body.appendChild(el('p','act-prompt', esc(q.q)));
+
+  const opts = el('div','act-options cols-2');
+  q.opts.forEach((optText, i)=>{
+    const btn = el('button','opt2');
+    btn.type = 'button';
+    btn.innerHTML = '<span class="k">' + (OPTION_LETTERS[i] || (i + 1)) +
+      '</span><span class="t">' + esc(optText) + '</span>';
     if(state.bossAnswered){
-      btn.disabled=true;
-      if(i===q.correct) btn.classList.add('correct');
-      else if(i===state.bossSelected) btn.classList.add('wrong');
+      btn.disabled = true;
+      if(i === q.correct) btn.classList.add('is-correct');
+      else if(i === state.bossSelected) btn.classList.add('is-wrong');
     }
-    btn.onclick=()=>{
+    btn.onclick = ()=>{
       if(state.bossAnswered) return;
       clearInterval(state.bossTimer);
-      state.bossAnswered=true; state.bossSelected=i;
-      if(i===q.correct) state.bossScore++;
+      state.bossAnswered = true; state.bossSelected = i;
+      if(i === q.correct) state.bossScore++;
       render();
     };
-    optsWrap.appendChild(btn);
+    opts.appendChild(btn);
   });
-  card.appendChild(optsWrap);
+  body.appendChild(opts);
+  card.appendChild(body);
 
   if(state.bossAnswered){
-    const box=el('div','explainbox');
-    const isCorrect = state.bossSelected===q.correct;
-    box.innerHTML = '<span class="'+(isCorrect?'tag-good':'tag-bad')+'">'+(isCorrect?'✓ CORRECTO':(state.bossSelected===-1?'⏱ TIEMPO AGOTADO':'✕ REVISA ESTO'))+'</span><br><br>'+esc(q.explain);
-    card.appendChild(box);
+    const isCorrect = state.bossSelected === q.correct;
+    const fb = el('div','act-feedback ' + (isCorrect ? 'is-correct' : 'is-wrong'));
+    const title = isCorrect ? '¡Correcto!'
+      : state.bossSelected === -1 ? 'Se acabó el tiempo'
+      : 'Revisa esto';
+    fb.innerHTML =
+      '<span class="fx">' + (isCorrect ? '✓' : '✕') + '</span>' +
+      '<div><div class="ft">' + title + '</div>' +
+      (q.explain ? '<div class="fb">' + esc(q.explain) + '</div>' : '') + '</div>';
+    card.appendChild(fb);
 
-    const nextBtn=el('button','btn btn-primary btn-block', state.bossIdx+1<state.bossPool.length? 'Siguiente →':'Ver resultado final');
-    nextBtn.style.marginTop='16px';
-    nextBtn.onclick=()=>{
-      if(state.bossIdx+1<state.bossPool.length){
-        state.bossIdx++; state.bossAnswered=false; state.bossSelected=null;
+    const actions = el('div','act-actions');
+    const last = state.bossIdx + 1 >= total;
+    const nextBtn = el('button','act-btn', last ? 'Ver resultado final →' : 'Siguiente pregunta →');
+    nextBtn.type = 'button';
+    nextBtn.onclick = ()=>{
+      if(!last){
+        state.bossIdx++; state.bossAnswered = false; state.bossSelected = null;
         render(); startBossTimer();
       } else {
-        state.progress['BOSS'] = { correct: state.bossScore, total: state.bossPool.length };
-        state.view='bossDone'; render();
+        state.progress['BOSS'] = { correct: state.bossScore, total: total };
+        state.view = 'bossDone'; render();
         saveProfile();
         autoSaveResult();
       }
     };
-    card.appendChild(nextBtn);
+    actions.appendChild(nextBtn);
+    card.appendChild(actions);
   }
 
-  wrap.appendChild(card);
-  return wrap;
+  return root;
 }
 
 function viewBossDone(){
-  const p=state.progress['BOSS'];
-  const score=pct(p.correct,p.total);
-  const wrap=el('div');
-  const card=el('div','card');
-  card.appendChild(el('div','eyebrow','RESULTADO — BOSS BATTLE'));
-  card.appendChild(el('h1','','¡Reto completado!'));
-  card.appendChild(starRow(starsFor(score)));
-  const statgrid=el('div','statgrid');
-  statgrid.innerHTML =
-    '<div class="stat"><div class="slabel">Puntaje</div><div class="sval '+(score>=80?'good':score>=60?'warn':'bad')+'">'+score+'%</div></div>'+
-    '<div class="stat"><div class="slabel">Correctas</div><div class="sval">'+p.correct+' / '+p.total+'</div></div>';
-  card.appendChild(statgrid);
-  const menuBtn=el('button','btn btn-primary btn-block','Volver al panel');
-  menuBtn.onclick=()=>{ state.view='menu'; render(); };
-  card.appendChild(menuBtn);
-  wrap.appendChild(card);
-  return wrap;
+  const p = state.progress['BOSS'] || { correct:0, total:0 };
+  const score = pct(p.correct, p.total);
+  const tier = resultTier(score);
+
+  const root = el('div','act');
+  const back = el('button','act-back','← Volver al panel');
+  back.type = 'button';
+  back.onclick = ()=>{ state.view='menu'; render(); };
+  root.appendChild(back);
+
+  const card = el('div','act-card result-card');
+  card.appendChild(el('div','act-topic','🏆 Boss Battle'));
+  card.appendChild(el('div','result-eyebrow','Reto completado'));
+  card.appendChild(el('div','act-type','Repaso combinado cronometrado'));
+  card.appendChild(el('div','result-score ' + tier.cls, score + '%'));
+  card.appendChild(el('div','result-label', tier.label));
+
+  const stats = el('div','result-stats');
+  stats.innerHTML = '<span><b>' + p.correct + '</b> de <b>' + p.total + '</b> aciertos</span>';
+  card.appendChild(stats);
+
+  const actions = el('div','act-actions');
+  const menuBtn = el('button','act-btn','Volver al panel');
+  menuBtn.type = 'button';
+  menuBtn.onclick = ()=>{ state.view='menu'; render(); };
+  actions.appendChild(menuBtn);
+  card.appendChild(actions);
+
+  root.appendChild(card);
+  return root;
 }
 
 /* ============================================================
