@@ -586,13 +586,13 @@ function render(){
 }
 
 function errorCard(err){
-  const wrap=el('div');
-  const card=el('div','card');
-  card.style.borderColor='var(--bad)';
-  card.appendChild(el('div','eyebrow','⚠️ ALGO SALIÓ MAL'));
+  const wrap=el('div','home');
+  const card=el('div','notice-card');
+  card.appendChild(el('div','n-eyebrow','Algo salió mal'));
   card.appendChild(el('h1','','No se pudo mostrar esta pantalla'));
-  card.appendChild(el('p','','Detalle técnico: '+esc(err && err.message ? err.message : String(err))));
-  const homeBtn=el('button','btn btn-primary btn-block','Volver al inicio');
+  card.appendChild(el('p','n-body','Detalle técnico: '+esc(err && err.message ? err.message : String(err))));
+  const homeBtn=el('button','act-btn','Volver al inicio');
+  homeBtn.type='button';
   homeBtn.onclick=()=>{ state.view=homeView(); render(); };
   card.appendChild(homeBtn);
   wrap.appendChild(card);
@@ -2245,69 +2245,69 @@ async function autoSaveResult(){
 
 function viewReport(){
   const rep = computeReport();
-  const wrap=el('div');
+  const wrap=el('div','home');
   wrap.appendChild(backButton('Volver', ()=>{ state.view=homeView(); render(); }));
 
-  const card=el('div','card');
-  card.appendChild(el('div','eyebrow','INFORME INDIVIDUAL'));
-  card.appendChild(el('h1','', esc(state.student.name)));
+  const card=el('div','panel');
+  const head=el('div','panel-head');
+  head.appendChild(el('div','panel-eyebrow','Informe individual'));
+  head.appendChild(el('h1','', esc(state.student.name)));
+  card.appendChild(head);
+
   if(rep.rows.length===0){
-    card.appendChild(el('p','','Aún no has completado ningún nivel. Entrena al menos un módulo para generar tu informe.'));
+    card.appendChild(el('p','panel-lead','Aún no has completado ningún nivel. Entrena al menos un módulo para generar tu informe.'));
     wrap.appendChild(card);
     return wrap;
   }
 
-  card.appendChild(el('p','lede', 'Completaste '+rep.rows.length+' de '+allLevelsFlat().length+' niveles, con un desempeño general de <b style="color:var(--ink)">'+rep.overall+'%</b> ('+rep.totalCorrect+' de '+rep.totalQ+' respuestas correctas).'+(rep.boss? ' En el Boss Battle obtuviste '+pct(rep.boss.correct,rep.boss.total)+'%.':'')));
+  card.appendChild(el('p','panel-lead', 'Completaste '+rep.rows.length+' de '+allLevelsFlat().length+' niveles, con un desempeño general de <b>'+rep.overall+'%</b> ('+rep.totalCorrect+' de '+rep.totalQ+' respuestas correctas).'+(rep.boss? ' En el Boss Battle obtuviste '+pct(rep.boss.correct,rep.boss.total)+'%.':'')));
 
-  const statgrid=el('div','statgrid');
-  statgrid.innerHTML =
-    '<div class="stat"><div class="slabel">General</div><div class="sval '+(rep.overall>=80?'good':rep.overall>=60?'warn':'bad')+'">'+rep.overall+'%</div></div>'+
-    '<div class="stat"><div class="slabel">Fortalezas</div><div class="sval good">'+rep.strengths.length+'</div></div>'+
-    '<div class="stat"><div class="slabel">A reforzar</div><div class="sval '+(rep.weak.length? 'bad':'good')+'">'+rep.weak.length+'</div></div>';
-  card.appendChild(statgrid);
+  const stats=el('div','stat-row');
+  stats.innerHTML =
+    '<div class="stat-cell"><span class="k">General</span><span class="v '+(rep.overall>=80?'good':rep.overall>=60?'warn':'bad')+'">'+rep.overall+'%</span></div>'+
+    '<div class="stat-cell"><span class="k">Fortalezas</span><span class="v good">'+rep.strengths.length+'</span></div>'+
+    '<div class="stat-cell"><span class="k">A reforzar</span><span class="v '+(rep.weak.length? 'bad':'good')+'">'+rep.weak.length+'</span></div>';
+  card.appendChild(stats);
 
-  if(rep.strengths.length){
-    card.appendChild(el('div','section-title','Fortalezas'));
-    const ul=el('ul','plain'); rep.strengths.forEach(s=>ul.appendChild(el('li','',esc(s)))); card.appendChild(ul);
+  function bullets(title, items, cls){
+    card.appendChild(el('div','panel-section', title));
+    const ul=el('ul','tag-list'+(cls?' '+cls:'')); items.forEach(s=>ul.appendChild(el('li','',esc(s)))); card.appendChild(ul);
   }
-  if(rep.developing.length){
-    card.appendChild(el('div','section-title','En desarrollo'));
-    const ul=el('ul','plain'); rep.developing.forEach(s=>ul.appendChild(el('li','',esc(s)))); card.appendChild(ul);
-  }
+  if(rep.strengths.length) bullets('Fortalezas', rep.strengths, 'is-good');
+  if(rep.developing.length) bullets('En desarrollo', rep.developing, 'is-warn');
   if(rep.weak.length){
-    card.appendChild(el('div','section-title','Temas prioritarios para reforzar'));
-    const ul=el('ul','plain'); rep.weak.forEach(s=>ul.appendChild(el('li','',esc(s)))); card.appendChild(ul);
+    bullets('Temas prioritarios para reforzar', rep.weak, 'is-bad');
   } else if(rep.rows.length>0){
-    card.appendChild(el('div','section-title','Recomendación'));
-    card.appendChild(el('p','','Buen dominio general. Puedes repasar con el Boss Battle para mantener el nivel bajo presión de tiempo.'));
+    card.appendChild(el('div','panel-section','Recomendación'));
+    card.appendChild(el('p','panel-foot','Buen dominio general. Puedes repasar con el Boss Battle para mantener el nivel bajo presión de tiempo.'));
   }
 
-  const statusBox=el('div','');
-  statusBox.style.cssText='border:2.5px solid '+(state.saved?'var(--good-dark)':'var(--line-strong)')+';border-radius:14px;padding:14px 16px;margin-top:18px;background:'+(state.saved?'var(--good-soft)':'var(--panel-2)')+';font-weight:700;font-size:13.5px;color:'+(state.saved?'var(--good-dark)':'var(--ink-dim)')+';';
+  const statusBox=el('div','panel-note'+(state.saved?' is-ok':''));
   statusBox.textContent = state.saved
     ? '✓ Este informe se guarda automáticamente cada vez que terminas un nivel — tu monitor ya lo puede ver.'
     : 'Sincronizando con tu monitor…';
   card.appendChild(statusBox);
-  if(!state.saved){ autoSaveResult().then(()=>{ statusBox.textContent='✓ Este informe se guarda automáticamente cada vez que terminas un nivel — tu monitor ya lo puede ver.'; statusBox.style.borderColor='var(--good-dark)'; statusBox.style.background='var(--good-soft)'; statusBox.style.color='var(--good-dark)'; }); }
+  if(!state.saved){ autoSaveResult().then(()=>{ statusBox.textContent='✓ Este informe se guarda automáticamente cada vez que terminas un nivel — tu monitor ya lo puede ver.'; statusBox.classList.add('is-ok'); }); }
 
-  const saveErr=el('p','footnote','');
-  saveErr.style.color='var(--bad)';
-  const syncBtn=el('button','btn btn-ghost btn-block','↻ Sincronizar de nuevo');
-  syncBtn.style.marginTop='10px';
+  const saveErr=el('p','panel-note is-bad','');
+  saveErr.hidden=true;
+  const syncBtn=el('button','act-btn is-ghost','↻ Sincronizar de nuevo');
+  syncBtn.type='button';
   syncBtn.onclick=async ()=>{
-    syncBtn.disabled=true; syncBtn.textContent='Sincronizando…'; saveErr.textContent='';
+    syncBtn.disabled=true; syncBtn.textContent='Sincronizando…'; saveErr.hidden=true;
     try{
       await autoSaveResult();
       syncBtn.textContent='✓ Sincronizado';
       setTimeout(()=>{ render(); }, 700);
     }catch(err){
       syncBtn.disabled=false; syncBtn.textContent='↻ Sincronizar de nuevo';
-      saveErr.textContent = 'Detalle: ' + (err && err.message ? err.message : String(err));
+      saveErr.textContent = 'No se pudo sincronizar. Detalle: ' + (err && err.message ? err.message : String(err));
+      saveErr.hidden=false;
     }
   };
   card.appendChild(syncBtn);
   card.appendChild(saveErr);
-  card.appendChild(el('p','footnote','Este resultado se guarda de forma compartida para que tu monitor pueda verlo en el panel del grupo, junto con tu nombre y código.'));
+  card.appendChild(el('p','panel-foot','Este resultado se guarda de forma compartida para que tu monitor pueda verlo en el panel del grupo, junto con tu nombre y código.'));
 
   wrap.appendChild(card);
   return wrap;
@@ -2370,28 +2370,37 @@ function moduleStatsFromProfile(profileRow, modId){
 }
 
 function viewMonitorLogin(){
-  const wrap=el('div');
+  const wrap=el('div','home');
   wrap.appendChild(backButton('Volver', ()=>{ state.view = homeView(); render(); }));
 
-  const card=el('div','card');
-  card.appendChild(el('div','eyebrow','ACCESO RESTRINGIDO'));
-  card.appendChild(el('h1','','Panel del monitor'));
-  card.appendChild(el('p','','Esta vista es solo para el monitor del curso. Ingresa la clave para continuar.'));
+  const card=el('div','panel');
+  const head=el('div','panel-head');
+  head.appendChild(el('div','panel-eyebrow','Acceso restringido'));
+  head.appendChild(el('h1','','Panel del monitor'));
+  card.appendChild(head);
+  card.appendChild(el('p','panel-lead','Esta vista es solo para el monitor del curso. Ingresa la clave para continuar.'));
 
-  const passLabel=el('label','','Clave de monitor');
+  const field=el('div','field');
+  const passLabel=el('label','field-label','Clave de monitor');
+  passLabel.htmlFor='monitorPass';
   const passInput=document.createElement('input');
-  passInput.type='password'; passInput.placeholder='••••••';
-  card.appendChild(passLabel); card.appendChild(passInput);
+  passInput.type='password'; passInput.id='monitorPass'; passInput.className='field-input';
+  passInput.placeholder='••••••'; passInput.autocomplete='off';
+  const hint=el('div','field-hint'); hint.setAttribute('aria-live','polite');
+  field.appendChild(passLabel); field.appendChild(passInput); field.appendChild(hint);
+  card.appendChild(field);
 
-  const errMsg=el('p','footnote','');
-  errMsg.style.color='var(--bad)'; errMsg.style.display='none';
-  card.appendChild(errMsg);
-
-  const goBtn=el('button','btn btn-primary btn-block','Entrar al panel →');
+  const goBtn=el('button','act-btn','Entrar al panel →');
+  goBtn.type='button';
+  function setErr(msg){
+    hint.textContent = msg || '';
+    hint.className = 'field-hint' + (msg ? ' is-error' : '');
+    field.classList.toggle('has-error', !!msg);
+  }
   goBtn.onclick=async ()=>{
     const pass=passInput.value;
-    if(!pass){ errMsg.textContent='Ingresa la clave.'; errMsg.style.display='block'; return; }
-    errMsg.style.display='none';
+    if(!pass){ setErr('Ingresa la clave.'); passInput.focus(); return; }
+    setErr('');
     goBtn.disabled=true; goBtn.textContent='Verificando…';
     try{
       const [resData, profData] = await Promise.all([
@@ -2408,12 +2417,11 @@ function viewMonitorLogin(){
       render();
     }catch(e){
       goBtn.disabled=false; goBtn.textContent='Entrar al panel →';
-      errMsg.textContent='Clave incorrecta. Detalle: '+(e&&e.message?e.message:String(e));
-      errMsg.style.display='block';
+      setErr('Clave incorrecta. Detalle: '+(e&&e.message?e.message:String(e)));
     }
   };
   passInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); goBtn.click(); } });
-  card.appendChild(el('div','', '')).appendChild(goBtn);
+  card.appendChild(goBtn);
 
   wrap.appendChild(card);
   return wrap;
@@ -2441,7 +2449,7 @@ async function loadDashboard(){
 const STATUS_LABEL = { not_started:'No iniciada', in_progress:'En progreso', completed:'Completada' };
 
 function viewDashboard(){
-  const wrap=el('div');
+  const wrap=el('div','home');
   wrap.appendChild(backButton('Salir del panel del monitor', ()=>{
     state.monitorAuthed=false;
     state.monitorPass='';
@@ -2451,13 +2459,15 @@ function viewDashboard(){
     render();
   }));
 
-  const card=el('div','card');
-  card.appendChild(el('div','eyebrow','PANEL DEL MONITOR'));
-  card.appendChild(el('h1','','Resultados del grupo'));
-  card.appendChild(el('p','','Vista general de todos los estudiantes, y el detalle de cada actividad con puntaje y tiempo invertido.'));
+  const card=el('div','panel');
+  const head=el('div','panel-head');
+  head.appendChild(el('div','panel-eyebrow','Panel del monitor'));
+  head.appendChild(el('h1','','Resultados del grupo'));
+  card.appendChild(head);
+  card.appendChild(el('p','panel-lead','Vista general de todos los estudiantes, y el detalle de cada actividad con puntaje y tiempo invertido.'));
 
   if(state.dashboardRows===null || state.dashboardProfiles===null){
-    card.appendChild(el('p','','Cargando…'));
+    card.appendChild(el('p','panel-lead','Cargando…'));
     wrap.appendChild(card);
     loadDashboard();
     return wrap;
@@ -2465,18 +2475,16 @@ function viewDashboard(){
 
   const rows=state.dashboardRows;
   const profiles=state.dashboardProfiles;
-  const refreshBtn=el('button','btn btn-ghost','↻ Actualizar');
+  const refreshBtn=el('button','act-btn is-ghost','↻ Actualizar');
+  refreshBtn.type='button';
   refreshBtn.onclick=()=>{ state.dashboardRows=null; state.dashboardProfiles=null; render(); };
   card.appendChild(refreshBtn);
 
   if(rows.length===0 && profiles.length===0){
-    if(state.dashboardError){
-      const errBox=el('p','footnote', 'No se pudieron cargar los datos. Detalle: '+esc(state.dashboardError));
-      errBox.style.color='var(--bad)';
-      card.appendChild(errBox);
-    } else {
-      card.appendChild(el('p','','Todavía no hay actividad registrada.'));
-    }
+    card.appendChild(el('p','panel-note'+(state.dashboardError?' is-bad':''),
+      state.dashboardError
+        ? 'No se pudieron cargar los datos. Detalle: '+esc(state.dashboardError)
+        : 'Todavía no hay actividad registrada.'));
     wrap.appendChild(card);
     return wrap;
   }
@@ -2485,13 +2493,11 @@ function viewDashboard(){
   const doubts = collectDoubts(profiles);
   const pending = doubts.filter(function(d){ return !d.rec.resuelta; });
   const resolved = doubts.filter(function(d){ return d.rec.resuelta; });
-  card.appendChild(el('div','section-title','Dudas marcadas' +
+  card.appendChild(el('div','panel-section','Dudas marcadas' +
     (pending.length ? ' (' + pending.length + ' pendiente' + (pending.length === 1 ? '' : 's') + ')' : '')));
 
   if(state._doubtError){
-    const eb = el('p','footnote', esc(state._doubtError));
-    eb.style.color = 'var(--bad)';
-    card.appendChild(eb);
+    card.appendChild(el('p','panel-note is-bad', esc(state._doubtError)));
   }
 
   function doubtItem(entry, isResolved){
@@ -2516,14 +2522,14 @@ function viewDashboard(){
   }
 
   if(!doubts.length){
-    card.appendChild(el('p','','Ningún estudiante ha marcado preguntas con dudas todavía. Aparecen aquí cuando alguien toca "No entiendo esta pregunta" durante una actividad.'));
+    card.appendChild(el('p','panel-foot','Ningún estudiante ha marcado preguntas con dudas todavía. Aparecen aquí cuando alguien toca "No entiendo esta pregunta" durante una actividad.'));
   } else {
     if(pending.length){
       const list = el('div','doubt-list');
       pending.forEach(function(e){ list.appendChild(doubtItem(e, false)); });
       card.appendChild(list);
     } else {
-      card.appendChild(el('p','','No hay dudas pendientes. 🎉'));
+      card.appendChild(el('p','panel-foot','No hay dudas pendientes. 🎉'));
     }
     if(resolved.length){
       card.appendChild(el('div','doubt-resolved-label', 'Resueltas (' + resolved.length + ')'));
@@ -2533,13 +2539,15 @@ function viewDashboard(){
     }
   }
 
-  // ---- Botones por actividad (con puntaje + tiempo por estudiante al entrar) ----
-  card.appendChild(el('div','section-title','Actividades'));
-  const grid=el('div','modgrid');
+  // ---- Actividades (puntaje + tiempo por estudiante al entrar) ----
+  card.appendChild(el('div','panel-section','Actividades'));
+  const grid=el('div','mod-list');
+  let anyActivity=false;
   Object.values(CATEGORIES).forEach(cat=>{
     cat.moduleIds.forEach((mid,idx)=>{
       const mod=MODULES[mid];
       if(!mod || !mod.levels.length) return; // aún sin contenido, se omite del panel
+      anyActivity=true;
       const num=String(idx+1).padStart(2,'0');
       let touched=0, sumScore=0, scoredCount=0, sumTime=0;
       profiles.forEach(p=>{
@@ -2552,40 +2560,48 @@ function viewDashboard(){
       const avg = scoredCount? Math.round(sumScore/scoredCount) : null;
       const avgTime = touched? sumTime/touched : 0;
 
-      const actBtn=el('button','modcard');
-      actBtn.innerHTML =
-        '<div class="mhead"><span class="modnum">'+num+'</span><span class="mtitle">'+esc(mod.title)+'</span></div>'+
-        '<div class="msub">'+touched+' estudiante'+(touched===1?'':'s')+' con actividad'+(avg!==null? ' · promedio '+avg+'%':'')+'</div>'+
-        (touched? '<div class="modtime">⏱ prom. '+formatHMS(avgTime)+'</div>' : '<span class="soontag">Sin datos aún</span>');
+      const actBtn=el('button','mod-card'+(touched?' is-ready':''));
+      actBtn.type='button';
+      const hd=el('div','mod-head');
+      hd.appendChild(el('span','mod-num', esc(num)));
+      hd.appendChild(el('span','mod-title2', esc(mod.title)));
+      actBtn.appendChild(hd);
+      actBtn.appendChild(el('p','mod-sub', touched
+        ? (touched+' estudiante'+(touched===1?'':'s')+' con actividad'+(avg!==null? ' · promedio '+avg+'%':''))
+        : 'Sin datos todavía'));
+      if(touched) actBtn.appendChild(el('div','mod-meta','⏱ prom. '+formatHMS(avgTime)));
       actBtn.onclick=()=>{ state.dashboardActivityId=mid; state.view='dashboardActivity'; render(); };
       grid.appendChild(actBtn);
     });
   });
-  card.appendChild(grid);
+  if(anyActivity){ card.appendChild(grid); }
+  else { card.appendChild(el('p','panel-foot','Todavía no hay módulos con contenido cargado.')); }
 
   // ---- Resumen general por estudiante ----
-  card.appendChild(el('div','section-title','Resumen general ('+rows.length+' informes enviados)'));
+  card.appendChild(el('div','panel-section','Resumen general ('+rows.length+' informe'+(rows.length===1?'':'s')+' enviado'+(rows.length===1?'':'s')+')'));
   if(rows.length===0){
-    card.appendChild(el('p','','Ningún estudiante ha enviado su informe todavía (se envía automáticamente al completar un nivel).'));
+    card.appendChild(el('p','panel-foot','Ningún estudiante ha enviado su informe todavía (se envía automáticamente al completar un nivel).'));
   } else {
+    const dw=el('div','data-wrap');
     const table=document.createElement('table');
-    table.innerHTML = '<thead><tr><th>Nombre</th><th>Código</th><th class="mono">General</th><th class="mono">Fecha</th></tr></thead>';
+    table.className='data-table';
+    table.innerHTML = '<thead><tr><th>Nombre</th><th class="mono">Código</th><th class="mono">General</th><th class="mono">Fecha</th></tr></thead>';
     const tbody=document.createElement('tbody');
     rows.forEach(r=>{
       const tr=document.createElement('tr');
-      const color = r.overall>=80?'var(--good-soft)': r.overall>=60?'var(--amber-soft)':'var(--bad-soft)';
-      const fg = r.overall>=80?'var(--good)': r.overall>=60?'var(--amber)':'var(--bad)';
+      const cls = r.overall>=80?'good': r.overall>=60?'warn':'bad';
       const date = r.timestamp? new Date(r.timestamp).toLocaleString('es-CO',{dateStyle:'short',timeStyle:'short'}) : '—';
       tr.innerHTML = '<td>'+esc(r.name||'—')+'</td><td class="mono">'+esc(r.code||'—')+'</td>'+
-        '<td class="mono"><span class="pillscore" style="background:'+color+';color:'+fg+'">'+r.overall+'%</span></td>'+
-        '<td class="mono">'+date+'</td>';
+        '<td class="mono"><span class="pill-score '+cls+'">'+r.overall+'%</span></td>'+
+        '<td class="mono">'+esc(date)+'</td>';
       tbody.appendChild(tr);
     });
     table.appendChild(tbody);
-    card.appendChild(table);
+    dw.appendChild(table);
+    card.appendChild(dw);
   }
 
-  card.appendChild(el('p','footnote','Cada estudiante inicia sesión con su código estudiantil, así que cada fila corresponde a una persona (no hay riesgo de duplicados por nombres repetidos).'));
+  card.appendChild(el('p','panel-foot','Cada estudiante inicia sesión con su código estudiantil, así que cada fila corresponde a una persona (no hay riesgo de duplicados por nombres repetidos).'));
 
   wrap.appendChild(card);
   return wrap;
@@ -2593,12 +2609,14 @@ function viewDashboard(){
 
 function viewDashboardActivity(){
   const mod = MODULES[state.dashboardActivityId];
-  const wrap=el('div');
+  const wrap=el('div','home');
   wrap.appendChild(backButton('Volver al panel del monitor', ()=>{ state.view='dashboard'; render(); }));
 
-  const card=el('div','card');
-  card.appendChild(el('div','eyebrow','DETALLE DE ACTIVIDAD'));
-  card.appendChild(el('h1','', mod? esc(mod.title) : 'Actividad'));
+  const card=el('div','panel');
+  const head=el('div','panel-head');
+  head.appendChild(el('div','panel-eyebrow','Detalle de actividad'));
+  head.appendChild(el('h1','', mod? esc(mod.title) : 'Actividad'));
+  card.appendChild(head);
 
   const profiles = state.dashboardProfiles || [];
   const students=[];
@@ -2608,7 +2626,7 @@ function viewDashboardActivity(){
   });
 
   if(students.length===0){
-    card.appendChild(el('p','','Todavía ningún estudiante ha comenzado esta actividad.'));
+    card.appendChild(el('p','panel-lead','Todavía ningún estudiante ha comenzado esta actividad.'));
     wrap.appendChild(card);
     return wrap;
   }
@@ -2621,34 +2639,35 @@ function viewDashboardActivity(){
   const scored = students.filter(s=>s.avgScore!==null);
   const avgScore = scored.length? Math.round(scored.reduce((a,s)=>a+s.avgScore,0)/scored.length) : null;
 
-  const statgrid=el('div','statgrid');
-  statgrid.innerHTML =
-    '<div class="stat"><div class="slabel">Estudiantes</div><div class="sval">'+total+'</div></div>'+
-    '<div class="stat"><div class="slabel">Completaron</div><div class="sval '+(completed===total?'good':'warn')+'">'+completed+' / '+total+'</div></div>'+
-    '<div class="stat"><div class="slabel">Tiempo prom.</div><div class="sval">'+formatHMS(avgTime)+'</div></div>';
-  card.appendChild(statgrid);
-  if(avgScore!==null){
-    card.appendChild(el('p','footnote','Puntaje promedio del grupo en esta actividad: <b style="color:var(--ink)">'+avgScore+'%</b>'));
-  }
+  const stats=el('div','stat-row');
+  stats.innerHTML =
+    '<div class="stat-cell"><span class="k">Estudiantes</span><span class="v">'+total+'</span></div>'+
+    '<div class="stat-cell"><span class="k">Completaron</span><span class="v '+(completed===total?'good':'warn')+'">'+completed+' / '+total+'</span></div>'+
+    '<div class="stat-cell"><span class="k">Tiempo prom.</span><span class="v">'+formatHMS(avgTime)+'</span></div>'+
+    (avgScore!==null ? '<div class="stat-cell"><span class="k">Puntaje prom.</span><span class="v '+(avgScore>=80?'good':avgScore>=60?'warn':'bad')+'">'+avgScore+'%</span></div>' : '');
+  card.appendChild(stats);
 
-  card.appendChild(el('div','section-title','Por estudiante (ordenado por tiempo, de mayor a menor)'));
+  card.appendChild(el('div','panel-section','Por estudiante · ordenado por tiempo'));
+  const dw=el('div','data-wrap');
   const table=document.createElement('table');
-  table.innerHTML = '<thead><tr><th>Nombre</th><th>Código</th><th>Estado</th><th class="mono">Puntaje</th><th class="mono">Tiempo</th></tr></thead>';
+  table.className='data-table';
+  table.innerHTML = '<thead><tr><th>Nombre</th><th class="mono">Código</th><th>Estado</th><th class="mono">Puntaje</th><th class="mono">Tiempo</th></tr></thead>';
   const tbody=document.createElement('tbody');
   students.forEach(s=>{
     const tr=document.createElement('tr');
-    const statusColor = s.status==='completed'?'var(--good-dark)': 'var(--gold-dark)';
+    const stCls = s.status==='completed'?'done':'wip';
     const scoreTxt = s.avgScore!==null ? s.avgScore+'% ('+s.done+'/'+s.total+')' : (s.done+'/'+s.total+' niveles');
     tr.innerHTML =
       '<td>'+esc(s.name||'—')+'</td>'+
       '<td class="mono">'+esc(s.code||'—')+'</td>'+
-      '<td><span style="color:'+statusColor+';font-weight:800;">'+STATUS_LABEL[s.status]+'</span></td>'+
+      '<td><span class="tag-state '+stCls+'">'+esc(STATUS_LABEL[s.status])+'</span></td>'+
       '<td class="mono">'+esc(scoreTxt)+'</td>'+
       '<td class="mono">'+formatHMS(s.elapsedSec)+'</td>';
     tbody.appendChild(tr);
   });
   table.appendChild(tbody);
-  card.appendChild(table);
+  dw.appendChild(table);
+  card.appendChild(dw);
 
   wrap.appendChild(card);
   return wrap;

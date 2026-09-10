@@ -705,6 +705,72 @@
   .notice-card .act-btn{margin-top:var(--s-2);}
 
   /* =========================================================
+     PANEL (informe individual · panel del monitor)
+     ========================================================= */
+  .panel{
+    background:var(--surface);border:1px solid var(--hairline-strong);border-radius:var(--r-4);
+    box-shadow:var(--elev-2);padding:var(--s-5);
+    display:flex;flex-direction:column;gap:var(--s-4);
+  }
+  @media(min-width:640px){ .panel{padding:var(--s-6);} }
+  .panel-head{display:flex;flex-direction:column;gap:6px;}
+  .panel-eyebrow{
+    font-family:var(--font-body);font-weight:800;font-size:var(--fs-eyebrow);
+    letter-spacing:.09em;text-transform:uppercase;color:var(--accent-brand);
+  }
+  .panel-head h1{font-family:var(--font-display);font-weight:800;font-size:var(--fs-h);color:var(--text);margin:0;line-height:1.2;}
+  .panel-lead{font-size:var(--fs-body);color:var(--text-soft);line-height:1.55;margin:0;}
+  .panel-lead b{color:var(--text);}
+  .panel-section{
+    font-family:var(--font-body);font-weight:800;font-size:var(--fs-eyebrow);
+    letter-spacing:.06em;text-transform:uppercase;color:var(--text-soft);
+    border-top:1px solid var(--hairline);padding-top:var(--s-4);margin:var(--s-1) 0 calc(-1 * var(--s-1));
+  }
+  .panel-foot{font-size:var(--fs-meta);color:var(--text-soft);line-height:1.5;margin:0;}
+  .panel-note{
+    font-size:var(--fs-meta);font-weight:700;line-height:1.5;color:var(--text-soft);
+    border-left:3px solid var(--hairline-strong);padding:4px 0 4px var(--s-4);
+  }
+  .panel-note.is-ok{border-left-color:var(--state-correct);color:var(--state-correct);}
+  .panel-note.is-bad{border-left-color:var(--state-wrong);color:var(--state-wrong);}
+
+  .stat-row{display:grid;grid-template-columns:repeat(auto-fit, minmax(96px,1fr));gap:var(--s-3);}
+  .stat-cell{
+    background:var(--surface-sunken);border-radius:var(--r-2);padding:var(--s-3);
+    display:flex;flex-direction:column;gap:4px;
+  }
+  .stat-cell .k{font-family:var(--font-body);font-weight:800;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-soft);}
+  .stat-cell .v{font-family:var(--font-display);font-weight:800;font-size:var(--fs-lead);color:var(--text);line-height:1.2;}
+  .stat-cell .v.good{color:var(--state-correct);}
+  .stat-cell .v.warn{color:var(--gold-dark);}
+  .stat-cell .v.bad{color:var(--state-wrong);}
+
+  .tag-list{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none;}
+  .tag-list li{
+    font-size:var(--fs-body);color:var(--text);line-height:1.4;font-weight:600;
+    padding-left:var(--s-4);position:relative;
+  }
+  .tag-list li::before{content:"";position:absolute;left:2px;top:8px;width:6px;height:6px;border-radius:50%;background:var(--accent-brand);}
+  .tag-list.is-good li::before{background:var(--state-correct);}
+  .tag-list.is-warn li::before{background:var(--gold);}
+  .tag-list.is-bad li::before{background:var(--state-wrong);}
+
+  .data-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--r-2);}
+  .data-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .data-table th,.data-table td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--hairline);white-space:nowrap;}
+  .data-table th{font-family:var(--font-body);font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-soft);font-weight:800;}
+  .data-table td{color:var(--text);font-weight:600;}
+  .data-table td.mono,.data-table th.mono{font-family:var(--font-mono);}
+  .data-table tbody tr:last-child td,.data-table tr:last-child td{border-bottom:none;}
+  .pill-score{display:inline-block;padding:2px 9px;border-radius:var(--r-pill);font-family:var(--font-mono);font-size:11px;font-weight:700;}
+  .pill-score.good{background:var(--state-correct-soft);color:var(--state-correct);}
+  .pill-score.warn{background:var(--gold-soft);color:var(--gold-dark);}
+  .pill-score.bad{background:var(--state-wrong-soft);color:var(--state-wrong);}
+  .tag-state{font-weight:800;}
+  .tag-state.done{color:var(--state-correct);}
+  .tag-state.wip{color:var(--gold-dark);}
+
+  /* =========================================================
      SISTEMA DE ACTIVIDADES  ·  ActivityLayout
      Estructura común: back · card(header · progreso · cuerpo ·
      feedback · acciones). Lo único que cambia entre tipos de
