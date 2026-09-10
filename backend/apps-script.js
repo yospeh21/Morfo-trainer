@@ -1,5 +1,5 @@
 /**
- * MORFO-TRAINER — backend en Google Apps Script (v9, + resolver dudas del monitor)
+ * MORFO-TRAINER — backend en Google Apps Script (v10, + respuesta del monitor a la duda)
  */
 
 var PERFILES_HEADERS = ['code','name','progress','timers','saved','updated_at'];
@@ -110,10 +110,14 @@ function doPost(e) {
       if (rowNum === -1) return jsonOut({ ok: false, error: 'No se encontró el perfil.' });
       var dudas = progress['@dudas'];
       if (dudas && dudas[body.key]) {
-        if (body.resolved) {
+        if (typeof body.respuesta === 'string') {
+          dudas[body.key].respuesta = body.respuesta;
+          dudas[body.key].respuestaAt = new Date().toISOString();
+        }
+        if (body.resolved === true) {
           dudas[body.key].resuelta = true;
           dudas[body.key].resueltaAt = new Date().toISOString();
-        } else {
+        } else if (body.resolved === false) {
           delete dudas[body.key].resuelta;
           delete dudas[body.key].resueltaAt;
         }

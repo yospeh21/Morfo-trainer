@@ -1002,6 +1002,56 @@
     background:var(--state-correct-soft);border-color:var(--state-correct);color:var(--state-correct);
   }
 
+  /* respuesta del monitor vista por el estudiante */
+  .doubt-answer{
+    background:var(--accent-brand-soft);border-left:3px solid var(--accent-brand);
+    border-radius:var(--r-2);padding:var(--s-3) var(--s-4);display:flex;flex-direction:column;gap:4px;
+  }
+  .doubt-answer .da-label{
+    font-family:var(--font-body);font-weight:800;font-size:11px;letter-spacing:.03em;
+    text-transform:uppercase;color:var(--accent-brand-dark);
+  }
+  .doubt-answer .da-text{margin:0;font-size:var(--fs-body);color:var(--text);line-height:1.55;white-space:pre-wrap;}
+
+  /* caja de respuesta del monitor (en el panel del grupo) */
+  .dg-answer{
+    display:flex;flex-direction:column;gap:6px;
+    border-top:1px solid var(--hairline);padding-top:var(--s-3);margin-top:2px;
+  }
+  .dg-answer-label{
+    font-family:var(--font-body);font-weight:800;font-size:11px;letter-spacing:.03em;
+    text-transform:uppercase;color:var(--accent-brand-dark);
+  }
+  .dg-answer-input{
+    width:100%;resize:vertical;min-height:60px;
+    font-family:var(--font-body);font-weight:600;font-size:var(--fs-body);line-height:1.5;color:var(--text);
+    background:var(--surface);border:1.5px solid var(--accent-brand);border-radius:var(--r-2);padding:10px 12px;
+  }
+  .dg-answer-input::placeholder{color:var(--text-soft);font-weight:600;}
+  .dg-answer-input:focus{outline:none;box-shadow:var(--focus-ring);}
+  .dg-answer .act-btn{width:auto;align-self:flex-start;padding:9px 16px;font-size:14px;}
+
+  /* ---- pantalla "Mis dudas" (estudiante) ---- */
+  .mydoubt-list{display:flex;flex-direction:column;gap:var(--s-3);}
+  .mydoubt{
+    background:var(--surface);border:1px solid var(--hairline-strong);border-radius:var(--r-3);
+    box-shadow:var(--elev-1);padding:var(--s-4) var(--s-5);display:flex;flex-direction:column;gap:var(--s-2);
+    position:relative;overflow:hidden;
+  }
+  .mydoubt::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gold-dark);}
+  .mydoubt.has-answer::before{background:var(--accent-brand);}
+  .mydoubt-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;}
+  .mydoubt-status{
+    font-family:var(--font-body);font-weight:800;font-size:10px;letter-spacing:.04em;text-transform:uppercase;
+    padding:2px 8px;border-radius:var(--r-pill);
+  }
+  .mydoubt-status.is-answered{background:var(--accent-brand-soft);color:var(--accent-brand-dark);}
+  .mydoubt-status.is-done{background:var(--state-correct-soft);color:var(--state-correct);}
+  .mydoubt-status.is-wait{background:var(--surface-sunken);color:var(--text-soft);}
+  .mydoubt-note{margin:0;font-size:var(--fs-meta);color:var(--text-soft);line-height:1.5;}
+  .mydoubt-hint{margin:0;font-size:var(--fs-meta);color:var(--text-soft);font-style:italic;}
+  .mydoubt .act-reset{align-self:flex-start;margin-top:2px;}
+
   /* ---- pantalla de resultado ---- */
   .result-card{align-items:center;text-align:center;gap:var(--s-3);}
   .result-card .act-topic,.result-card .act-type{align-self:center;text-align:center;}

@@ -575,7 +575,8 @@ function render(){
     monitorLogin: viewMonitorLogin,
     comingSoon: viewComingSoon,
     dashboardActivity: viewDashboardActivity,
-    moduleSubmenu: viewModuleSubmenu
+    moduleSubmenu: viewModuleSubmenu,
+    doubts: viewDoubts
   };
   try{
     app.appendChild(views[state.view]());
@@ -691,6 +692,13 @@ function navRow(){
       nav.appendChild(link('Módulos', inTheme, ()=>{ state.view = 'menu'; render(); }));
     }
     nav.appendChild(link('Mi informe', v === 'report', ()=>{ state.view = 'report'; render(); }));
+
+    const dd = getDoubts();
+    const nDoubts = dd ? Object.keys(dd).length : 0;
+    if(nDoubts){
+      const nAns = Object.keys(dd).filter(function(kk){ return dd[kk].respuesta; }).length;
+      nav.appendChild(link('Mis dudas' + (nAns ? ' · ' + nAns : ''), v === 'doubts', ()=>{ state.view = 'doubts'; render(); }));
+    }
   }
 
   if(parseStudent().role === 'Monitor' || state.monitorAuthed){
@@ -1876,9 +1884,11 @@ function appendDoubtControl(A, ctx){
   const d = marked ? getDoubts()[k] : null;
   const solved = !!(d && d.resuelta);
 
-  const wrap = el('div','act-doubt' + (marked ? ' is-on' : '') + (solved ? ' is-resolved' : ''));
+  const answer = (d && d.respuesta) || '';
+  const wrap = el('div','act-doubt' + (marked ? ' is-on' : '') + (solved || answer ? ' is-resolved' : ''));
   const btn = el('button','act-doubt-toggle',
-    solved ? '✓ Tu monitor marcó esta duda como resuelta'
+    answer ? '💬 Tu monitor respondió esta duda'
+    : solved ? '✓ Tu monitor marcó esta duda como resuelta'
     : marked ? '✓ Duda marcada — la verá tu monitor'
     : '🚩 No entiendo esta pregunta');
   btn.type = 'button';
@@ -1901,7 +1911,7 @@ function appendDoubtControl(A, ctx){
   };
   wrap.appendChild(btn);
 
-  if(marked){
+  if(marked && !answer){
     const ta = document.createElement('textarea');
     ta.className = 'act-doubt-note';
     ta.rows = 2;
@@ -1910,6 +1920,12 @@ function appendDoubtControl(A, ctx){
     ta.value = (d && d.nota) || '';
     ta.addEventListener('blur', ()=>{ updateDoubtNote(k, ta.value.trim()); });
     wrap.appendChild(ta);
+  }
+  if(answer){
+    const ans = el('div','doubt-answer');
+    ans.appendChild(el('div','da-label','💬 Respuesta de tu monitor'));
+    ans.appendChild(el('p','da-text', esc(answer)));
+    wrap.appendChild(ans);
   }
   A.content.appendChild(wrap);
 }
@@ -2005,11 +2021,135 @@ async function resolveDoubtGroup(group, resolved){
   }
 }
 
+// El monitor escribe una respuesta para toda la pregunta (la ven los
+// estudiantes). Responder también marca la duda como resuelta.
+async function answerDoubtGroup(group, respuesta){
+  const undo = group.entries.map(function(x){
+    return { rec:x.rec, resp:x.rec.respuesta, respAt:x.rec.respuestaAt, r:x.rec.resuelta, at:x.rec.resueltaAt };
+  });
+  const now = new Date().toISOString();
+  group.entries.forEach(function(x){
+    x.rec.respuesta = respuesta;
+    x.rec.respuestaAt = now;
+    x.rec.resuelta = true;
+    x.rec.resueltaAt = now;
+  });
+  state._doubtError = null;
+  state._resolvedOpen = true; // para que el monitor siga viendo lo que acaba de responder
+  render();
+  try{
+    await Promise.all(group.entries.map(function(x){
+      return apiPost({ action:'resolveDoubt', pass: state.monitorPass, code: x.code, key: x.key,
+        respuesta: respuesta, resolved: true });
+    }));
+  }catch(e){
+    undo.forEach(function(u){
+      if(u.resp !== undefined) u.rec.respuesta = u.resp; else delete u.rec.respuesta;
+      if(u.respAt !== undefined) u.rec.respuestaAt = u.respAt; else delete u.rec.respuestaAt;
+      if(u.r) u.rec.resuelta = u.r; else delete u.rec.resuelta;
+      if(u.at !== undefined) u.rec.resueltaAt = u.at; else delete u.rec.resueltaAt;
+    });
+    state._doubtError = doubtErrText(e);
+    render();
+  }
+}
+
 function doubtErrText(e){
   return 'No se pudo actualizar la duda. ' +
     (String(e && e.message || e).indexOf('reconocida') !== -1
       ? 'Falta actualizar el backend (acción resolveDoubt).'
       : 'Detalle: ' + (e && e.message ? e.message : String(e)));
+}
+
+// El estudiante recarga sus dudas (para ver respuestas nuevas del monitor)
+// sin perder el resto del estado local.
+async function reloadDoubts(){
+  if(!state.student.code) return;
+  try{
+    const existing = await loadProfile(state.student.code);
+    if(existing && existing.progress){
+      if(existing.progress['@dudas']) state.progress['@dudas'] = existing.progress['@dudas'];
+      else delete state.progress['@dudas'];
+    }
+  }catch(e){ console.error('No se pudieron recargar las dudas', e); }
+}
+
+/* ============================================================
+   VISTA: MIS DUDAS (estudiante) — preguntas marcadas + respuestas
+   ============================================================ */
+function viewDoubts(){
+  const wrap = el('div','home');
+  const head = el('div','home-head');
+  head.appendChild(el('h1','','Mis dudas'));
+  head.appendChild(el('p','','Las preguntas que marcaste y las respuestas de tu monitor.'));
+  wrap.appendChild(head);
+
+  const refresh = el('button','act-btn is-ghost', state._doubtsRefreshing ? 'Buscando…' : '↻ Buscar respuestas nuevas');
+  refresh.type = 'button';
+  refresh.disabled = !!state._doubtsRefreshing;
+  refresh.onclick = function(){
+    state._doubtsRefreshing = true; render();
+    reloadDoubts().then(function(){ state._doubtsRefreshing = false; render(); });
+  };
+  wrap.appendChild(refresh);
+
+  const d = getDoubts();
+  const items = d ? Object.keys(d).map(function(k){ return { k:k, rec:d[k] }; }) : [];
+  items.sort(function(a,b){
+    const aa = a.rec.respuesta ? 0 : a.rec.resuelta ? 1 : 2;
+    const bb = b.rec.respuesta ? 0 : b.rec.resuelta ? 1 : 2;
+    if(aa !== bb) return aa - bb;
+    return String(b.rec.t || '').localeCompare(String(a.rec.t || ''));
+  });
+
+  if(!items.length){
+    const nc = el('div','notice-card');
+    nc.appendChild(el('div','n-eyebrow','Sin dudas marcadas'));
+    nc.appendChild(el('h1','','Todavía no marcaste ninguna pregunta'));
+    nc.appendChild(el('p','n-body','Durante una actividad, toca "🚩 No entiendo esta pregunta" para pedirle una explicación a tu monitor. Su respuesta aparecerá aquí.'));
+    wrap.appendChild(nc);
+    return wrap;
+  }
+
+  const list = el('div','mydoubt-list');
+  items.forEach(function(it){
+    const rec = it.rec;
+    const card = el('div','mydoubt' + (rec.respuesta ? ' has-answer' : ''));
+
+    const meta = el('div','mydoubt-meta');
+    const tipoTxt = ACTIVITY_TYPE_LABEL[rec.tipo] || '';
+    meta.appendChild(el('span','doubt-tag', esc((rec.modT || rec.mod || 'Módulo') + (tipoTxt ? ' · ' + tipoTxt : ''))));
+    meta.appendChild(el('span','mydoubt-status ' + (rec.respuesta ? 'is-answered' : rec.resuelta ? 'is-done' : 'is-wait'),
+      rec.respuesta ? 'Respondida' : rec.resuelta ? 'Resuelta' : 'Esperando respuesta'));
+    card.appendChild(meta);
+
+    card.appendChild(el('p','doubt-q', '“' + esc(rec.q) + '”'));
+    if(rec.lvlT) card.appendChild(el('div','dgroup-lvl', esc(rec.lvlT)));
+    if(rec.nota) card.appendChild(el('p','mydoubt-note', 'Tu nota: ' + esc(rec.nota)));
+
+    if(rec.respuesta){
+      const ans = el('div','doubt-answer');
+      ans.appendChild(el('div','da-label','💬 Respuesta de tu monitor'));
+      ans.appendChild(el('p','da-text', esc(rec.respuesta)));
+      card.appendChild(ans);
+    } else {
+      card.appendChild(el('p','mydoubt-hint','Tu monitor todavía no responde esta pregunta.'));
+    }
+
+    const rm = el('button','act-reset','Quitar esta duda');
+    rm.type = 'button';
+    rm.onclick = function(){
+      if(rm._armed){ removeDoubt(it.k); render(); return; }
+      rm._armed = true;
+      rm.textContent = 'Toca otra vez para quitarla';
+      rm.classList.add('is-armed');
+      setTimeout(function(){ rm._armed = false; rm.textContent = 'Quitar esta duda'; rm.classList.remove('is-armed'); }, 3000);
+    };
+    card.appendChild(rm);
+    list.appendChild(card);
+  });
+  wrap.appendChild(list);
+  return wrap;
 }
 
 // Tarjeta de una pregunta con dudas (panel del monitor).
@@ -2048,6 +2188,30 @@ function doubtGroupCard(g){
     ul.appendChild(li);
   });
   card.appendChild(ul);
+
+  // ---- respuesta del monitor (la ven los estudiantes) ----
+  const answered = (g.entries.find(function(e){ return e.rec.respuesta; }) || {}).rec;
+  const ansWrap = el('div','dg-answer');
+  ansWrap.appendChild(el('div','dg-answer-label',
+    answered ? '💬 Tu respuesta (visible para los estudiantes)' : '💬 Responder a los estudiantes'));
+  const ta = document.createElement('textarea');
+  ta.className = 'dg-answer-input';
+  ta.rows = 3;
+  ta.maxLength = 1500;
+  ta.placeholder = 'Escribe la explicación que verán los estudiantes que marcaron esta pregunta…';
+  ta.value = answered ? answered.respuesta : '';
+  ansWrap.appendChild(ta);
+  const send = el('button','act-btn is-ghost', answered ? 'Actualizar respuesta' : 'Enviar respuesta');
+  send.type = 'button';
+  send.onclick = function(){
+    const txt = ta.value.trim();
+    if(!txt){ ta.focus(); return; }
+    send.disabled = true; send.textContent = 'Enviando…';
+    answerDoubtGroup(g, txt);
+  };
+  ansWrap.appendChild(send);
+  card.appendChild(ansWrap);
+
   return card;
 }
 
