@@ -293,9 +293,141 @@ function subscribeMonitorDoubts(){
   );
 }
 
+let _monProfUnsub = null;
+
 function unsubscribeDoubts(){
   if(_doubtsUnsub){ _doubtsUnsub(); _doubtsUnsub = null; }
   if(_monDoubtsUnsub){ _monDoubtsUnsub(); _monDoubtsUnsub = null; }
+}
+function unsubscribeMonitor(){
+  if(_monDoubtsUnsub){ _monDoubtsUnsub(); _monDoubtsUnsub = null; }
+  if(_monProfUnsub){ _monProfUnsub(); _monProfUnsub = null; }
+}
+
+/* ============================================================
+   PERFILES en Firestore (colección "perfiles", doc = código).
+   Durante la transición se sigue escribiendo también en Sheets y,
+   al cargar, gana el más reciente (por updated_at).
+   ============================================================ */
+function fsProfileRef(code){ return _fs.collection('perfiles').doc(String(code)); }
+
+async function getFsProfile(code){
+  if(!_fs) return null;
+  try{
+    const snap = await fsProfileRef(code).get();
+    if(!snap.exists) return null;
+    const p = snap.data();
+    return { name:p.name||'', code:String(code), progress:p.progress||{}, timers:p.timers||{},
+             saved:!!p.saved, updated_at: p.updated_at || '' };
+  }catch(e){ console.error('getFsProfile', e); return null; }
+}
+
+async function loadProfileFromSheets(code){
+  try{
+    const data = await apiGet({ action:'getProfile', code: code });
+    if(!data.profile) return null;
+    const p = data.profile;
+    return {
+      name: p.name || '',
+      code: p.code || code,
+      progress: p.progress ? JSON.parse(p.progress) : {},
+      timers: p.timers ? JSON.parse(p.timers) : {},
+      saved: String(p.saved).toUpperCase() === 'TRUE',
+      updated_at: p.updated_at || ''
+    };
+  }catch(e){ console.error('getProfile (Sheets)', e); return null; }
+}
+
+function seedFsProfile(code, prof){
+  if(!_fs || !prof) return;
+  fsProfileRef(code).set({
+    name: prof.name || '', progress: prof.progress || {}, timers: prof.timers || {},
+    saved: !!prof.saved, updated_at: prof.updated_at || new Date().toISOString()
+  }).catch(function(e){ console.error('seedFsProfile', e); });
+}
+
+// Listener del monitor: todos los perfiles en tiempo real.
+function subscribeMonitorProfiles(){
+  if(!_fs) return;
+  if(_monProfUnsub){ _monProfUnsub(); _monProfUnsub = null; }
+  _monProfUnsub = _fs.collection('perfiles').onSnapshot(function(snap){
+    const rows = [];
+    snap.forEach(function(doc){
+      const p = doc.data();
+      rows.push({ name:p.name||'', code:doc.id, updated_at:p.updated_at||'',
+                  progress:p.progress||{}, timers:p.timers||{} });
+    });
+    state.dashboardProfiles = rows;
+    if(state.monitorAuthed) scheduleFsRender();
+  }, function(err){
+    console.error('Listener perfiles (monitor)', err);
+    // Firestore no disponible (p. ej. reglas sin publicar) → cae a Sheets
+    apiGet({ action:'listProfiles', pass: state.monitorPass })
+      .then(function(pd){ state.dashboardProfiles = mapProfilesRows(pd.profiles); if(state.monitorAuthed) render(); })
+      .catch(function(){ state.dashboardProfiles = []; if(state.monitorAuthed) render(); });
+  });
+}
+
+// Una vez: sube a Firestore los perfiles que solo estén en Sheets.
+async function gapFillProfiles(){
+  if(!_fs) return;
+  try{
+    const [sheetData, fsSnap] = await Promise.all([
+      apiGet({ action:'listProfiles', pass: state.monitorPass }),
+      _fs.collection('perfiles').get()
+    ]);
+    const have = {};
+    fsSnap.forEach(function(d){ have[d.id] = true; });
+    const missing = (sheetData.profiles || []).filter(function(r){ return r.code && !have[String(r.code)]; });
+    if(!missing.length) return;
+    const batch = _fs.batch();
+    missing.forEach(function(r){
+      let progress = {}, timers = {};
+      try{ progress = r.progress ? JSON.parse(r.progress) : {}; }catch(e){}
+      try{ timers = r.timers ? JSON.parse(r.timers) : {}; }catch(e){}
+      batch.set(fsProfileRef(r.code), {
+        name: r.name || '', progress: progress, timers: timers,
+        saved: String(r.saved).toUpperCase() === 'TRUE',
+        updated_at: r.updated_at || new Date().toISOString()
+      });
+    });
+    await batch.commit();
+  }catch(e){ console.error('gapFillProfiles', e); }
+}
+
+/* ============================================================
+   AVISO DE VERSIÓN NUEVA
+   Compara la versión de este app.js con la que sirve index.html.
+   ============================================================ */
+function runningAppVersion(){
+  const s = document.querySelector('script[src*="app.js?v="]');
+  const m = s && s.src.match(/app\.js\?v=(\d+)/);
+  return m ? Number(m[1]) : 0;
+}
+let _updateShown = false, _lastUpdateCheck = 0;
+async function checkForUpdate(){
+  const mine = runningAppVersion();
+  if(!mine || _updateShown) return;
+  const now = Date.now();
+  if(now - _lastUpdateCheck < 60000) return;
+  _lastUpdateCheck = now;
+  try{
+    const html = await fetch('index.html?_=' + now, { cache:'no-store' }).then(function(r){ return r.text(); });
+    const m = html.match(/app\.js\?v=(\d+)/);
+    if(m && Number(m[1]) > mine){ _updateShown = true; showUpdateBanner(); }
+  }catch(e){}
+}
+function showUpdateBanner(){
+  if(document.getElementById('updateBanner')) return;
+  const b = document.createElement('div');
+  b.id = 'updateBanner';
+  b.className = 'update-banner';
+  b.appendChild(el('span','', 'Hay una versión nueva de Morfo-Trainer.'));
+  const r = el('button','update-reload','↻ Recargar');
+  r.type = 'button';
+  r.onclick = function(){ location.reload(); };
+  b.appendChild(r);
+  document.body.appendChild(b);
 }
 
 // Traslada a Firestore, una sola vez, las dudas que quedaron guardadas
@@ -468,29 +600,41 @@ async function checkStorageDiag(badgeEl){
 }
 
 async function saveProfile(){
+  if(!state.student.code) return;
+  const code = String(state.student.code);
+  const now = new Date().toISOString();
+  const progress = state.progress || {}, timers = state.timers || {};
+  // Firestore es el primario
+  if(_fs){
+    try{
+      await fsProfileRef(code).set({
+        name: state.student.name || '', progress: progress, timers: timers,
+        saved: !!state.saved, updated_at: now
+      });
+    }catch(e){ console.error('saveProfile (Firestore)', e); }
+  }
+  // Durante la transición, también en Sheets (respaldo, y para que el profe lo vea)
   try{
-    if(!state.student.code) return;
     await apiPost({
       action:'saveProfile',
-      code: state.student.code, name: state.student.name,
-      progress: state.progress, timers: state.timers, saved: state.saved
+      code: code, name: state.student.name,
+      progress: progress, timers: timers, saved: state.saved
     });
-  }catch(e){ console.error('No se pudo guardar el perfil', e); }
+  }catch(e){ console.error('saveProfile (Sheets)', e); }
 }
 
 async function loadProfile(code){
-  try{
-    const data = await apiGet({action:'getProfile', code: code});
-    if(!data.profile) return null;
-    const p = data.profile;
-    return {
-      name: p.name || '',
-      code: p.code || code,
-      progress: p.progress ? JSON.parse(p.progress) : {},
-      timers: p.timers ? JSON.parse(p.timers) : {},
-      saved: String(p.saved).toUpperCase()==='TRUE'
-    };
-  }catch(e){ console.error('No se pudo cargar el perfil', e); return null; }
+  code = String(code);
+  const results = await Promise.all([ getFsProfile(code), loadProfileFromSheets(code) ]);
+  const fs = results[0], sh = results[1];
+  if(fs && sh){
+    if(String(fs.updated_at || '') >= String(sh.updated_at || '')) return fs;
+    seedFsProfile(code, sh); // Sheets más nuevo → sincroniza y úsalo
+    return sh;
+  }
+  if(fs) return fs;
+  if(sh){ seedFsProfile(code, sh); return sh; }
+  return null;
 }
 
 /* ============================================================
@@ -618,12 +762,14 @@ async function resetProfile(){
 
 function logout(){
   unsubscribeDoubts();
+  unsubscribeMonitor();
   state.student={name:'',code:''};
   state.progress={};
   state.timers={};
   state.saved=false;
   state.doubts={};
   state.dashboardDoubts=null;
+  state.dashboardProfiles=null;
   state.monitorAuthed=false;
   state.monitorPass='';
   state.currentCategory=null;
@@ -2778,22 +2924,31 @@ function viewMonitorLogin(){
     setErr('');
     goBtn.disabled=true; goBtn.textContent='Verificando…';
     try{
-      const [resData, profData] = await Promise.all([
-        apiGet({action:'listResults', pass}),
-        apiGet({action:'listProfiles', pass}),
-        loadDynamicContent()  // para saber qué actividades están habilitadas
+      const [resData] = await Promise.all([
+        apiGet({action:'listResults', pass}), // valida la clave del lado del servidor
+        loadDynamicContent()                  // para saber qué actividades están habilitadas
       ]);
       state.monitorPass = pass;
       state.monitorAuthed = true;
       state.dashboardRows = mapResultsRows(resData.results);
-      state.dashboardProfiles = mapProfilesRows(profData.profiles);
+      state.dashboardProfiles = null; // lo llena el listener de Firestore
       state.dashboardError = null;
       state.dashboardActivityId = null;
       state.view='dashboard';
       render();
       initFirestore().then(function(ok){
-        if(ok) subscribeMonitorDoubts();
-        else { state.dashboardDoubts = []; state._doubtError = 'No se pudieron cargar las dudas en tiempo real.'; }
+        if(ok){
+          subscribeMonitorDoubts();
+          subscribeMonitorProfiles();
+          gapFillProfiles();
+        } else {
+          state.dashboardDoubts = [];
+          state._doubtError = 'No se pudieron cargar las dudas en tiempo real.';
+          apiGet({action:'listProfiles', pass: state.monitorPass}).then(function(pd){
+            state.dashboardProfiles = mapProfilesRows(pd.profiles);
+            render();
+          }).catch(function(){ state.dashboardProfiles = []; render(); });
+        }
         render();
       });
     }catch(e){
@@ -2808,21 +2963,18 @@ function viewMonitorLogin(){
   return wrap;
 }
 
+// Solo refresca los "Resultados" (informes) desde Sheets. Los perfiles y las
+// dudas se mantienen solos con los listeners de Firestore.
 async function loadDashboard(){
   try{
-    const [resData, profData] = await Promise.all([
+    const [resData] = await Promise.all([
       apiGet({action:'listResults', pass: state.monitorPass}),
-      apiGet({action:'listProfiles', pass: state.monitorPass}),
       loadDynamicContent()
     ]);
     state.dashboardRows = mapResultsRows(resData.results);
-    state.dashboardProfiles = mapProfilesRows(profData.profiles);
     state.dashboardError = null;
-    state._doubtError = null;
-    state._doubtFilter = '';
   }catch(err){
     state.dashboardRows = [];
-    state.dashboardProfiles = [];
     state.dashboardError = err && err.message ? err.message : String(err);
     console.error('Dashboard load error', err);
   }
@@ -2839,7 +2991,7 @@ function viewDashboard(){
     state.dashboardRows=null;
     state.dashboardProfiles=null;
     state.dashboardDoubts=null;
-    if(_monDoubtsUnsub){ _monDoubtsUnsub(); _monDoubtsUnsub=null; }
+    unsubscribeMonitor();
     state.view = homeView();
     render();
   }));
@@ -2851,7 +3003,7 @@ function viewDashboard(){
   card.appendChild(head);
   card.appendChild(el('p','panel-lead','Vista general de todos los estudiantes, y el detalle de cada actividad con puntaje y tiempo invertido.'));
 
-  if(state.dashboardRows===null || state.dashboardProfiles===null){
+  if(state.dashboardRows===null){
     card.appendChild(el('p','panel-lead','Cargando…'));
     wrap.appendChild(card);
     loadDashboard();
@@ -2859,20 +3011,11 @@ function viewDashboard(){
   }
 
   const rows=state.dashboardRows;
-  const profiles=state.dashboardProfiles;
+  const profiles=state.dashboardProfiles || [];
   const refreshBtn=el('button','act-btn is-ghost','↻ Actualizar');
   refreshBtn.type='button';
-  refreshBtn.onclick=()=>{ state.dashboardRows=null; state.dashboardProfiles=null; render(); };
+  refreshBtn.onclick=()=>{ state.dashboardRows=null; render(); };
   card.appendChild(refreshBtn);
-
-  if(rows.length===0 && profiles.length===0){
-    card.appendChild(el('p','panel-note'+(state.dashboardError?' is-bad':''),
-      state.dashboardError
-        ? 'No se pudieron cargar los datos. Detalle: '+esc(state.dashboardError)
-        : 'Todavía no hay actividad registrada.'));
-    wrap.appendChild(card);
-    return wrap;
-  }
 
   // ---- Dudas de los estudiantes (agrupadas por pregunta, en tiempo real) ----
   const allGroups = groupDoubts(state.dashboardDoubts || []);
@@ -2954,6 +3097,9 @@ function viewDashboard(){
   // Solo se muestran las que están habilitadas para los estudiantes: no
   // bloqueadas y con contenido cargado. Al habilitar una nueva, aparece aquí.
   card.appendChild(el('div','panel-section','Actividades'));
+  if(state.dashboardProfiles === null){
+    card.appendChild(el('p','panel-foot','Cargando datos de los estudiantes…'));
+  }
   const grid=el('div','mod-list');
   let anyActivity=false;
   Object.values(CATEGORIES).forEach(cat=>{
@@ -3091,5 +3237,9 @@ function viewDashboardActivity(){
    ============================================================ */
 initFirestore(); // calienta la sesión anónima mientras el usuario escribe su código
 render();
+
+setTimeout(checkForUpdate, 20000);
+setInterval(checkForUpdate, 6 * 60 * 1000);
+document.addEventListener('visibilitychange', function(){ if(!document.hidden) checkForUpdate(); });
 
 })();
