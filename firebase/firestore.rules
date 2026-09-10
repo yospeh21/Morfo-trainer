@@ -12,12 +12,15 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // Perfil de cada estudiante: nombre, progreso, cronómetros.
+    // progress y timers se guardan como texto JSON.
     match /perfiles/{code} {
       allow read: if request.auth != null;
       allow write: if request.auth != null
         && request.resource.data.name is string
-        && request.resource.data.get('progress', {}).keys().size() < 800
-        && request.resource.data.get('timers', {}).keys().size() < 200;
+        && request.resource.data.progress is string
+        && request.resource.data.progress.size() < 300000
+        && request.resource.data.timers is string
+        && request.resource.data.timers.size() < 50000;
     }
 
     match /dudas/{id} {

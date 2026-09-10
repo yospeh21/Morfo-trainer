@@ -311,13 +311,22 @@ function unsubscribeMonitor(){
    ============================================================ */
 function fsProfileRef(code){ return _fs.collection('perfiles').doc(String(code)); }
 
+// progress/timers se guardan como TEXTO JSON en Firestore (igual que en
+// Sheets): así no chocan con el límite de "arrays anidados" de Firestore
+// (los snapshots de reanudación tienen array de arrays).
+function parseMaybeJson(v){
+  if(v && typeof v === 'object') return v;      // ya venía como objeto (formato viejo)
+  try{ return v ? JSON.parse(v) : {}; }catch(e){ return {}; }
+}
+
 async function getFsProfile(code){
   if(!_fs) return null;
   try{
     const snap = await fsProfileRef(code).get();
     if(!snap.exists) return null;
     const p = snap.data();
-    return { name:p.name||'', code:String(code), progress:p.progress||{}, timers:p.timers||{},
+    return { name:p.name||'', code:String(code),
+             progress: parseMaybeJson(p.progress), timers: parseMaybeJson(p.timers),
              saved:!!p.saved, updated_at: p.updated_at || '' };
   }catch(e){ console.error('getFsProfile', e); return null; }
 }
@@ -340,10 +349,14 @@ async function loadProfileFromSheets(code){
 
 function seedFsProfile(code, prof){
   if(!_fs || !prof) return;
-  fsProfileRef(code).set({
-    name: prof.name || '', progress: prof.progress || {}, timers: prof.timers || {},
-    saved: !!prof.saved, updated_at: prof.updated_at || new Date().toISOString()
-  }).catch(function(e){ console.error('seedFsProfile', e); });
+  try{
+    fsProfileRef(code).set({
+      name: prof.name || '',
+      progress: JSON.stringify(prof.progress || {}),
+      timers: JSON.stringify(prof.timers || {}),
+      saved: !!prof.saved, updated_at: prof.updated_at || new Date().toISOString()
+    }).catch(function(e){ console.error('seedFsProfile', e); });
+  }catch(e){ console.error('seedFsProfile (sync)', e); }
 }
 
 // Listener del monitor: todos los perfiles en tiempo real.
@@ -355,7 +368,7 @@ function subscribeMonitorProfiles(){
     snap.forEach(function(doc){
       const p = doc.data();
       rows.push({ name:p.name||'', code:doc.id, updated_at:p.updated_at||'',
-                  progress:p.progress||{}, timers:p.timers||{} });
+                  progress: parseMaybeJson(p.progress), timers: parseMaybeJson(p.timers) });
     });
     state.dashboardProfiles = rows;
     if(state.monitorAuthed) scheduleFsRender();
@@ -382,11 +395,11 @@ async function gapFillProfiles(){
     if(!missing.length) return;
     const batch = _fs.batch();
     missing.forEach(function(r){
-      let progress = {}, timers = {};
-      try{ progress = r.progress ? JSON.parse(r.progress) : {}; }catch(e){}
-      try{ timers = r.timers ? JSON.parse(r.timers) : {}; }catch(e){}
+      // r.progress / r.timers ya vienen como texto JSON desde Sheets
       batch.set(fsProfileRef(r.code), {
-        name: r.name || '', progress: progress, timers: timers,
+        name: r.name || '',
+        progress: typeof r.progress === 'string' ? r.progress : JSON.stringify(r.progress || {}),
+        timers: typeof r.timers === 'string' ? r.timers : JSON.stringify(r.timers || {}),
         saved: String(r.saved).toUpperCase() === 'TRUE',
         updated_at: r.updated_at || new Date().toISOString()
       });
@@ -604,11 +617,12 @@ async function saveProfile(){
   const code = String(state.student.code);
   const now = new Date().toISOString();
   const progress = state.progress || {}, timers = state.timers || {};
-  // Firestore es el primario
+  // Firestore es el primario. progress/timers van como texto JSON.
   if(_fs){
     try{
       await fsProfileRef(code).set({
-        name: state.student.name || '', progress: progress, timers: timers,
+        name: state.student.name || '',
+        progress: JSON.stringify(progress), timers: JSON.stringify(timers),
         saved: !!state.saved, updated_at: now
       });
     }catch(e){ console.error('saveProfile (Firestore)', e); }
