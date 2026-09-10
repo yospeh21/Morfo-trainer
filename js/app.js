@@ -3087,4 +3087,14 @@ function viewDashboardActivity(){
 initFirestore(); // calienta la sesión anónima mientras el usuario escribe su código
 render();
 
+// --- debug temporal (quitar) ---
+window.__mt = {
+  state: state,
+  fs: function(){ return _fs; },
+  ready: function(){ return _fsReady; },
+  addDoubt: addDoubt,
+  subStudent: subscribeStudentDoubts,
+  subMonitor: subscribeMonitorDoubts
+};
+
 })();
