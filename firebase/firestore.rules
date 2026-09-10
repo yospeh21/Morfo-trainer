@@ -1,12 +1,12 @@
 rules_version = '2';
 
 // Reglas de Firestore para Morfo-Trainer.
-// Por ahora solo la colección "dudas" vive en Firestore; el resto de los
-// datos (perfiles, resultados, contenido) sigue en Google Sheets.
+// En Firestore: "dudas" y "perfiles". En Google Sheets todavía: el roster
+// "Estudiantes", los "Resultados" (informes) y el contenido de preguntas.
 //
 // Seguridad: la app abre una sesión anónima de Firebase, así que solo se
 // puede leer/escribir desde la propia web. Los datos no son sensibles
-// (nombre, código, texto de la duda y de la respuesta).
+// (nombre, código, progreso de práctica, texto de dudas y respuestas).
 
 service cloud.firestore {
   match /databases/{database}/documents {
