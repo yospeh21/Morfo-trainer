@@ -1930,6 +1930,38 @@ function collectDoubts(profiles){
   return out;
 }
 
+// Agrupa las dudas por pregunta (misma clave = misma pregunta, aunque la
+// marquen varios estudiantes). Ordena: preguntas con más pendientes primero.
+function groupDoubts(doubts){
+  const map = {};
+  doubts.forEach(function(e){
+    let g = map[e.key];
+    if(!g){
+      g = { key:e.key, mod:e.rec.mod||'', modT:e.rec.modT||e.rec.mod||'Módulo',
+            lvlT:e.rec.lvlT||'', tipo:e.rec.tipo||'', q:e.rec.q, entries:[] };
+      map[e.key] = g;
+    }
+    g.entries.push(e);
+  });
+  const groups = Object.keys(map).map(function(k){ return map[k]; });
+  groups.forEach(function(g){
+    g.total = g.entries.length;
+    g.pendCount = g.entries.filter(function(x){ return !x.rec.resuelta; }).length;
+    g.allResolved = g.pendCount === 0;
+    g.lastT = g.entries.reduce(function(m,x){ return (x.rec.t||'') > m ? (x.rec.t||'') : m; }, '');
+    g.entries.sort(function(a,b){
+      const r = (a.rec.resuelta?1:0) - (b.rec.resuelta?1:0);
+      return r !== 0 ? r : String(a.student).localeCompare(String(b.student));
+    });
+  });
+  groups.sort(function(a,b){
+    if(a.allResolved !== b.allResolved) return a.allResolved ? 1 : -1;
+    if(b.pendCount !== a.pendCount) return b.pendCount - a.pendCount;
+    return String(b.lastT).localeCompare(String(a.lastT));
+  });
+  return groups;
+}
+
 // El monitor marca/reabre una duda. Actualización optimista + POST al backend.
 async function setDoubtResolved(code, key, resolved, rec){
   const prevR = rec.resuelta, prevAt = rec.resueltaAt;
@@ -1942,12 +1974,81 @@ async function setDoubtResolved(code, key, resolved, rec){
   }catch(e){
     if(prevR){ rec.resuelta = prevR; rec.resueltaAt = prevAt; }
     else { delete rec.resuelta; delete rec.resueltaAt; }
-    state._doubtError = 'No se pudo actualizar la duda. ' +
-      (String(e && e.message || e).indexOf('reconocida') !== -1
-        ? 'Falta actualizar el backend (acción resolveDoubt).'
-        : 'Detalle: ' + (e && e.message ? e.message : String(e)));
+    state._doubtError = doubtErrText(e);
     render();
   }
+}
+
+// Resuelve (o reabre) toda una pregunta de golpe: todos los estudiantes cuyo
+// estado no coincida con `resolved`.
+async function resolveDoubtGroup(group, resolved){
+  const targets = group.entries.filter(function(x){ return !!x.rec.resuelta !== !!resolved; });
+  if(!targets.length) return;
+  const undo = targets.map(function(x){ return { rec:x.rec, r:x.rec.resuelta, at:x.rec.resueltaAt }; });
+  targets.forEach(function(x){
+    if(resolved){ x.rec.resuelta = true; x.rec.resueltaAt = new Date().toISOString(); }
+    else { delete x.rec.resuelta; delete x.rec.resueltaAt; }
+  });
+  state._doubtError = null;
+  render();
+  try{
+    await Promise.all(targets.map(function(x){
+      return apiPost({ action:'resolveDoubt', pass: state.monitorPass, code: x.code, key: x.key, resolved: !!resolved });
+    }));
+  }catch(e){
+    undo.forEach(function(u){
+      if(u.r){ u.rec.resuelta = u.r; u.rec.resueltaAt = u.at; }
+      else { delete u.rec.resuelta; delete u.rec.resueltaAt; }
+    });
+    state._doubtError = doubtErrText(e);
+    render();
+  }
+}
+
+function doubtErrText(e){
+  return 'No se pudo actualizar la duda. ' +
+    (String(e && e.message || e).indexOf('reconocida') !== -1
+      ? 'Falta actualizar el backend (acción resolveDoubt).'
+      : 'Detalle: ' + (e && e.message ? e.message : String(e)));
+}
+
+// Tarjeta de una pregunta con dudas (panel del monitor).
+function doubtGroupCard(g){
+  const card = el('div','dgroup' + (g.allResolved ? ' is-resolved' : ''));
+
+  const top = el('div','dgroup-top');
+  const tipoTxt = ACTIVITY_TYPE_LABEL[g.tipo] || '';
+  top.appendChild(el('span','doubt-tag', esc(g.modT + (tipoTxt ? ' · ' + tipoTxt : ''))));
+  top.appendChild(el('span','dgroup-count' + (g.pendCount ? '' : ' is-done'),
+    g.allResolved ? ('✓ ' + g.total + (g.total === 1 ? ' marca' : ' marcas'))
+                  : (g.pendCount + ' de ' + g.total + ' sin resolver')));
+  const bulk = el('button','doubt-resolve', g.pendCount ? '✓ Resolver todas' : '↺ Reabrir todas');
+  bulk.type = 'button';
+  bulk.onclick = function(){ resolveDoubtGroup(g, g.pendCount > 0); };
+  top.appendChild(bulk);
+  card.appendChild(top);
+
+  card.appendChild(el('p','doubt-q', '“' + esc(g.q) + '”'));
+  if(g.lvlT) card.appendChild(el('div','dgroup-lvl', esc(g.lvlT)));
+
+  const ul = el('ul','dgroup-students');
+  g.entries.forEach(function(e){
+    const done = !!e.rec.resuelta;
+    const li = el('li','dg-row' + (done ? ' is-done' : ''));
+    const main = el('div','dg-main');
+    main.appendChild(el('span','dg-name', esc(e.student)));
+    if(e.rec.nota) main.appendChild(el('span','dg-note', '“' + esc(e.rec.nota) + '”'));
+    li.appendChild(main);
+    const t = el('button','dg-toggle', done ? '↺' : '✓');
+    t.type = 'button';
+    t.title = (done ? 'Reabrir para ' : 'Marcar resuelta para ') + e.student;
+    t.setAttribute('aria-label', t.title);
+    t.onclick = function(){ setDoubtResolved(e.code, e.key, !done, e.rec); };
+    li.appendChild(t);
+    ul.appendChild(li);
+  });
+  card.appendChild(ul);
+  return card;
 }
 
 /* ============================================================
@@ -2405,7 +2506,8 @@ function viewMonitorLogin(){
     try{
       const [resData, profData] = await Promise.all([
         apiGet({action:'listResults', pass}),
-        apiGet({action:'listProfiles', pass})
+        apiGet({action:'listProfiles', pass}),
+        loadDynamicContent()  // para saber qué actividades están habilitadas
       ]);
       state.monitorPass = pass;
       state.monitorAuthed = true;
@@ -2431,12 +2533,14 @@ async function loadDashboard(){
   try{
     const [resData, profData] = await Promise.all([
       apiGet({action:'listResults', pass: state.monitorPass}),
-      apiGet({action:'listProfiles', pass: state.monitorPass})
+      apiGet({action:'listProfiles', pass: state.monitorPass}),
+      loadDynamicContent()
     ]);
     state.dashboardRows = mapResultsRows(resData.results);
     state.dashboardProfiles = mapProfilesRows(profData.profiles);
     state.dashboardError = null;
     state._doubtError = null;
+    state._doubtFilter = '';
   }catch(err){
     state.dashboardRows = [];
     state.dashboardProfiles = [];
@@ -2489,64 +2593,90 @@ function viewDashboard(){
     return wrap;
   }
 
-  // ---- Dudas marcadas por los estudiantes ----
-  const doubts = collectDoubts(profiles);
-  const pending = doubts.filter(function(d){ return !d.rec.resuelta; });
-  const resolved = doubts.filter(function(d){ return d.rec.resuelta; });
-  card.appendChild(el('div','panel-section','Dudas marcadas' +
-    (pending.length ? ' (' + pending.length + ' pendiente' + (pending.length === 1 ? '' : 's') + ')' : '')));
+  // ---- Dudas de los estudiantes (agrupadas por pregunta) ----
+  const allGroups = groupDoubts(collectDoubts(profiles));
+  const totalMarks = allGroups.reduce(function(s,g){ return s + g.total; }, 0);
+  const totalPend = allGroups.reduce(function(s,g){ return s + g.pendCount; }, 0);
+
+  card.appendChild(el('div','panel-section','Dudas de los estudiantes' +
+    (totalPend ? ' · ' + totalPend + ' sin resolver' : '')));
 
   if(state._doubtError){
     card.appendChild(el('p','panel-note is-bad', esc(state._doubtError)));
   }
 
-  function doubtItem(entry, isResolved){
-    const rec = entry.rec;
-    const item = el('div','doubt-item' + (isResolved ? ' is-resolved' : ''));
-    const meta = el('div','doubt-meta');
-    meta.appendChild(el('span','doubt-tag', esc(rec.modT || rec.mod || 'Módulo')));
-    if(rec.lvlT) meta.appendChild(el('span','', esc(rec.lvlT)));
-    if(rec.t){
-      meta.appendChild(el('span','doubt-when',
-        new Date(rec.t).toLocaleString('es-CO', { dateStyle:'short', timeStyle:'short' })));
-    }
-    item.appendChild(meta);
-    item.appendChild(el('p','doubt-q', '“' + esc(rec.q) + '”'));
-    if(rec.nota) item.appendChild(el('p','doubt-note', esc(rec.nota)));
-    item.appendChild(el('div','doubt-who', esc(entry.student) + ' · ' + esc(entry.code)));
-    const btn = el('button','doubt-resolve', isResolved ? '↺ Reabrir' : '✓ Marcar como resuelta');
-    btn.type = 'button';
-    btn.onclick = function(){ setDoubtResolved(entry.code, entry.key, !isResolved, rec); };
-    item.appendChild(btn);
-    return item;
-  }
-
-  if(!doubts.length){
+  if(!allGroups.length){
     card.appendChild(el('p','panel-foot','Ningún estudiante ha marcado preguntas con dudas todavía. Aparecen aquí cuando alguien toca "No entiendo esta pregunta" durante una actividad.'));
   } else {
-    if(pending.length){
-      const list = el('div','doubt-list');
-      pending.forEach(function(e){ list.appendChild(doubtItem(e, false)); });
+    // resumen
+    card.appendChild(el('p','panel-foot',
+      allGroups.length + ' pregunta' + (allGroups.length===1?'':'s') + ' · ' +
+      totalMarks + ' marca' + (totalMarks===1?'':'s') + ' en total'));
+
+    // filtro por módulo (solo si hay dudas de más de un módulo)
+    const modsWithDoubts = [];
+    allGroups.forEach(function(g){
+      if(!modsWithDoubts.some(function(m){ return m.id === g.mod; })){
+        modsWithDoubts.push({ id:g.mod, label:g.modT });
+      }
+    });
+    if(state._doubtFilter && !modsWithDoubts.some(function(m){ return m.id === state._doubtFilter; })){
+      state._doubtFilter = '';
+    }
+    if(modsWithDoubts.length > 1){
+      const chips = el('div','dfilter');
+      const mk = function(id, label, count){
+        const b = el('button','dfilter-chip' + ((state._doubtFilter||'') === id ? ' is-active' : ''),
+          esc(label) + ' (' + count + ')');
+        b.type = 'button';
+        b.onclick = function(){ state._doubtFilter = id; render(); };
+        return b;
+      };
+      chips.appendChild(mk('', 'Todos', allGroups.length));
+      modsWithDoubts.forEach(function(m){
+        chips.appendChild(mk(m.id, m.label, allGroups.filter(function(g){ return g.mod === m.id; }).length));
+      });
+      card.appendChild(chips);
+    }
+
+    const flt = state._doubtFilter || '';
+    const shown = flt ? allGroups.filter(function(g){ return g.mod === flt; }) : allGroups;
+    const active = shown.filter(function(g){ return !g.allResolved; });
+    const done = shown.filter(function(g){ return g.allResolved; });
+
+    if(active.length){
+      const list = el('div','dgroup-list');
+      active.forEach(function(g){ list.appendChild(doubtGroupCard(g)); });
       card.appendChild(list);
     } else {
-      card.appendChild(el('p','panel-foot','No hay dudas pendientes. 🎉'));
+      card.appendChild(el('p','panel-foot','No hay preguntas pendientes en esta vista. 🎉'));
     }
-    if(resolved.length){
-      card.appendChild(el('div','doubt-resolved-label', 'Resueltas (' + resolved.length + ')'));
-      const rlist = el('div','doubt-list');
-      resolved.forEach(function(e){ rlist.appendChild(doubtItem(e, true)); });
-      card.appendChild(rlist);
+
+    if(done.length){
+      const det = document.createElement('details');
+      det.className = 'dresolved';
+      if(state._resolvedOpen) det.open = true;
+      det.addEventListener('toggle', function(){ state._resolvedOpen = det.open; });
+      const sum = document.createElement('summary');
+      sum.textContent = 'Resueltas (' + done.length + ' pregunta' + (done.length===1?'':'s') + ')';
+      det.appendChild(sum);
+      const list = el('div','dgroup-list');
+      done.forEach(function(g){ list.appendChild(doubtGroupCard(g)); });
+      det.appendChild(list);
+      card.appendChild(det);
     }
   }
 
   // ---- Actividades (puntaje + tiempo por estudiante al entrar) ----
+  // Solo se muestran las que están habilitadas para los estudiantes: no
+  // bloqueadas y con contenido cargado. Al habilitar una nueva, aparece aquí.
   card.appendChild(el('div','panel-section','Actividades'));
   const grid=el('div','mod-list');
   let anyActivity=false;
   Object.values(CATEGORIES).forEach(cat=>{
     cat.moduleIds.forEach((mid,idx)=>{
       const mod=MODULES[mid];
-      if(!mod || !mod.levels.length) return; // aún sin contenido, se omite del panel
+      if(!mod || isModuleLocked(mid) || !mod.levels.length) return;
       anyActivity=true;
       const num=String(idx+1).padStart(2,'0');
       let touched=0, sumScore=0, scoredCount=0, sumTime=0;
