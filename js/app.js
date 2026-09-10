@@ -205,13 +205,118 @@ const state = {
   dashboardError:null,
   monitorPass:'',
   monitorAuthed:false,
-  saved:false
+  saved:false,
+  doubts:{},            // dudas del estudiante (reflejo del listener de Firestore)
+  dashboardDoubts:null  // dudas de todo el grupo (listener del monitor)
 };
 
 function homeView(){
   if(state.currentCategory) return 'menu';
   if(state.student.code) return 'categories';
   return 'welcome';
+}
+
+/* ============================================================
+   FIRESTORE — solo las "dudas" viven aquí (tiempo real).
+   El resto (perfiles, progreso, resultados, contenido) sigue en
+   Google Sheets / Apps Script.
+   ============================================================ */
+let _fs = null;          // instancia de Firestore
+let _fsReady = null;     // Promise<boolean> — true cuando la sesión anónima está lista
+let _doubtsUnsub = null; // listener de las dudas del estudiante
+let _monDoubtsUnsub = null;
+
+function initFirestore(){
+  if(_fsReady) return _fsReady;
+  _fsReady = new Promise(function(resolve){
+    try{
+      if(!window.MORFO_FIREBASE || typeof firebase === 'undefined'){ resolve(false); return; }
+      firebase.initializeApp(window.MORFO_FIREBASE);
+      _fs = firebase.firestore();
+      firebase.auth().signInAnonymously()
+        .then(function(){ resolve(true); })
+        .catch(function(e){ console.error('Firebase auth anónima', e); resolve(false); });
+    }catch(e){ console.error('Firebase init', e); resolve(false); }
+  });
+  return _fsReady;
+}
+
+function doubtDocId(code, key){
+  return String(code) + '__' + String(key).replace(/[^A-Za-z0-9_-]/g, '_');
+}
+
+// Re-render diferido para los listeners: espera a que el usuario deje de
+// escribir para no perderle el foco de un input.
+let _fsRenderT = null;
+function scheduleFsRender(){
+  clearTimeout(_fsRenderT);
+  _fsRenderT = setTimeout(function(){
+    const ae = document.activeElement;
+    if(ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')){ scheduleFsRender(); return; }
+    render();
+  }, 450);
+}
+
+function subscribeStudentDoubts(code){
+  if(!_fs || !code) return;
+  if(_doubtsUnsub){ _doubtsUnsub(); _doubtsUnsub = null; }
+  _doubtsUnsub = _fs.collection('dudas').where('code', '==', String(code)).onSnapshot(
+    function(snap){
+      const map = {};
+      snap.forEach(function(doc){ const d = doc.data(); if(d && d.key) map[d.key] = d; });
+      state.doubts = map;
+      if(state.student.code) scheduleFsRender();
+    },
+    function(err){ console.error('Listener dudas (estudiante)', err); }
+  );
+}
+
+function subscribeMonitorDoubts(){
+  if(!_fs) return;
+  if(_monDoubtsUnsub){ _monDoubtsUnsub(); _monDoubtsUnsub = null; }
+  _monDoubtsUnsub = _fs.collection('dudas').onSnapshot(
+    function(snap){
+      const arr = [];
+      snap.forEach(function(doc){
+        const d = doc.data();
+        if(d && d.q && d.key){ arr.push({ student: d.student || '—', code: d.code || '—', key: d.key, rec: d }); }
+      });
+      state.dashboardDoubts = arr;
+      if(state.monitorAuthed) scheduleFsRender();
+    },
+    function(err){
+      console.error('Listener dudas (monitor)', err);
+      state.dashboardDoubts = [];
+      state._doubtError = 'No se pudieron cargar las dudas en tiempo real.';
+      if(state.monitorAuthed) scheduleFsRender();
+    }
+  );
+}
+
+function unsubscribeDoubts(){
+  if(_doubtsUnsub){ _doubtsUnsub(); _doubtsUnsub = null; }
+  if(_monDoubtsUnsub){ _monDoubtsUnsub(); _monDoubtsUnsub = null; }
+}
+
+// Traslada a Firestore, una sola vez, las dudas que quedaron guardadas
+// dentro del perfil (formato viejo state.progress['@dudas']).
+async function migrateDoubtsToFirestore(){
+  const old = state.progress && state.progress['@dudas'];
+  if(!old || typeof old !== 'object' || !Object.keys(old).length) return;
+  if(!_fs) return;
+  const code = state.student.code, student = state.student.name;
+  try{
+    const batch = _fs.batch();
+    Object.keys(old).forEach(function(k){
+      const rec = old[k];
+      if(!rec || !rec.q) return;
+      const ref = _fs.collection('dudas').doc(doubtDocId(code, k));
+      batch.set(ref, Object.assign({ code:code, student:student, key:k, nota:'' }, rec), { merge:true });
+    });
+    await batch.commit();
+    delete state.progress['@dudas'];
+    saveProfile();
+  }catch(e){ console.error('Migración de dudas a Firestore', e); }
 }
 
 function levelBackTarget(){
@@ -512,10 +617,15 @@ async function resetProfile(){
 }
 
 function logout(){
+  unsubscribeDoubts();
   state.student={name:'',code:''};
   state.progress={};
   state.timers={};
   state.saved=false;
+  state.doubts={};
+  state.dashboardDoubts=null;
+  state.monitorAuthed=false;
+  state.monitorPass='';
   state.currentCategory=null;
   state.currentModule=null;
   state._levelRuntime=null;
@@ -873,6 +983,15 @@ function viewWelcome(){
       state.view = 'categories';
       render();
       saveProfile();
+      // Dudas en tiempo real (Firestore)
+      initFirestore().then(function(ok){
+        state._fsOk = ok;
+        if(ok){
+          subscribeStudentDoubts(code);
+          migrateDoubtsToFirestore();
+        }
+        render();
+      });
     }catch(err){
       setBusy(false);
       setHint('No se pudo cargar tu perfil. Detalle: ' + (err && err.message ? err.message : String(err)), 'error');
@@ -1847,38 +1966,55 @@ function clearResume(modId, levelId){
 
 /* ============================================================
    DUDAS DEL ESTUDIANTE (preguntas marcadas para el monitor)
-   Se guardan dentro de state.progress con la clave "@dudas"
-   (un objeto por pregunta), así viajan con el perfil sin tocar
-   el backend. El monitor las lee desde el perfil de cada quien.
+   Viven en la colección Firestore "dudas", un documento por
+   (código, pregunta), sincronizadas en tiempo real con listeners.
    ============================================================ */
 function doubtKey(modId, levelId, origQIdx){ return modId + '|' + levelId + '|' + origQIdx; }
 
+// Las dudas del estudiante viven en Firestore (state.doubts es el reflejo
+// local que mantiene el listener en tiempo real).
 function getDoubts(){
-  const d = state.progress['@dudas'];
-  return (d && typeof d === 'object') ? d : null;
+  const d = state.doubts;
+  return (d && typeof d === 'object' && Object.keys(d).length) ? d : null;
 }
-function isDoubtMarked(k){ const d = getDoubts(); return !!(d && d[k]); }
+function isDoubtMarked(k){ return !!(state.doubts && state.doubts[k]); }
+
 function addDoubt(k, rec){
-  if(!state.progress['@dudas'] || typeof state.progress['@dudas'] !== 'object') state.progress['@dudas'] = {};
-  state.progress['@dudas'][k] = rec;
-  saveProfile();
+  const code = state.student.code, student = state.student.name;
+  const full = Object.assign({ code:String(code), student:student, key:k }, rec);
+  if(!state.doubts) state.doubts = {};
+  state.doubts[k] = full; // optimista; el listener confirma
+  if(_fs){
+    _fs.collection('dudas').doc(doubtDocId(code, k)).set(full).catch(function(e){
+      console.error('addDoubt', e);
+      state._doubtError = 'No se pudo guardar la duda. Intenta de nuevo.';
+      render();
+    });
+  }
 }
 function updateDoubtNote(k, nota){
-  const d = getDoubts();
-  if(d && d[k] && d[k].nota !== nota){ d[k].nota = nota; saveProfile(); }
+  const d = state.doubts;
+  if(!d || !d[k] || d[k].nota === nota) return;
+  d[k].nota = nota;
+  if(_fs){
+    _fs.collection('dudas').doc(doubtDocId(state.student.code, k)).update({ nota: nota })
+      .catch(function(e){ console.error('updateDoubtNote', e); });
+  }
 }
 function removeDoubt(k){
-  const d = getDoubts();
-  if(d && d[k]){
-    delete d[k];
-    if(!Object.keys(d).length) delete state.progress['@dudas'];
-    saveProfile();
+  const d = state.doubts;
+  if(!d || !d[k]) return;
+  delete d[k];
+  if(_fs){
+    _fs.collection('dudas').doc(doubtDocId(state.student.code, k)).delete()
+      .catch(function(e){ console.error('removeDoubt', e); });
   }
 }
 
 // Control "no entiendo esta pregunta" para actividades por preguntas.
 // ctx: { mod, level, origQIdx, qText }
 function appendDoubtControl(A, ctx){
+  if(state._fsOk === false) return; // sin servidor de dudas, no se ofrece marcar
   const k = doubtKey(ctx.mod.id, ctx.level.id, ctx.origQIdx);
   const marked = isDoubtMarked(k);
   const d = marked ? getDoubts()[k] : null;
@@ -1930,22 +2066,6 @@ function appendDoubtControl(A, ctx){
   A.content.appendChild(wrap);
 }
 
-// Reúne todas las dudas marcadas de todos los perfiles (panel del monitor).
-function collectDoubts(profiles){
-  const out = [];
-  (profiles || []).forEach(p=>{
-    const d = p.progress && p.progress['@dudas'];
-    if(d && typeof d === 'object'){
-      Object.keys(d).forEach(key=>{
-        const rec = d[key];
-        if(rec && rec.q){ out.push({ student: p.name || '—', code: p.code || '—', key: key, rec: rec }); }
-      });
-    }
-  });
-  out.sort((a,b)=> String(b.rec.t || '').localeCompare(String(a.rec.t || '')));
-  return out;
-}
-
 // Agrupa las dudas por pregunta (misma clave = misma pregunta, aunque la
 // marquen varios estudiantes). Ordena: preguntas con más pendientes primero.
 function groupDoubts(doubts){
@@ -1978,15 +2098,26 @@ function groupDoubts(doubts){
   return groups;
 }
 
-// El monitor marca/reabre una duda. Actualización optimista + POST al backend.
+function doubtRef(code, key){
+  return _fs.collection('dudas').doc(doubtDocId(code, key));
+}
+function doubtErrText(e){
+  return 'No se pudo actualizar la duda. Detalle: ' + (e && e.message ? e.message : String(e));
+}
+const FS_DEL = function(){ return firebase.firestore.FieldValue.delete(); };
+
+// El monitor marca / reabre una duda. Escritura optimista + Firestore.
 async function setDoubtResolved(code, key, resolved, rec){
   const prevR = rec.resuelta, prevAt = rec.resueltaAt;
   if(resolved){ rec.resuelta = true; rec.resueltaAt = new Date().toISOString(); }
   else { delete rec.resuelta; delete rec.resueltaAt; }
   state._doubtError = null;
   render();
+  if(!_fs) return;
   try{
-    await apiPost({ action:'resolveDoubt', pass: state.monitorPass, code: code, key: key, resolved: !!resolved });
+    await doubtRef(code, key).update(resolved
+      ? { resuelta:true, resueltaAt: rec.resueltaAt }
+      : { resuelta: FS_DEL(), resueltaAt: FS_DEL() });
   }catch(e){
     if(prevR){ rec.resuelta = prevR; rec.resueltaAt = prevAt; }
     else { delete rec.resuelta; delete rec.resueltaAt; }
@@ -1995,21 +2126,24 @@ async function setDoubtResolved(code, key, resolved, rec){
   }
 }
 
-// Resuelve (o reabre) toda una pregunta de golpe: todos los estudiantes cuyo
-// estado no coincida con `resolved`.
+// Resuelve (o reabre) toda una pregunta: todos los estudiantes cuyo estado
+// no coincida con `resolved`.
 async function resolveDoubtGroup(group, resolved){
   const targets = group.entries.filter(function(x){ return !!x.rec.resuelta !== !!resolved; });
-  if(!targets.length) return;
+  if(!targets.length || !_fs) return;
   const undo = targets.map(function(x){ return { rec:x.rec, r:x.rec.resuelta, at:x.rec.resueltaAt }; });
+  const now = new Date().toISOString();
   targets.forEach(function(x){
-    if(resolved){ x.rec.resuelta = true; x.rec.resueltaAt = new Date().toISOString(); }
+    if(resolved){ x.rec.resuelta = true; x.rec.resueltaAt = now; }
     else { delete x.rec.resuelta; delete x.rec.resueltaAt; }
   });
   state._doubtError = null;
   render();
   try{
     await Promise.all(targets.map(function(x){
-      return apiPost({ action:'resolveDoubt', pass: state.monitorPass, code: x.code, key: x.key, resolved: !!resolved });
+      return doubtRef(x.code, x.key).update(resolved
+        ? { resuelta:true, resueltaAt: now }
+        : { resuelta: FS_DEL(), resueltaAt: FS_DEL() });
     }));
   }catch(e){
     undo.forEach(function(u){
@@ -2022,25 +2156,25 @@ async function resolveDoubtGroup(group, resolved){
 }
 
 // El monitor escribe una respuesta para toda la pregunta (la ven los
-// estudiantes). Responder también marca la duda como resuelta.
+// estudiantes en tiempo real). Responder también marca la duda como resuelta.
 async function answerDoubtGroup(group, respuesta){
+  if(!_fs) return;
   const undo = group.entries.map(function(x){
     return { rec:x.rec, resp:x.rec.respuesta, respAt:x.rec.respuestaAt, r:x.rec.resuelta, at:x.rec.resueltaAt };
   });
   const now = new Date().toISOString();
   group.entries.forEach(function(x){
-    x.rec.respuesta = respuesta;
-    x.rec.respuestaAt = now;
-    x.rec.resuelta = true;
-    x.rec.resueltaAt = now;
+    x.rec.respuesta = respuesta; x.rec.respuestaAt = now;
+    x.rec.resuelta = true; x.rec.resueltaAt = now;
   });
   state._doubtError = null;
-  state._resolvedOpen = true; // para que el monitor siga viendo lo que acaba de responder
+  state._resolvedOpen = true;
   render();
   try{
     await Promise.all(group.entries.map(function(x){
-      return apiPost({ action:'resolveDoubt', pass: state.monitorPass, code: x.code, key: x.key,
-        respuesta: respuesta, resolved: true });
+      return doubtRef(x.code, x.key).update({
+        respuesta: respuesta, respuestaAt: now, resuelta: true, resueltaAt: now
+      });
     }));
   }catch(e){
     undo.forEach(function(u){
@@ -2054,26 +2188,6 @@ async function answerDoubtGroup(group, respuesta){
   }
 }
 
-function doubtErrText(e){
-  return 'No se pudo actualizar la duda. ' +
-    (String(e && e.message || e).indexOf('reconocida') !== -1
-      ? 'Falta actualizar el backend (acción resolveDoubt).'
-      : 'Detalle: ' + (e && e.message ? e.message : String(e)));
-}
-
-// El estudiante recarga sus dudas (para ver respuestas nuevas del monitor)
-// sin perder el resto del estado local.
-async function reloadDoubts(){
-  if(!state.student.code) return;
-  try{
-    const existing = await loadProfile(state.student.code);
-    if(existing && existing.progress){
-      if(existing.progress['@dudas']) state.progress['@dudas'] = existing.progress['@dudas'];
-      else delete state.progress['@dudas'];
-    }
-  }catch(e){ console.error('No se pudieron recargar las dudas', e); }
-}
-
 /* ============================================================
    VISTA: MIS DUDAS (estudiante) — preguntas marcadas + respuestas
    ============================================================ */
@@ -2081,17 +2195,8 @@ function viewDoubts(){
   const wrap = el('div','home');
   const head = el('div','home-head');
   head.appendChild(el('h1','','Mis dudas'));
-  head.appendChild(el('p','','Las preguntas que marcaste y las respuestas de tu monitor.'));
+  head.appendChild(el('p','','Las preguntas que marcaste y las respuestas de tu monitor. Se actualiza en vivo.'));
   wrap.appendChild(head);
-
-  const refresh = el('button','act-btn is-ghost', state._doubtsRefreshing ? 'Buscando…' : '↻ Buscar respuestas nuevas');
-  refresh.type = 'button';
-  refresh.disabled = !!state._doubtsRefreshing;
-  refresh.onclick = function(){
-    state._doubtsRefreshing = true; render();
-    reloadDoubts().then(function(){ state._doubtsRefreshing = false; render(); });
-  };
-  wrap.appendChild(refresh);
 
   const d = getDoubts();
   const items = d ? Object.keys(d).map(function(k){ return { k:k, rec:d[k] }; }) : [];
@@ -2681,6 +2786,11 @@ function viewMonitorLogin(){
       state.dashboardActivityId = null;
       state.view='dashboard';
       render();
+      initFirestore().then(function(ok){
+        if(ok) subscribeMonitorDoubts();
+        else { state.dashboardDoubts = []; state._doubtError = 'No se pudieron cargar las dudas en tiempo real.'; }
+        render();
+      });
     }catch(e){
       goBtn.disabled=false; goBtn.textContent='Entrar al panel →';
       setErr('Clave incorrecta. Detalle: '+(e&&e.message?e.message:String(e)));
@@ -2723,6 +2833,8 @@ function viewDashboard(){
     state.monitorPass='';
     state.dashboardRows=null;
     state.dashboardProfiles=null;
+    state.dashboardDoubts=null;
+    if(_monDoubtsUnsub){ _monDoubtsUnsub(); _monDoubtsUnsub=null; }
     state.view = homeView();
     render();
   }));
@@ -2757,8 +2869,8 @@ function viewDashboard(){
     return wrap;
   }
 
-  // ---- Dudas de los estudiantes (agrupadas por pregunta) ----
-  const allGroups = groupDoubts(collectDoubts(profiles));
+  // ---- Dudas de los estudiantes (agrupadas por pregunta, en tiempo real) ----
+  const allGroups = groupDoubts(state.dashboardDoubts || []);
   const totalMarks = allGroups.reduce(function(s,g){ return s + g.total; }, 0);
   const totalPend = allGroups.reduce(function(s,g){ return s + g.pendCount; }, 0);
 
@@ -2769,7 +2881,9 @@ function viewDashboard(){
     card.appendChild(el('p','panel-note is-bad', esc(state._doubtError)));
   }
 
-  if(!allGroups.length){
+  if(state.dashboardDoubts === null){
+    card.appendChild(el('p','panel-foot','Cargando dudas…'));
+  } else if(!allGroups.length){
     card.appendChild(el('p','panel-foot','Ningún estudiante ha marcado preguntas con dudas todavía. Aparecen aquí cuando alguien toca "No entiendo esta pregunta" durante una actividad.'));
   } else {
     // resumen
@@ -2970,6 +3084,7 @@ function viewDashboardActivity(){
 /* ============================================================
    INIT
    ============================================================ */
+initFirestore(); // calienta la sesión anónima mientras el usuario escribe su código
 render();
 
 })();
