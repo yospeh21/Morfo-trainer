@@ -293,7 +293,7 @@ function subscribeMonitorDoubts(){
   );
 }
 
-let _monProfUnsub = null;
+let _monProfUnsub = null, _monResUnsub = null;
 
 function unsubscribeDoubts(){
   if(_doubtsUnsub){ _doubtsUnsub(); _doubtsUnsub = null; }
@@ -302,6 +302,7 @@ function unsubscribeDoubts(){
 function unsubscribeMonitor(){
   if(_monDoubtsUnsub){ _monDoubtsUnsub(); _monDoubtsUnsub = null; }
   if(_monProfUnsub){ _monProfUnsub(); _monProfUnsub = null; }
+  if(_monResUnsub){ _monResUnsub(); _monResUnsub = null; }
 }
 
 /* ============================================================
@@ -406,6 +407,58 @@ async function gapFillProfiles(){
     });
     await batch.commit();
   }catch(e){ console.error('gapFillProfiles', e); }
+}
+
+/* ---- RESULTADOS (informes) en Firestore, colección "resultados" ---- */
+function resultRowFromDoc(id, r){
+  let rowsArr = [], boss = null;
+  try{ rowsArr = r.rows ? (typeof r.rows === 'string' ? JSON.parse(r.rows) : r.rows) : []; }catch(e){}
+  try{ boss = r.boss ? (typeof r.boss === 'string' ? JSON.parse(r.boss) : r.boss) : null; }catch(e){}
+  return { name:r.name, code:id, timestamp:r.timestamp || '',
+           overall:Number(r.overall)||0, totalCorrect:Number(r.totalCorrect)||0, totalQ:Number(r.totalQ)||0,
+           rows: rowsArr, boss: boss };
+}
+
+function subscribeMonitorResults(){
+  if(!_fs) return;
+  if(_monResUnsub){ _monResUnsub(); _monResUnsub = null; }
+  _monResUnsub = _fs.collection('resultados').onSnapshot(function(snap){
+    const rows = [];
+    snap.forEach(function(doc){ rows.push(resultRowFromDoc(doc.id, doc.data())); });
+    rows.sort(function(a,b){ return String(b.timestamp||'').localeCompare(String(a.timestamp||'')); });
+    state.dashboardRows = rows;
+    if(state.monitorAuthed) scheduleFsRender();
+  }, function(err){
+    console.error('Listener resultados (monitor)', err);
+    apiGet({ action:'listResults', pass: state.monitorPass })
+      .then(function(rd){ state.dashboardRows = mapResultsRows(rd.results); if(state.monitorAuthed) render(); })
+      .catch(function(){ state.dashboardRows = []; if(state.monitorAuthed) render(); });
+  });
+}
+
+// Una vez: sube a Firestore los informes que solo estén en Sheets.
+async function gapFillResults(){
+  if(!_fs) return;
+  try{
+    const [sheetData, fsSnap] = await Promise.all([
+      apiGet({ action:'listResults', pass: state.monitorPass }),
+      _fs.collection('resultados').get()
+    ]);
+    const have = {};
+    fsSnap.forEach(function(d){ have[d.id] = true; });
+    const missing = (sheetData.results || []).filter(function(r){ return r.code && !have[String(r.code)]; });
+    if(!missing.length) return;
+    const batch = _fs.batch();
+    missing.forEach(function(r){
+      batch.set(_fs.collection('resultados').doc(String(r.code)), {
+        name: r.name || '', code: String(r.code), timestamp: r.timestamp || '',
+        overall: Number(r.overall)||0, totalCorrect: Number(r.totalCorrect)||0, totalQ: Number(r.totalQ)||0,
+        rows: typeof r.rows === 'string' ? r.rows : JSON.stringify(r.rows || []),
+        boss: typeof r.boss === 'string' ? r.boss : JSON.stringify(r.boss || null)
+      });
+    });
+    await batch.commit();
+  }catch(e){ console.error('gapFillResults', e); }
 }
 
 /* ============================================================
@@ -784,6 +837,7 @@ function logout(){
   state.doubts={};
   state.dashboardDoubts=null;
   state.dashboardProfiles=null;
+  state.dashboardRows=null;
   state.monitorAuthed=false;
   state.monitorPass='';
   state.currentCategory=null;
@@ -2763,19 +2817,31 @@ function computeReport(){
 }
 
 async function autoSaveResult(){
+  if(!state.student.code) return;
+  const rep = computeReport();
+  if(rep.rows.length===0) return; // nada que reportar todavía
+  const code = String(state.student.code);
+  const ts = new Date().toISOString();
+  if(_fs){
+    try{
+      await _fs.collection('resultados').doc(code).set({
+        name: state.student.name || '', code: code, timestamp: ts,
+        overall: rep.overall, totalCorrect: rep.totalCorrect, totalQ: rep.totalQ,
+        rows: JSON.stringify(rep.rows), boss: JSON.stringify(rep.boss || null)
+      });
+      state.saved = true;
+    }catch(e){ console.error('autoSaveResult (Firestore)', e); }
+  }
+  // transición: también en Sheets
   try{
-    if(!state.student.code) return;
-    const rep = computeReport();
-    if(rep.rows.length===0) return; // nada que reportar todavía
     await apiPost({
       action:'saveResult',
-      name: state.student.name, code: state.student.code,
-      timestamp: new Date().toISOString(),
+      name: state.student.name, code: code, timestamp: ts,
       overall: rep.overall, totalCorrect: rep.totalCorrect, totalQ: rep.totalQ,
       rows: rep.rows, boss: rep.boss || null
     });
     state.saved = true;
-  }catch(e){ console.error('No se pudo autoguardar el informe', e); }
+  }catch(e){ console.error('autoSaveResult (Sheets)', e); }
 }
 
 function viewReport(){
@@ -2938,14 +3004,15 @@ function viewMonitorLogin(){
     setErr('');
     goBtn.disabled=true; goBtn.textContent='Verificando…';
     try{
-      const [resData] = await Promise.all([
-        apiGet({action:'listResults', pass}), // valida la clave del lado del servidor
+      await Promise.all([
+        apiGet({action:'listResults', pass}), // solo valida la clave del lado del servidor
         loadDynamicContent()                  // para saber qué actividades están habilitadas
       ]);
       state.monitorPass = pass;
       state.monitorAuthed = true;
-      state.dashboardRows = mapResultsRows(resData.results);
-      state.dashboardProfiles = null; // lo llena el listener de Firestore
+      state.dashboardRows = null;      // los llenan los listeners de Firestore
+      state.dashboardProfiles = null;
+      state.dashboardDoubts = null;
       state.dashboardError = null;
       state.dashboardActivityId = null;
       state.view='dashboard';
@@ -2954,14 +3021,20 @@ function viewMonitorLogin(){
         if(ok){
           subscribeMonitorDoubts();
           subscribeMonitorProfiles();
+          subscribeMonitorResults();
           gapFillProfiles();
+          gapFillResults();
         } else {
           state.dashboardDoubts = [];
-          state._doubtError = 'No se pudieron cargar las dudas en tiempo real.';
-          apiGet({action:'listProfiles', pass: state.monitorPass}).then(function(pd){
-            state.dashboardProfiles = mapProfilesRows(pd.profiles);
+          state._doubtError = 'Sin conexión con la base de datos en tiempo real.';
+          Promise.all([
+            apiGet({action:'listResults', pass: state.monitorPass}),
+            apiGet({action:'listProfiles', pass: state.monitorPass})
+          ]).then(function(r){
+            state.dashboardRows = mapResultsRows(r[0].results);
+            state.dashboardProfiles = mapProfilesRows(r[1].profiles);
             render();
-          }).catch(function(){ state.dashboardProfiles = []; render(); });
+          }).catch(function(){ state.dashboardRows = []; state.dashboardProfiles = []; render(); });
         }
         render();
       });
@@ -2975,24 +3048,6 @@ function viewMonitorLogin(){
 
   wrap.appendChild(card);
   return wrap;
-}
-
-// Solo refresca los "Resultados" (informes) desde Sheets. Los perfiles y las
-// dudas se mantienen solos con los listeners de Firestore.
-async function loadDashboard(){
-  try{
-    const [resData] = await Promise.all([
-      apiGet({action:'listResults', pass: state.monitorPass}),
-      loadDynamicContent()
-    ]);
-    state.dashboardRows = mapResultsRows(resData.results);
-    state.dashboardError = null;
-  }catch(err){
-    state.dashboardRows = [];
-    state.dashboardError = err && err.message ? err.message : String(err);
-    console.error('Dashboard load error', err);
-  }
-  render();
 }
 
 const STATUS_LABEL = { not_started:'No iniciada', in_progress:'En progreso', completed:'Completada' };
@@ -3017,18 +3072,22 @@ function viewDashboard(){
   card.appendChild(head);
   card.appendChild(el('p','panel-lead','Vista general de todos los estudiantes, y el detalle de cada actividad con puntaje y tiempo invertido.'));
 
-  if(state.dashboardRows===null){
+  if(state.dashboardRows===null && state.dashboardProfiles===null){
     card.appendChild(el('p','panel-lead','Cargando…'));
     wrap.appendChild(card);
-    loadDashboard();
     return wrap;
   }
 
-  const rows=state.dashboardRows;
+  const rows=state.dashboardRows || [];
   const profiles=state.dashboardProfiles || [];
-  const refreshBtn=el('button','act-btn is-ghost','↻ Actualizar');
+  const refreshBtn=el('button','act-btn is-ghost', state._reloadingContent ? 'Buscando…' : '↻ Buscar contenido nuevo');
   refreshBtn.type='button';
-  refreshBtn.onclick=()=>{ state.dashboardRows=null; render(); };
+  refreshBtn.disabled = !!state._reloadingContent;
+  refreshBtn.onclick=()=>{
+    state._reloadingContent = true; render();
+    _dynamicContentLoaded = false;
+    loadDynamicContent().then(function(){ state._reloadingContent = false; render(); });
+  };
   card.appendChild(refreshBtn);
 
   // ---- Dudas de los estudiantes (agrupadas por pregunta, en tiempo real) ----
@@ -3150,9 +3209,11 @@ function viewDashboard(){
   if(anyActivity){ card.appendChild(grid); }
   else { card.appendChild(el('p','panel-foot','Todavía no hay módulos con contenido cargado.')); }
 
-  // ---- Resumen general por estudiante ----
-  card.appendChild(el('div','panel-section','Resumen general ('+rows.length+' informe'+(rows.length===1?'':'s')+' enviado'+(rows.length===1?'':'s')+')'));
-  if(rows.length===0){
+  // ---- Resumen general por estudiante (en tiempo real) ----
+  card.appendChild(el('div','panel-section','Resumen general' + (state.dashboardRows ? ' (' + rows.length + ' informe' + (rows.length===1?'':'s') + ')' : '')));
+  if(state.dashboardRows === null){
+    card.appendChild(el('p','panel-foot','Cargando informes…'));
+  } else if(rows.length===0){
     card.appendChild(el('p','panel-foot','Ningún estudiante ha enviado su informe todavía (se envía automáticamente al completar un nivel).'));
   } else {
     const dw=el('div','data-wrap');
