@@ -1980,16 +1980,18 @@ function getDoubts(){
 function isDoubtMarked(k){ return !!(state.doubts && state.doubts[k]); }
 
 function addDoubt(k, rec){
-  const code = state.student.code, student = state.student.name;
-  const full = Object.assign({ code:String(code), student:student, key:k }, rec);
+  const code = state.student.code, student = state.student.name || '';
+  const full = Object.assign({ code:String(code), student:String(student), key:k }, rec);
   if(!state.doubts) state.doubts = {};
   state.doubts[k] = full; // optimista; el listener confirma
   if(_fs){
     _fs.collection('dudas').doc(doubtDocId(code, k)).set(full).catch(function(e){
       console.error('addDoubt', e);
-      state._doubtError = 'No se pudo guardar la duda. Intenta de nuevo.';
+      state._fsWriteErr = 'No se pudo guardar la duda (sin conexión). Intenta de nuevo.';
       render();
     });
+  } else {
+    state._fsWriteErr = 'El servidor de dudas no está listo. Recarga la página e intenta de nuevo.';
   }
 }
 function updateDoubtNote(k, nota){
@@ -2062,6 +2064,9 @@ function appendDoubtControl(A, ctx){
     ans.appendChild(el('div','da-label','💬 Respuesta de tu monitor'));
     ans.appendChild(el('p','da-text', esc(answer)));
     wrap.appendChild(ans);
+  }
+  if(state._fsWriteErr){
+    wrap.appendChild(el('p','act-instr', '⚠ ' + esc(state._fsWriteErr)));
   }
   A.content.appendChild(wrap);
 }
@@ -3086,15 +3091,5 @@ function viewDashboardActivity(){
    ============================================================ */
 initFirestore(); // calienta la sesión anónima mientras el usuario escribe su código
 render();
-
-// --- debug temporal (quitar) ---
-window.__mt = {
-  state: state,
-  fs: function(){ return _fs; },
-  ready: function(){ return _fsReady; },
-  addDoubt: addDoubt,
-  subStudent: subscribeStudentDoubts,
-  subMonitor: subscribeMonitorDoubts
-};
 
 })();
