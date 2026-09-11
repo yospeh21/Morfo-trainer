@@ -1205,7 +1205,7 @@ function viewWelcome(){
     }
     startBtn.textContent = 'Entrando…';
     try{
-      const [existing, fsOk] = await Promise.all([ pProfile, pFs, pContent ]);
+      const [existing, fsOk] = await Promise.all([ pProfile, pFs ]); // el contenido NO bloquea el ingreso
       state._fsOk = fsOk;
       state.student.code = code;
       state.student.name = name;
@@ -1226,6 +1226,8 @@ function viewWelcome(){
         subscribeStudentDoubts(code);
         migrateDoubtsToFirestore();
       }
+      // el contenido llega en segundo plano; re-render cuando esté
+      pContent.then(function(){ state._triedContent = true; if(state.student.code) render(); });
     }catch(err){
       setBusy(false);
       setHint('No se pudo cargar tu perfil. Detalle: ' + (err && err.message ? err.message : String(err)), 'error');
@@ -1239,11 +1241,12 @@ function viewWelcome(){
    VISTA: SELECCIÓN DE TEMA (home)
    ============================================================ */
 function categoryStats(cat){
-  let total=0, done=0, sumPct=0, hasContent=false;
+  let total=0, done=0, sumPct=0, hasUnlocked=false, pendingContent=false;
   cat.moduleIds.forEach(mid=>{
     const mod=MODULES[mid];
     if(!mod || isModuleLocked(mid)) return;
-    hasContent = true;
+    hasUnlocked = true;
+    if(mod.placeholder && !mod.levels.length && !_dynamicContentLoaded) pendingContent = true;
     mod.levels.forEach(l=>{
       total++;
       const p=state.progress[levelKey(mod.id,l.id)];
@@ -1253,8 +1256,8 @@ function categoryStats(cat){
   return {
     total, done,
     avg: done ? Math.round(sumPct/done) : 0,
-    hasContent,
-    locked: !hasContent || total===0,
+    hasUnlocked, pendingContent,
+    locked: !hasUnlocked || (total===0 && !pendingContent),
     completed: total>0 && done>=total,
     inProgress: done>0 && done<total
   };
@@ -1269,6 +1272,7 @@ function courseCard(cat){
   const head = el('div','course-head');
   head.appendChild(el('div','course-icon', cat.emoji || '📚'));
   if(s.locked) head.appendChild(badge('Próximamente','locked'));
+  else if(s.pendingContent) head.appendChild(badge('Cargando…','progress'));
   else if(s.completed) head.appendChild(badge('Completado','done'));
   else if(s.inProgress) head.appendChild(badge('En curso','progress'));
   card.appendChild(head);
@@ -1278,6 +1282,9 @@ function courseCard(cat){
 
   if(s.locked){
     card.appendChild(el('p','course-desc','Este tema todavía no tiene actividades disponibles.'));
+  } else if(s.pendingContent){
+    card.appendChild(el('p','course-desc','Cargando actividades…'));
+    card.onclick = ()=>{ state.currentCategory = cat.id; state.view = 'menu'; render(); };
   } else {
     card.appendChild(progressBar(s.done, s.total, { avg: s.avg }));
     card.onclick = ()=>{ state.currentCategory = cat.id; state.view = 'menu'; render(); };
@@ -1348,9 +1355,40 @@ function moduleCard(mod, num){
   return card;
 }
 
+// Pantalla de espera mientras se descargan las preguntas del profesor.
+function contentLoadingView(title, backLabel, backCb){
+  const wrap = el('div','home');
+  if(backCb) wrap.appendChild(backButton(backLabel || 'Volver', backCb));
+  const head = el('div','home-head');
+  head.appendChild(el('h1','', esc(title || 'Cargando…')));
+  wrap.appendChild(head);
+  const nc = el('div','notice-card');
+  const failed = !_dynamicContentLoaded && !_dynamicContentPromise && state._triedContent;
+  if(failed){
+    nc.appendChild(el('div','n-eyebrow','Sin conexión'));
+    nc.appendChild(el('h1','','No se pudieron cargar las actividades'));
+    nc.appendChild(el('p','n-body','Revisa tu conexión e inténtalo de nuevo.'));
+    const b = el('button','act-btn','↻ Reintentar');
+    b.type = 'button';
+    b.onclick = function(){ loadDynamicContent().then(function(){ render(); }); };
+    nc.appendChild(b);
+  }else{
+    nc.appendChild(el('div','n-eyebrow','Un momento'));
+    nc.appendChild(el('h1','','Cargando actividades'));
+    nc.appendChild(el('p','n-body','Estamos descargando las preguntas. La primera vez toma unos segundos.'));
+    loadDynamicContent().then(function(){ state._triedContent = true; render(); });
+  }
+  wrap.appendChild(nc);
+  return wrap;
+}
+
 function viewMenu(){
   const cat = CATEGORIES[state.currentCategory];
   if(!cat){ state.view='categories'; return viewCategories(); }
+
+  if(categoryStats(cat).pendingContent){
+    return contentLoadingView(cat.title, 'Cambiar de tema', ()=>{ state.currentCategory=null; state.view='categories'; render(); });
+  }
 
   const wrap = el('div','home');
 
@@ -1433,6 +1471,9 @@ function resetZone(){
 
 function viewModuleSubmenu(){
   const mod = MODULES[state.currentModule];
+  if(mod && mod.placeholder && !mod.levels.length && !_dynamicContentLoaded){
+    return contentLoadingView(mod.title, 'Volver al panel', ()=>{ state.view='menu'; render(); });
+  }
   const wrap = el('div','home');
   wrap.appendChild(backButton('Volver al panel', ()=>{ state.view='menu'; render(); }));
 
