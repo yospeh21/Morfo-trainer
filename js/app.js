@@ -650,18 +650,23 @@ async function apiPost(body){
 }
 
 async function checkStorageDiag(badgeEl){
-  try{
-    await apiGet({action:'ping'});
+  // Aprovecha las precargas (contenido + Firebase) en vez de un ping aparte.
+  const res = await Promise.all([ loadDynamicContent(), initFirestore() ]);
+  let ok = _dynamicContentLoaded || res[1] === true;
+  if(!ok){
+    try{ await apiGet({action:'ping'}); ok = true; }catch(e){}
+  }
+  if(ok){
     badgeEl.className = 'auth-conn is-ok';
     badgeEl.innerHTML = '<span class="dot"></span> Conectado';
-    badgeEl.title = 'Tu progreso se guarda en la hoja de Google Sheets del curso.';
+    badgeEl.title = 'Tu progreso se guarda automáticamente.';
     badgeEl.removeAttribute('role');
-  }catch(err){
+  }else{
     badgeEl.className = 'auth-conn is-err';
     badgeEl.innerHTML = '<span class="dot"></span> Sin conexión con el servidor — tu progreso no se guardará';
-    badgeEl.title = 'No se pudo conectar con la hoja de Google. Detalle: '+(err&&err.message?err.message:String(err));
+    badgeEl.title = 'No se pudo conectar con el servidor.';
     badgeEl.setAttribute('role','alert');
-    console.error('Backend diag error', err);
+    console.error('Backend diag error');
   }
 }
 
@@ -1165,11 +1170,18 @@ function viewWelcome(){
     }
   }
 
+  let _lookupT = null;
   codeInput.addEventListener('blur', doLookup);
   codeInput.addEventListener('input', ()=>{
     confirmedName = null; lastLookupCode = null;
     setHint('Te identifica en la lista del curso y autocompleta tu nombre.', '');
     startBtn.disabled = !codeInput.value.trim();
+    // Adelanta la verificación mientras el usuario deja de escribir, para
+    // que al pulsar "Continuar" el nombre ya esté listo.
+    clearTimeout(_lookupT);
+    if(codeInput.value.trim().length >= 7){
+      _lookupT = setTimeout(function(){ doLookup(); }, 650);
+    }
   });
   startBtn.disabled = !codeInput.value.trim();
 
