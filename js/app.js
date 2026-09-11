@@ -1196,21 +1196,35 @@ function viewWelcome(){
     if(!code){ setHint('Escribe tu código estudiantil para continuar.', 'error'); codeInput.focus(); return; }
     setBusy(true, 'Verificando…');
 
-    // Arranca en paralelo todo lo que solo necesita el código (el contenido
-    // y la sesión de Firebase ya vienen precargados desde que abrió la página).
+    // Arranca en paralelo (el contenido y Firebase ya vienen precargados).
     const pProfile = loadProfile(code);
     const pContent = loadDynamicContent();
     const pFs = initFirestore();
 
-    const name = await doLookup();
-    if(!name){
+    let existing, fsOk;
+    try{
+      [existing, fsOk] = await Promise.all([ pProfile, pFs ]);
+    }catch(err){
       setBusy(false);
-      if(!field.classList.contains('has-error')) setHint('Ese código no está en la lista del curso. Verifica que esté bien escrito.', 'error');
+      setHint('No se pudo conectar. Detalle: ' + (err && err.message ? err.message : String(err)), 'error');
       return;
     }
+
+    // Si el alumno ya tiene perfil, su nombre viene de ahí (rápido). Solo se
+    // valida contra la lista del curso cuando es la primera vez (o usa la
+    // caché del adelanto que se hace al escribir el código).
+    let name = existing && existing.name;
+    if(!name){
+      name = await doLookup();
+      if(!name){
+        setBusy(false);
+        if(!field.classList.contains('has-error')) setHint('Ese código no está en la lista del curso. Verifica que esté bien escrito.', 'error');
+        return;
+      }
+    }
+
     startBtn.textContent = 'Entrando…';
     try{
-      const [existing, fsOk] = await Promise.all([ pProfile, pFs ]); // el contenido NO bloquea el ingreso
       state._fsOk = fsOk;
       state.student.code = code;
       state.student.name = name;
