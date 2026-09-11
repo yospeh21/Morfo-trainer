@@ -807,15 +807,21 @@ function mergeDynamicContent(data){
   });
 }
 
-async function loadDynamicContent(){
-  if(_dynamicContentLoaded) return;
-  try{
-    const data = await apiGet({action:'getContent'});
-    mergeDynamicContent(data);
-    _dynamicContentLoaded = true;
-  }catch(e){
-    console.error('No se pudo cargar contenido dinámico de Sheets', e);
-  }
+let _dynamicContentPromise = null;
+function loadDynamicContent(){
+  if(_dynamicContentLoaded) return Promise.resolve();
+  if(_dynamicContentPromise) return _dynamicContentPromise;   // ya en curso: no dupliques
+  _dynamicContentPromise = (async ()=>{
+    try{
+      const data = await apiGet({action:'getContent'});
+      mergeDynamicContent(data);
+      _dynamicContentLoaded = true;
+    }catch(e){
+      console.error('No se pudo cargar contenido dinámico de Sheets', e);
+    }
+    _dynamicContentPromise = null; // terminó: permite recargar
+  })();
+  return _dynamicContentPromise;
 }
 
 async function resetProfile(){
@@ -1172,6 +1178,13 @@ function viewWelcome(){
     const code = codeInput.value.trim();
     if(!code){ setHint('Escribe tu código estudiantil para continuar.', 'error'); codeInput.focus(); return; }
     setBusy(true, 'Verificando…');
+
+    // Arranca en paralelo todo lo que solo necesita el código (el contenido
+    // y la sesión de Firebase ya vienen precargados desde que abrió la página).
+    const pProfile = loadProfile(code);
+    const pContent = loadDynamicContent();
+    const pFs = initFirestore();
+
     const name = await doLookup();
     if(!name){
       setBusy(false);
@@ -1180,8 +1193,8 @@ function viewWelcome(){
     }
     startBtn.textContent = 'Entrando…';
     try{
-      await loadDynamicContent();
-      const existing = await loadProfile(code);
+      const [existing, fsOk] = await Promise.all([ pProfile, pFs, pContent ]);
+      state._fsOk = fsOk;
       state.student.code = code;
       state.student.name = name;
       if(existing){
@@ -1197,15 +1210,10 @@ function viewWelcome(){
       state.view = 'categories';
       render();
       saveProfile();
-      // Dudas en tiempo real (Firestore)
-      initFirestore().then(function(ok){
-        state._fsOk = ok;
-        if(ok){
-          subscribeStudentDoubts(code);
-          migrateDoubtsToFirestore();
-        }
-        render();
-      });
+      if(fsOk){
+        subscribeStudentDoubts(code);
+        migrateDoubtsToFirestore();
+      }
     }catch(err){
       setBusy(false);
       setHint('No se pudo cargar tu perfil. Detalle: ' + (err && err.message ? err.message : String(err)), 'error');
@@ -3310,7 +3318,10 @@ function viewDashboardActivity(){
 /* ============================================================
    INIT
    ============================================================ */
-initFirestore(); // calienta la sesión anónima mientras el usuario escribe su código
+// Precarga mientras el usuario escribe su código: así el login es casi
+// instantáneo (no espera ni la sesión de Firebase ni las preguntas).
+initFirestore();
+loadDynamicContent();
 render();
 
 setTimeout(checkForUpdate, 20000);
