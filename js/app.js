@@ -697,14 +697,19 @@ async function saveProfile(){
 
 async function loadProfile(code){
   code = String(code);
-  const results = await Promise.all([ getFsProfile(code), loadProfileFromSheets(code) ]);
-  const fs = results[0], sh = results[1];
-  if(fs && sh){
-    if(String(fs.updated_at || '') >= String(sh.updated_at || '')) return fs;
-    seedFsProfile(code, sh); // Sheets más nuevo → sincroniza y úsalo
-    return sh;
+  // Firestore es rápido (~100 ms). Si tiene el perfil, se usa y punto;
+  // en segundo plano se comprueba si Sheets quedó más nuevo (raro).
+  const fs = await getFsProfile(code);
+  if(fs){
+    loadProfileFromSheets(code).then(function(sh){
+      if(sh && String(sh.updated_at || '') > String(fs.updated_at || '')){
+        seedFsProfile(code, sh);
+      }
+    }).catch(function(){});
+    return fs;
   }
-  if(fs) return fs;
+  // No está en Firestore: puede ser nuevo, o de antes de la migración.
+  const sh = await loadProfileFromSheets(code);
   if(sh){ seedFsProfile(code, sh); return sh; }
   return null;
 }
