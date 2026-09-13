@@ -159,7 +159,7 @@ MODULES.G.levels.push({
   id:'img', type:'imgLabel', title:'Actividades con imágenes anatómicas',
   instructions:'Toca cada marcador y escribe el nombre de la estructura que señala la flecha. No importan las mayúsculas ni las tildes.',
   images:[
-    { file:'assets/img/oseo/miembro-inferior/coxal-1.png', points:[
+    { file:'assets/img/oseo/miembro-inferior/coxal-1.png', label:'Coxal · vista 1', points:[
       {n:1, x:78.11, y:14.85, answers:['Cresta ilíaca','Zona intermedia','Línea intermedia']},
       {n:2, x:94.45, y:28.19, answers:['Espina ilíaca anterior superior','Espina ilíaca anterosuperior']},
       {n:3, x:84.89, y:45.61, answers:['Espina ilíaca anterior inferior','Espina ilíaca anteroinferior']},
@@ -176,18 +176,18 @@ MODULES.G.levels.push({
       {n:14, x:5.22,  y:42.61, answers:['Espina ilíaca posterior superior','Espina ilíaca posterosuperior']},
       {n:15, x:23.11, y:19.88, answers:['Línea glútea anterior']}
     ]},
-    { file:'assets/img/oseo/miembro-inferior/coxal-2.png', points:[
+    { file:'assets/img/oseo/miembro-inferior/coxal-2.png', label:'Coxal · vista 2', points:[
       {n:1, x:21,    y:16.06, answers:['Fosa ilíaca']},
       {n:2, x:16.45, y:56.95, answers:['Línea arqueada']},
       {n:3, x:21.11, y:69.45, answers:['Pecten del pubis']}
     ]},
-    { file:'assets/img/oseo/miembro-inferior/coxal-3.png', points:[
+    { file:'assets/img/oseo/miembro-inferior/coxal-3.png', label:'Coxal · vista 3', points:[
       {n:1, x:89.56, y:20.86, answers:['Tuberosidad del ilion','Tuberosidad ilíaca']},
       {n:2, x:88.67, y:46.88, answers:['Cara auricular','Carilla auricular']},
       {n:3, x:81.22, y:66.46, answers:['Espina ciática','Espina isquiática']},
       {n:4, x:12.11, y:79.79, answers:['Tubérculo del pubis']}
     ]},
-    { file:'assets/img/oseo/miembro-inferior/femur-1.png', points:[
+    { file:'assets/img/oseo/miembro-inferior/femur-1.png', label:'Fémur · vista 1', points:[
       {n:1, x:59.45, y:8,     answers:['Cabeza del fémur','Cabeza femoral']},
       {n:2, x:60.89, y:16.15, answers:['Cuello del fémur','Cuello femoral']},
       {n:3, x:55.56, y:24.76, answers:['Trocánter menor']},
@@ -195,7 +195,7 @@ MODULES.G.levels.push({
       {n:5, x:30.33, y:23.83, answers:['Línea intertrocantérica']},
       {n:6, x:66.78, y:92.2,  answers:['Superficie articular','Cara rotuliana']}
     ]},
-    { file:'assets/img/oseo/miembro-inferior/femur-2.png', points:[
+    { file:'assets/img/oseo/miembro-inferior/femur-2.png', label:'Fémur · vista 2', points:[
       {n:1, x:67.67, y:10.5,  answers:['Fosa trocantérica']},
       {n:2, x:78.22, y:18.46, answers:['Cresta intertrocantérica']},
       {n:3, x:67.45, y:29.87, answers:['Tuberosidad glútea']},
@@ -208,7 +208,7 @@ MODULES.G.levels.push({
       {n:10, x:32.56, y:68.27, answers:['Línea supracondílea medial']},
       {n:11, x:44.78, y:32.53, answers:['Línea espiral','Línea pectínea']}
     ]},
-    { file:'assets/img/oseo/miembro-inferior/tibia-perone-1.png', points:[
+    { file:'assets/img/oseo/miembro-inferior/tibia-perone-1.png', label:'Tibia y peroné · vista 1', points:[
       {n:1, x:34.33, y:8.28,  answers:['Cóndilo lateral']},
       {n:2, x:71,    y:9.67,  answers:['Cóndilo medial']},
       {n:3, x:73,    y:20.99, answers:['Tuberosidad tibial','Tuberosidad de la tibia']},
@@ -218,12 +218,12 @@ MODULES.G.levels.push({
       {n:7, x:26.78, y:49.31, answers:['Cuerpo del peroné','Cuerpo de la fíbula']},
       {n:8, x:26.45, y:16.24, answers:['Cabeza del peroné']}
     ]},
-    { file:'assets/img/oseo/miembro-inferior/tibia-perone-2.png', points:[
+    { file:'assets/img/oseo/miembro-inferior/tibia-perone-2.png', label:'Tibia y peroné · vista 2', points:[
       {n:1, x:35.11, y:9.48,  answers:['Tubérculo intercondíleo medial']},
       {n:2, x:67.11, y:10.13, answers:['Tubérculo intercondíleo lateral']},
       {n:3, x:36.45, y:31.43, answers:['Línea para el músculo sóleo','Línea del sóleo','Línea del músculo sóleo']}
     ]},
-    { file:'assets/img/oseo/miembro-inferior/pie-1.png', points:[
+    { file:'assets/img/oseo/miembro-inferior/pie-1.png', label:'Pie', points:[
       {n:1, x:24.22, y:16.43, answers:['Falange proximal del hallux','Primera falange proximal','Falange proximal del primer dedo del pie']},
       {n:2, x:38.22, y:3.74,  answers:['Falange medial del segundo dedo del pie']},
       {n:3, x:66.89, y:10.13, answers:['Falange distal del cuarto dedo del pie']},
@@ -2355,12 +2355,28 @@ function viewImgLabel(){
 
   const totalPointsAll = images.reduce((s,im)=> s + im.points.length, 0);
   const answeredAll = Object.keys(rt.answers).length;
+  const allDoneOverall = answeredAll === totalPointsAll;
+
+  function isImgDone(i){
+    return images[i].points.every(p=> rt.answers[i + '-' + p.n]);
+  }
 
   const A = beginActivity({ mod:mod, level:level, idx:idx,
     progress:{ label:'Imagen ' + (rt.imgIdx+1) + ' de ' + totalImgs,
                frac: totalPointsAll ? answeredAll / totalPointsAll : 0 } });
   const card = A.content;
   if(level.instructions) card.appendChild(el('p','act-instr', esc(level.instructions)));
+
+  const picker = el('div','imglabel-picker');
+  images.forEach((im, i)=>{
+    const cls = 'imglabel-pick' + (i===rt.imgIdx ? ' is-current' : '') + (isImgDone(i) ? ' is-done' : '');
+    const b = el('button', cls, (isImgDone(i) ? '✓ ' : '') + esc(im.label || ('Imagen ' + (i+1))));
+    b.type = 'button';
+    if(i===rt.imgIdx){ b.disabled = true; }
+    else { b.onclick = ()=>{ rt.imgIdx = i; rt.active = null; saveResume(mod.id, level.id, 'imgLabel', rt); render(); }; }
+    picker.appendChild(b);
+  });
+  card.appendChild(picker);
 
   const wrap = el('div','imglabel-wrap');
   const imgEl = document.createElement('img');
@@ -2435,16 +2451,14 @@ function viewImgLabel(){
   }
 
   if(allAnsweredInImg && !rt.active){
-    const isLast = rt.imgIdx + 1 >= totalImgs;
-    const mainBtn = el('button','act-btn', isLast ? 'Finalizar actividad →' : 'Siguiente imagen →');
+    const mainBtn = el('button','act-btn', allDoneOverall ? 'Finalizar actividad →' : 'Siguiente imagen →');
     mainBtn.type = 'button';
     mainBtn.onclick = ()=>{
-      if(isLast){
-        const totalPoints = images.reduce((s,im)=> s + im.points.length, 0);
+      if(allDoneOverall){
         const totalCorrect = Object.keys(rt.answers).filter(k=> rt.answers[k].correct).length;
-        finishLevel(mod.id, level.id, totalCorrect, totalPoints);
+        finishLevel(mod.id, level.id, totalCorrect, totalPointsAll);
       } else {
-        rt.imgIdx++;
+        rt.imgIdx = (rt.imgIdx + 1) % totalImgs;
         rt.active = null;
         saveResume(mod.id, level.id, 'imgLabel', rt);
         render();

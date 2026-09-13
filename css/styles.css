@@ -412,6 +412,17 @@
   /* ============================================================
      SEÑALAR ESTRUCTURAS (imgLabel) — imagen con marcadores tocables
      ============================================================ */
+  .imglabel-picker{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:var(--s-3);}
+  .imglabel-pick{
+    padding:8px 14px;border-radius:var(--r-pill);border:1.5px solid var(--hairline-strong);
+    background:var(--surface);color:var(--text);font-family:var(--font-body);font-weight:700;font-size:12.5px;
+    cursor:pointer;
+  }
+  .imglabel-pick:hover:not(:disabled){background:var(--surface-sunken);}
+  .imglabel-pick:disabled{cursor:default;}
+  .imglabel-pick.is-current{background:var(--accent-brand);border-color:var(--accent-brand-dark);color:#fff;}
+  .imglabel-pick.is-done{border-color:var(--good-dark);color:var(--good-dark);}
+  .imglabel-pick.is-done.is-current{background:var(--good);border-color:var(--good-dark);color:#fff;}
   .imglabel-wrap{position:relative;display:block;max-width:520px;margin:0 auto var(--s-3);}
   .imglabel-img{display:block;width:100%;height:auto;border-radius:var(--r-3);background:#fff;border:1.5px solid var(--hairline-strong);}
   .imglabel-marker{
