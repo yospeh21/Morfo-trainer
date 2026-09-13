@@ -175,6 +175,68 @@ MODULES.G.levels.push({
       {n:13, x:12.11, y:51.04, answers:['Espina ilíaca posterior inferior','Espina ilíaca posteroinferior']},
       {n:14, x:5.22,  y:42.61, answers:['Espina ilíaca posterior superior','Espina ilíaca posterosuperior']},
       {n:15, x:23.11, y:19.88, answers:['Línea glútea anterior']}
+    ]},
+    { file:'assets/img/oseo/miembro-inferior/coxal-2.png', points:[
+      {n:1, x:21,    y:16.06, answers:['Fosa ilíaca']},
+      {n:2, x:16.45, y:56.95, answers:['Línea arqueada']},
+      {n:3, x:21.11, y:69.45, answers:['Pecten del pubis']}
+    ]},
+    { file:'assets/img/oseo/miembro-inferior/coxal-3.png', points:[
+      {n:1, x:89.56, y:20.86, answers:['Tuberosidad del ilion','Tuberosidad ilíaca']},
+      {n:2, x:88.67, y:46.88, answers:['Cara auricular','Carilla auricular']},
+      {n:3, x:81.22, y:66.46, answers:['Espina ciática','Espina isquiática']},
+      {n:4, x:12.11, y:79.79, answers:['Tubérculo del pubis']}
+    ]},
+    { file:'assets/img/oseo/miembro-inferior/femur-1.png', points:[
+      {n:1, x:59.45, y:8,     answers:['Cabeza del fémur','Cabeza femoral']},
+      {n:2, x:60.89, y:16.15, answers:['Cuello del fémur','Cuello femoral']},
+      {n:3, x:55.56, y:24.76, answers:['Trocánter menor']},
+      {n:4, x:25.67, y:15.32, answers:['Trocánter mayor']},
+      {n:5, x:30.33, y:23.83, answers:['Línea intertrocantérica']},
+      {n:6, x:66.78, y:92.2,  answers:['Superficie articular','Cara rotuliana']}
+    ]},
+    { file:'assets/img/oseo/miembro-inferior/femur-2.png', points:[
+      {n:1, x:67.67, y:10.5,  answers:['Fosa trocantérica']},
+      {n:2, x:78.22, y:18.46, answers:['Cresta intertrocantérica']},
+      {n:3, x:67.45, y:29.87, answers:['Tuberosidad glútea']},
+      {n:4, x:64.22, y:44.66, answers:['Línea áspera']},
+      {n:5, x:60,    y:72.23, answers:['Línea supracondílea lateral']},
+      {n:6, x:57.56, y:88.81, answers:['Cóndilo lateral']},
+      {n:7, x:56.45, y:93.09, answers:['Fosa intercondílea']},
+      {n:8, x:26.45, y:90.59, answers:['Cóndilo medial']},
+      {n:9, x:22,    y:75.03, answers:['Cara poplítea']},
+      {n:10, x:32.56, y:68.27, answers:['Línea supracondílea medial']},
+      {n:11, x:44.78, y:32.53, answers:['Línea espiral','Línea pectínea']}
+    ]},
+    { file:'assets/img/oseo/miembro-inferior/tibia-perone-1.png', points:[
+      {n:1, x:34.33, y:8.28,  answers:['Cóndilo lateral']},
+      {n:2, x:71,    y:9.67,  answers:['Cóndilo medial']},
+      {n:3, x:73,    y:20.99, answers:['Tuberosidad tibial','Tuberosidad de la tibia']},
+      {n:4, x:65.78, y:44.55, answers:['Borde anterior','Borde anterior de la tibia']},
+      {n:5, x:73.67, y:89.18, answers:['Maléolo medial']},
+      {n:6, x:32.33, y:92.51, answers:['Maléolo lateral']},
+      {n:7, x:26.78, y:49.31, answers:['Cuerpo del peroné','Cuerpo de la fíbula']},
+      {n:8, x:26.45, y:16.24, answers:['Cabeza del peroné']}
+    ]},
+    { file:'assets/img/oseo/miembro-inferior/tibia-perone-2.png', points:[
+      {n:1, x:35.11, y:9.48,  answers:['Tubérculo intercondíleo medial']},
+      {n:2, x:67.11, y:10.13, answers:['Tubérculo intercondíleo lateral']},
+      {n:3, x:36.45, y:31.43, answers:['Línea para el músculo sóleo','Línea del sóleo','Línea del músculo sóleo']}
+    ]},
+    { file:'assets/img/oseo/miembro-inferior/pie-1.png', points:[
+      {n:1, x:24.22, y:16.43, answers:['Falange proximal del hallux','Primera falange proximal','Falange proximal del primer dedo del pie']},
+      {n:2, x:38.22, y:3.74,  answers:['Falange medial del segundo dedo del pie']},
+      {n:3, x:66.89, y:10.13, answers:['Falange distal del cuarto dedo del pie']},
+      {n:4, x:71.67, y:37.18, answers:['Quinto metatarsiano del pie','5 metatarsiano del pie']},
+      {n:5, x:72.78, y:48.11, answers:['Cuneiforme lateral']},
+      {n:6, x:75,    y:57.09, answers:['Tubérculo del quinto metatarsiano del pie']},
+      {n:7, x:66.67, y:64.58, answers:['Cuboides']},
+      {n:8, x:73.11, y:78.47, answers:['Calcáneo']},
+      {n:9, x:32.22, y:76.53, answers:['Astrágalo','Cuello del astrágalo','Cuello astragalino']},
+      {n:10, x:25.33, y:65.14, answers:['Navicular','Escafoides tarsiano']},
+      {n:11, x:27.67, y:57.73, answers:['Cuneiforme intermedio']},
+      {n:12, x:26.78, y:50.69, answers:['Cuneiforme medial']},
+      {n:13, x:22.56, y:37.34, answers:['Primer metatarsiano del pie']}
     ]}
   ]
 });
