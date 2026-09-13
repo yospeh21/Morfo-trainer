@@ -2067,7 +2067,7 @@ function viewMC(){
     };
   }
   A.actions.appendChild(mainBtn);
-  appendResetControl(A, mod, level, rt);
+  appendResetControl(A, mod, level, rt, rt.qIdx > 0 || rt.answered);
 
   if(rt.answered){
     const ok = rt.selected===q.correct;
@@ -2079,8 +2079,8 @@ function viewMC(){
 
 // Botón discreto "reiniciar" al final de una actividad por preguntas;
 // aparece sólo cuando hay avance que reiniciar. Doble toque para confirmar.
-function appendResetControl(A, mod, level, rt){
-  if(rt.qIdx <= 0 && !rt.answered) return;
+function appendResetControl(A, mod, level, rt, hasProgress){
+  if(!hasProgress) return;
   const btn = el('button','act-reset','↻ Reiniciar y empezar de nuevo');
   btn.type = 'button';
   btn.onclick = ()=>{
@@ -2260,7 +2260,7 @@ function viewFill(){
     };
   }
   A.actions.appendChild(mainBtn);
-  appendResetControl(A, mod, level, rt);
+  appendResetControl(A, mod, level, rt, rt.qIdx > 0 || rt.answered);
 
   return A.root;
 }
@@ -2279,7 +2279,7 @@ function viewImgLabel(){
   const idx = state.currentLevelIdx;
 
   if(!state._levelRuntime){
-    state._levelRuntime = { imgIdx:0, answers:{}, active:null };
+    state._levelRuntime = loadResume(mod.id, level.id, 'imgLabel', level) || { imgIdx:0, answers:{}, active:null };
   }
   const rt = state._levelRuntime;
   const images = level.images;
@@ -2291,8 +2291,12 @@ function viewImgLabel(){
   const answeredInImg = points.filter(p=> rt.answers[pKey(p.n)]).length;
   const allAnsweredInImg = answeredInImg === points.length;
 
+  const totalPointsAll = images.reduce((s,im)=> s + im.points.length, 0);
+  const answeredAll = Object.keys(rt.answers).length;
+
   const A = beginActivity({ mod:mod, level:level, idx:idx,
-    progress:{ label:'Imagen ' + (rt.imgIdx+1) + ' de ' + totalImgs, frac: rt.imgIdx / totalImgs } });
+    progress:{ label:'Imagen ' + (rt.imgIdx+1) + ' de ' + totalImgs,
+               frac: totalPointsAll ? answeredAll / totalPointsAll : 0 } });
   const card = A.content;
   if(level.instructions) card.appendChild(el('p','act-instr', esc(level.instructions)));
 
@@ -2333,7 +2337,7 @@ function viewImgLabel(){
           ? '✓ Correcto — escribiste “' + esc(already.value) + '”.' + (already.accentNote ? '<br><small>' + esc(already.accentNote) + '</small>' : '')
           : '✕ Escribiste “' + esc(already.value) + '”. La respuesta correcta es “' + esc(already.correctAnswer) + '”.');
       panel.appendChild(readout);
-      const closeBtn = el('button','act-btn is-ghost','Cerrar');
+      const closeBtn = el('button','act-btn','Continuar →');
       closeBtn.type = 'button';
       closeBtn.onclick = ()=>{ rt.active = null; render(); };
       panel.appendChild(closeBtn);
@@ -2349,7 +2353,7 @@ function viewImgLabel(){
         if(!val) return;
         const res = checkLabelAnswer(val, p.answers);
         rt.answers[pKey(p.n)] = { value: val, correct: res.correct, accentNote: res.accentNote, correctAnswer: res.correctAnswer };
-        saveProfile();
+        saveResume(mod.id, level.id, 'imgLabel', rt);
         render();
       };
       inp.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); submit(); } });
@@ -2380,11 +2384,13 @@ function viewImgLabel(){
       } else {
         rt.imgIdx++;
         rt.active = null;
+        saveResume(mod.id, level.id, 'imgLabel', rt);
         render();
       }
     };
     A.actions.appendChild(mainBtn);
   }
+  appendResetControl(A, mod, level, rt, answeredAll > 0);
 
   return A.root;
 }
@@ -2415,6 +2421,13 @@ function loadResume(modId, levelId, type, level){
   if(state.progress[levelKey(modId, levelId)]) return null;     // ya completado
   const s = state.progress[resumeKey(modId, levelId)];
   if(!s || s.type !== type) return null;
+  if(type === 'imgLabel'){
+    if(!s.answers || typeof s.answers !== 'object') return null;
+    if(!Object.keys(s.answers).length) return null;
+    const totalImgs = (level.images || []).length;
+    const imgIdx = Math.min(Math.max(0, s.imgIdx|0), Math.max(0, totalImgs - 1));
+    return { imgIdx: imgIdx, answers: s.answers, active: null };
+  }
   const n = level.questions.length;
   if(!Array.isArray(s.qOrder) || s.qOrder.length !== n) return null; // el contenido cambió
   const qIdx = Math.min(Math.max(0, s.qIdx|0), n - 1);
@@ -2433,6 +2446,12 @@ function loadResume(modId, levelId, type, level){
 
 function saveResume(modId, levelId, type, rt){
   const k = resumeKey(modId, levelId);
+  if(type === 'imgLabel'){
+    if(!Object.keys(rt.answers).length){ delete state.progress[k]; }
+    else { state.progress[k] = { type:'imgLabel', imgIdx: rt.imgIdx, answers: rt.answers }; }
+    saveProfile();
+    return;
+  }
   const n = rt.qOrder ? rt.qOrder.length : 0;
   if(rt.qIdx <= 0 || rt.qIdx >= n){
     delete state.progress[k];
