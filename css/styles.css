@@ -409,6 +409,34 @@
   .sessionbar .slogout:hover{background:#FF5580;}
   .sessionbar .slogout:active{transform:translateY(3px);box-shadow:0 0 0 var(--bad-dark);}
 
+  /* ============================================================
+     SEÑALAR ESTRUCTURAS (imgLabel) — imagen con marcadores tocables
+     ============================================================ */
+  .imglabel-wrap{position:relative;display:block;max-width:520px;margin:0 auto var(--s-3);}
+  .imglabel-img{display:block;width:100%;height:auto;border-radius:var(--r-3);background:#fff;border:1.5px solid var(--hairline-strong);}
+  .imglabel-marker{
+    position:absolute;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;
+    background:var(--accent-brand);color:#fff;font-family:var(--font-body);font-weight:800;font-size:13px;
+    border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;
+    cursor:pointer;padding:0;line-height:1;
+  }
+  .imglabel-marker:hover{filter:brightness(1.08);}
+  .imglabel-marker.is-active{box-shadow:0 0 0 4px rgba(255,255,255,.55),0 2px 6px rgba(0,0,0,.4);transform:translate(-50%,-50%) scale(1.18);}
+  .imglabel-marker.is-correct{background:var(--good);border-color:var(--good-dark);}
+  .imglabel-marker.is-wrong{background:var(--bad);border-color:var(--bad-dark);}
+  .imglabel-count{font-size:13px;font-weight:700;color:var(--text-soft);text-align:center;margin-bottom:var(--s-3);}
+  .imglabel-panel{background:var(--surface-sunken);border:1.5px solid var(--hairline-strong);border-radius:var(--r-3);padding:var(--s-3);margin-bottom:var(--s-3);}
+  .imglabel-panel-label{font-family:var(--font-display);font-weight:800;margin-bottom:8px;}
+  .imglabel-input{
+    width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--hairline-strong);
+    font-size:15px;font-family:var(--font-body);margin-bottom:10px;background:var(--surface);color:var(--text);
+  }
+  .imglabel-input:focus{outline:none;border-color:var(--accent-brand);box-shadow:0 0 0 3px var(--accent-brand-soft);}
+  .imglabel-panel-readout{margin-bottom:10px;line-height:1.5;}
+  .imglabel-panel-readout.is-ok{color:var(--good-dark);}
+  .imglabel-panel-readout.is-bad{color:var(--bad-dark);}
+  .imglabel-panel-readout small{display:block;margin-top:4px;color:var(--text-soft);font-weight:600;}
+
   ::selection{background:var(--accent-soft);}
 
   /* =========================================================

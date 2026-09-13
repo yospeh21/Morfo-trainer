@@ -151,6 +151,35 @@ const MODULES = {
   H: { id:'H', title:'Histología, fisiología y envejecimiento del tejido óseo', subtitle:'Selecciona el tipo de actividad', placeholder:true, levels:[], subActivities:SUB_ACTIVITY_TEMPLATE() }
 };
 
+// Actividad "señalar estructuras": imágenes con flechas ya dibujadas por el
+// profesor; el estudiante toca cada marcador y escribe el nombre. Se arma a
+// mano (no viene de Sheets) porque cada punto necesita su coordenada exacta
+// sobre la imagen, algo poco práctico de mantener en una hoja de cálculo.
+MODULES.G.levels.push({
+  id:'img', type:'imgLabel', title:'Actividades con imágenes anatómicas',
+  instructions:'Toca cada marcador y escribe el nombre de la estructura que señala la flecha. No importan las mayúsculas ni las tildes.',
+  images:[
+    { file:'assets/img/oseo/miembro-inferior/coxal-1.png', points:[
+      {n:1, x:78.11, y:14.85, answers:['Cresta ilíaca','Zona intermedia','Línea intermedia']},
+      {n:2, x:94.45, y:28.19, answers:['Espina ilíaca anterior superior','Espina ilíaca anterosuperior']},
+      {n:3, x:84.89, y:45.61, answers:['Espina ilíaca anterior inferior','Espina ilíaca anteroinferior']},
+      {n:4, x:85,    y:57.05, answers:['Cara semilunar']},
+      {n:5, x:82,    y:66.31, answers:['Fosa acetabular']},
+      {n:6, x:81.78, y:72.94, answers:['Escotadura acetabular']},
+      {n:7, x:85,    y:85.72, answers:['Foramen obturado']},
+      {n:8, x:20.56, y:85.53, answers:['Tuberosidad isquiática','Tuberosidad ciática']},
+      {n:9, x:20.89, y:76.46, answers:['Escotadura ciática menor','Escotadura isquiática menor']},
+      {n:10, x:15.11, y:71.37, answers:['Espina ciática','Espina isquiática']},
+      {n:11, x:25.45, y:61.92, answers:['Limbo acetabular']},
+      {n:12, x:17,    y:56.13, answers:['Escotadura ciática mayor','Escotadura isquiática mayor']},
+      {n:13, x:12.11, y:51.04, answers:['Espina ilíaca posterior inferior','Espina ilíaca posteroinferior']},
+      {n:14, x:5.22,  y:42.61, answers:['Espina ilíaca posterior superior','Espina ilíaca posterosuperior']},
+      {n:15, x:23.11, y:19.88, answers:['Línea glútea anterior']}
+    ]}
+  ]
+});
+MODULES.G.subActivities.find(s=>s.id==='img').ready = true;
+
 const CATEGORIES = {
   oseo: {
     id:'oseo',
@@ -890,7 +919,7 @@ function shuffle(arr){
 }
 function pct(correct,total){ return total? Math.round((correct/total)*100) : 0; }
 
-const MODULE_TIMER_VIEWS = ['sort','match','mc','completar','levelDone'];
+const MODULE_TIMER_VIEWS = ['sort','match','mc','completar','imgLabel','levelDone'];
 
 function render(){
   if(_activeTimerModule && !(MODULE_TIMER_VIEWS.includes(state.view) && state.currentModule===_activeTimerModule)){
@@ -907,6 +936,7 @@ function render(){
     match: viewMatch,
     mc: viewMC,
     completar: viewFill,
+    imgLabel: viewImgLabel,
     levelDone: viewLevelDone,
     boss: viewBoss,
     bossDone: viewBossDone,
@@ -1013,7 +1043,7 @@ function navRow(){
   const nav = el('nav','app-nav');
   nav.setAttribute('aria-label','Navegación');
   const v = state.view;
-  const inTheme = ['menu','moduleSubmenu','comingSoon','sort','match','mc','completar','levelDone','boss','bossDone'].indexOf(v) !== -1;
+  const inTheme = ['menu','moduleSubmenu','comingSoon','sort','match','mc','completar','imgLabel','levelDone','boss','bossDone'].indexOf(v) !== -1;
   const inDash = ['dashboard','monitorLogin','dashboardActivity'].indexOf(v) !== -1;
 
   function link(label, active, onClick){
@@ -1650,7 +1680,8 @@ const ACTIVITY_TYPE_LABEL = {
   match:'Relacionar',
   truefalse:'Verdadero o falso',
   label:'Identificar estructuras',
-  hotspot:'Señala la estructura'
+  hotspot:'Señala la estructura',
+  imgLabel:'Señalar estructuras'
 };
 
 function beginActivity(opts){
@@ -2087,6 +2118,42 @@ function fillMatches(typed, q){
   return (q.answers||[]).some(a=> normFill(a) === t);
 }
 
+/* ============================================================
+   CORRECCIÓN PARA "SEÑALAR ESTRUCTURAS" (imgLabel)
+   Igual de tolerante que normFill (sin tildes ni mayúsculas),
+   pero además avisa cuando la única diferencia es una tilde:
+   sigue contando como correcta, con una nota aclaratoria.
+   ============================================================ */
+function normLabel(s){
+  return String(s==null?'':s)
+    .normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+function describeAccentDiff(typedLower, ansLower){
+  const wt = typedLower.split(' '), wa = ansLower.split(' ');
+  const parts = [];
+  for(let i=0;i<wa.length;i++){
+    if(wt[i] !== wa[i]) parts.push('"'+wa[i]+'"');
+  }
+  return parts.length ? ('Recuerda escribir con tilde: ' + parts.join(', ') + '.') : null;
+}
+function checkLabelAnswer(typed, answers){
+  const t = normLabel(typed);
+  if(!t) return null;
+  for(const ans of (answers||[])){
+    if(normLabel(ans) === t){
+      const typedLower = String(typed).trim().toLowerCase().replace(/\s+/g,' ');
+      const ansLower = String(ans).trim().toLowerCase();
+      if(typedLower === ansLower) return { correct:true, accentNote:null, correctAnswer:ans };
+      return { correct:true, accentNote: describeAccentDiff(typedLower, ansLower), correctAnswer: ans };
+    }
+  }
+  return { correct:false, accentNote:null, correctAnswer: (answers && answers[0]) || '' };
+}
+
 function viewFill(){
   const mod=MODULES[state.currentModule];
   const level=mod.levels[state.currentLevelIdx];
@@ -2194,6 +2261,130 @@ function viewFill(){
   }
   A.actions.appendChild(mainBtn);
   appendResetControl(A, mod, level, rt);
+
+  return A.root;
+}
+
+/* ============================================================
+   VISTA: SEÑALAR ESTRUCTURAS SOBRE UNA IMAGEN (imgLabel)
+   Una imagen por "pantalla", con marcadores en las puntas de las
+   flechas ya dibujadas. Tocar un marcador abre un panel para
+   escribir el nombre; no hace falta que quepan todas las cajas de
+   texto a la vez. Un punto ya respondido queda fijo (sin reintento),
+   igual que en "completar".
+   ============================================================ */
+function viewImgLabel(){
+  const mod = MODULES[state.currentModule];
+  const level = mod.levels[state.currentLevelIdx];
+  const idx = state.currentLevelIdx;
+
+  if(!state._levelRuntime){
+    state._levelRuntime = { imgIdx:0, answers:{}, active:null };
+  }
+  const rt = state._levelRuntime;
+  const images = level.images;
+  const totalImgs = images.length;
+  const img = images[rt.imgIdx];
+  const points = img.points;
+
+  function pKey(n){ return rt.imgIdx + '-' + n; }
+  const answeredInImg = points.filter(p=> rt.answers[pKey(p.n)]).length;
+  const allAnsweredInImg = answeredInImg === points.length;
+
+  const A = beginActivity({ mod:mod, level:level, idx:idx,
+    progress:{ label:'Imagen ' + (rt.imgIdx+1) + ' de ' + totalImgs, frac: rt.imgIdx / totalImgs } });
+  const card = A.content;
+  if(level.instructions) card.appendChild(el('p','act-instr', esc(level.instructions)));
+
+  const wrap = el('div','imglabel-wrap');
+  const imgEl = document.createElement('img');
+  imgEl.className = 'imglabel-img';
+  imgEl.src = img.file;
+  imgEl.alt = '';
+  wrap.appendChild(imgEl);
+
+  points.forEach(p=>{
+    const ans = rt.answers[pKey(p.n)];
+    const isActive = rt.active && rt.active.n === p.n;
+    const cls = 'imglabel-marker' + (ans ? (ans.correct ? ' is-correct' : ' is-wrong') : '') + (isActive ? ' is-active' : '');
+    const marker = el('button', cls, ans ? (ans.correct ? '✓' : '✕') : String(p.n));
+    marker.type = 'button';
+    marker.style.left = p.x + '%';
+    marker.style.top = p.y + '%';
+    marker.onclick = ()=>{
+      rt.active = { n: p.n };
+      render();
+      setTimeout(()=>{ try{ const i=document.getElementById('imglabelInput'); if(i) i.focus(); }catch(e){} }, 0);
+    };
+    wrap.appendChild(marker);
+  });
+  card.appendChild(wrap);
+  card.appendChild(el('div','imglabel-count', answeredInImg + ' de ' + points.length + ' estructuras señaladas en esta imagen'));
+
+  if(rt.active){
+    const p = points.find(pp=> pp.n === rt.active.n);
+    const already = rt.answers[pKey(p.n)];
+    const panel = el('div','imglabel-panel');
+    panel.appendChild(el('div','imglabel-panel-label', 'Estructura N.º ' + p.n));
+
+    if(already){
+      const readout = el('div','imglabel-panel-readout' + (already.correct ? ' is-ok' : ' is-bad'),
+        already.correct
+          ? '✓ Correcto — escribiste “' + esc(already.value) + '”.' + (already.accentNote ? '<br><small>' + esc(already.accentNote) + '</small>' : '')
+          : '✕ Escribiste “' + esc(already.value) + '”. La respuesta correcta es “' + esc(already.correctAnswer) + '”.');
+      panel.appendChild(readout);
+      const closeBtn = el('button','act-btn is-ghost','Cerrar');
+      closeBtn.type = 'button';
+      closeBtn.onclick = ()=>{ rt.active = null; render(); };
+      panel.appendChild(closeBtn);
+    } else {
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.id = 'imglabelInput';
+      inp.className = 'imglabel-input';
+      inp.autocomplete = 'off';
+      inp.placeholder = 'Escribe el nombre de la estructura…';
+      const submit = ()=>{
+        const val = inp.value.trim();
+        if(!val) return;
+        const res = checkLabelAnswer(val, p.answers);
+        rt.answers[pKey(p.n)] = { value: val, correct: res.correct, accentNote: res.accentNote, correctAnswer: res.correctAnswer };
+        saveProfile();
+        render();
+      };
+      inp.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); submit(); } });
+      panel.appendChild(inp);
+      const row = el('div','row');
+      const okBtn = el('button','act-btn','Comprobar');
+      okBtn.type = 'button';
+      okBtn.onclick = submit;
+      const cancelBtn = el('button','act-btn is-ghost','Cancelar');
+      cancelBtn.type = 'button';
+      cancelBtn.onclick = ()=>{ rt.active = null; render(); };
+      row.appendChild(okBtn); row.appendChild(cancelBtn);
+      panel.appendChild(row);
+      setTimeout(()=>{ try{ inp.focus(); }catch(e){} }, 0);
+    }
+    card.appendChild(panel);
+  }
+
+  if(allAnsweredInImg && !rt.active){
+    const isLast = rt.imgIdx + 1 >= totalImgs;
+    const mainBtn = el('button','act-btn', isLast ? 'Finalizar actividad →' : 'Siguiente imagen →');
+    mainBtn.type = 'button';
+    mainBtn.onclick = ()=>{
+      if(isLast){
+        const totalPoints = images.reduce((s,im)=> s + im.points.length, 0);
+        const totalCorrect = Object.keys(rt.answers).filter(k=> rt.answers[k].correct).length;
+        finishLevel(mod.id, level.id, totalCorrect, totalPoints);
+      } else {
+        rt.imgIdx++;
+        rt.active = null;
+        render();
+      }
+    };
+    A.actions.appendChild(mainBtn);
+  }
 
   return A.root;
 }
