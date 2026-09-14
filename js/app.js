@@ -298,7 +298,8 @@ const state = {
   monitorAuthed:false,
   saved:false,
   doubts:{},            // dudas del estudiante (reflejo del listener de Firestore)
-  dashboardDoubts:null  // dudas de todo el grupo (listener del monitor)
+  dashboardDoubts:null, // dudas de todo el grupo (listener del monitor)
+  dashboardImgDisputas:null // disputas de "señalar estructuras" pendientes de revisar
 };
 
 function homeView(){
@@ -394,6 +395,117 @@ function unsubscribeMonitor(){
   if(_monDoubtsUnsub){ _monDoubtsUnsub(); _monDoubtsUnsub = null; }
   if(_monProfUnsub){ _monProfUnsub(); _monProfUnsub = null; }
   if(_monResUnsub){ _monResUnsub(); _monResUnsub = null; }
+  unsubscribeMonImgDisputes();
+}
+
+/* ============================================================
+   DISPUTAS DE "SEÑALAR ESTRUCTURAS" — un estudiante puede marcar
+   una respuesta incorrecta como "creo que también es correcta" con
+   una justificación; el monitor la revisa y, si la aprueba, queda
+   agregada como respuesta válida para todos desde ese momento
+   (colección "imgAnswerOverrides"), sin tocar el código.
+   ============================================================ */
+function imgOverrideKey(modId, levelId, imgFile, n){
+  // Los ids de documento de Firestore no pueden tener "/" (se interpretaría
+  // como una ruta con más colecciones); el nombre del archivo sí los trae.
+  const safeFile = String(imgFile).replace(/[\/.]/g, '_');
+  return modId + '__' + levelId + '__' + safeFile + '__' + n;
+}
+
+let _imgOverrides = {};
+let _imgOverridesLoaded = false;
+let _imgOverridesPromise = null;
+function loadImgOverrides(){
+  // Si Firestore aún no está listo, no lo intenta (evita re-intentarlo en
+  // cada render); vuelve a llamarse solo cuando algo más ya causó un
+  // render legítimo. Se marca "cargado" pase lo que pase para no
+  // reintentar sin parar en la misma sesión ante un error puntual.
+  if(_imgOverridesLoaded || !_fs) return Promise.resolve();
+  if(_imgOverridesPromise) return _imgOverridesPromise;
+  _imgOverridesPromise = _fs.collection('imgAnswerOverrides').get().then(function(snap){
+    const map = {};
+    snap.forEach(function(doc){
+      const d = doc.data();
+      if(d && Array.isArray(d.extra)) map[doc.id] = d.extra;
+    });
+    _imgOverrides = map;
+  }).catch(function(e){
+    console.error('loadImgOverrides', e);
+  }).then(function(){
+    _imgOverridesLoaded = true;
+    _imgOverridesPromise = null;
+  });
+  return _imgOverridesPromise;
+}
+
+function submitImgDispute(mod, level, img, p, typedVal, justificacion){
+  if(!_fs) return Promise.resolve(false);
+  try{
+    const id = imgOverrideKey(mod.id, level.id, img.file, p.n) + '__' + String(state.student.code || 'x') + '__' + Date.now();
+    return _fs.collection('imgDisputas').doc(id).set({
+      code: String(state.student.code || ''),
+      name: state.student.name || '',
+      mod: mod.id, levelId: level.id,
+      imgFile: img.file, imgLabel: img.label || '',
+      pointN: p.n,
+      typed: String(typedVal || ''),
+      acceptedAnswers: p.answers || [],
+      justificacion: String(justificacion || ''),
+      createdAt: new Date().toISOString(),
+      resolved: false
+    }).then(function(){ return true; }).catch(function(e){ console.error('submitImgDispute', e); return false; });
+  }catch(e){
+    console.error('submitImgDispute (síncrono)', e);
+    return Promise.resolve(false);
+  }
+}
+
+let _monImgDisputesUnsub = null;
+function subscribeMonitorImgDisputes(){
+  if(!_fs) return;
+  if(_monImgDisputesUnsub){ _monImgDisputesUnsub(); _monImgDisputesUnsub = null; }
+  _monImgDisputesUnsub = _fs.collection('imgDisputas').where('resolved','==', false).onSnapshot(
+    function(snap){
+      const arr = [];
+      snap.forEach(function(doc){ arr.push(Object.assign({ id: doc.id }, doc.data())); });
+      state.dashboardImgDisputas = arr;
+      if(state.monitorAuthed) scheduleFsRender();
+    },
+    function(err){
+      console.error('Listener disputas (monitor)', err);
+      state.dashboardImgDisputas = [];
+      if(state.monitorAuthed) scheduleFsRender();
+    }
+  );
+}
+function unsubscribeMonImgDisputes(){
+  if(_monImgDisputesUnsub){ _monImgDisputesUnsub(); _monImgDisputesUnsub = null; }
+}
+
+function approveImgDispute(dispute){
+  if(!_fs) return;
+  try{
+    const key = imgOverrideKey(dispute.mod, dispute.levelId, dispute.imgFile, dispute.pointN);
+    const ref = _fs.collection('imgAnswerOverrides').doc(key);
+    ref.get().then(function(snap){
+      const cur = (snap.exists && Array.isArray(snap.data().extra)) ? snap.data().extra.slice() : [];
+      if(cur.indexOf(dispute.typed) === -1) cur.push(dispute.typed);
+      return ref.set({ extra: cur });
+    }).then(function(){
+      return _fs.collection('imgDisputas').doc(dispute.id).update({ resolved: true, approved: true });
+    }).then(function(){
+      const cur = (_imgOverrides[key] || []).slice();
+      if(cur.indexOf(dispute.typed) === -1) cur.push(dispute.typed);
+      _imgOverrides[key] = cur;
+    }).catch(function(e){ console.error('approveImgDispute', e); });
+  }catch(e){
+    console.error('approveImgDispute (síncrono)', e);
+  }
+}
+function rejectImgDispute(dispute){
+  if(!_fs) return;
+  _fs.collection('imgDisputas').doc(dispute.id).update({ resolved: true, approved: false })
+    .catch(function(e){ console.error('rejectImgDispute', e); });
 }
 
 /* ============================================================
@@ -943,6 +1055,7 @@ function logout(){
   state.saved=false;
   state.doubts={};
   state.dashboardDoubts=null;
+  state.dashboardImgDisputas=null;
   state.dashboardProfiles=null;
   state.dashboardRows=null;
   state.monitorAuthed=false;
@@ -2202,10 +2315,28 @@ function describeAccentDiff(typedLower, ansLower){
   }
   return parts.length ? ('Recuerda escribir con tilde: ' + parts.join(', ') + '.') : null;
 }
+// Distancia de edición (Levenshtein) simple, para tolerar una letra de
+// más/menos/cambiada (errores de tipeo reales, no solo tildes).
+function levenshtein(a, b){
+  const m = a.length, n = b.length;
+  if(!m) return n; if(!n) return m;
+  const dp = new Array(n+1);
+  for(let j=0;j<=n;j++) dp[j]=j;
+  for(let i=1;i<=m;i++){
+    let prev = dp[0]; dp[0]=i;
+    for(let j=1;j<=n;j++){
+      const tmp = dp[j];
+      dp[j] = a[i-1]===b[j-1] ? prev : 1+Math.min(prev, dp[j], dp[j-1]);
+      prev = tmp;
+    }
+  }
+  return dp[n];
+}
 function checkLabelAnswer(typed, answers){
   const t = normLabel(typed);
   if(!t) return null;
-  for(const ans of (answers||[])){
+  const list = answers || [];
+  for(const ans of list){
     if(normLabel(ans) === t){
       const typedLower = String(typed).trim().toLowerCase().replace(/\s+/g,' ');
       const ansLower = String(ans).trim().toLowerCase();
@@ -2213,7 +2344,20 @@ function checkLabelAnswer(typed, answers){
       return { correct:true, accentNote: describeAccentDiff(typedLower, ansLower), correctAnswer: ans };
     }
   }
-  return { correct:false, accentNote:null, correctAnswer: (answers && answers[0]) || '' };
+  // Sin coincidencia exacta (ni ignorando tildes): admite una sola letra de
+  // diferencia en respuestas suficientemente largas, para no penalizar un
+  // error de tipeo real. Muestra la ortografía correcta de todas formas.
+  let best = null;
+  for(const ans of list){
+    const na = normLabel(ans);
+    if(na.length < 5) continue;
+    const dist = levenshtein(t, na);
+    if(dist === 1 && (!best || dist < best.dist)) best = { ans, dist };
+  }
+  if(best){
+    return { correct:true, accentNote: 'Revisa la ortografía: se escribe "' + best.ans + '".', correctAnswer: best.ans };
+  }
+  return { correct:false, accentNote:null, correctAnswer: (list && list[0]) || '' };
 }
 
 function viewFill(){
@@ -2343,6 +2487,7 @@ function viewImgLabel(){
   if(!state._levelRuntime){
     state._levelRuntime = loadResume(mod.id, level.id, 'imgLabel', level) || { imgIdx:0, answers:{}, active:null };
   }
+  if(!_imgOverridesLoaded && _fs){ loadImgOverrides().then(render); }
   const rt = state._levelRuntime;
   const images = level.images;
   const totalImgs = images.length;
@@ -2415,6 +2560,40 @@ function viewImgLabel(){
           ? '✓ Correcto — escribiste “' + esc(already.value) + '”.' + (already.accentNote ? '<br><small>' + esc(already.accentNote) + '</small>' : '')
           : '✕ Escribiste “' + esc(already.value) + '”. La respuesta correcta es “' + esc(already.correctAnswer) + '”.');
       panel.appendChild(readout);
+
+      if(!already.correct){
+        if(already.disputed){
+          panel.appendChild(el('div','imglabel-dispute-sent','✓ Enviado para revisión del monitor.'));
+        } else if(rt.active.disputing){
+          const ta = document.createElement('textarea');
+          ta.className = 'imglabel-dispute-input';
+          ta.rows = 2;
+          ta.maxLength = 500;
+          ta.placeholder = '¿Por qué crees que tu respuesta también es correcta? (opcional)';
+          panel.appendChild(ta);
+          const disputeRow = el('div','row');
+          const sendBtn = el('button','act-btn is-ghost','Enviar para revisión');
+          sendBtn.type = 'button';
+          sendBtn.onclick = ()=>{
+            sendBtn.disabled = true; sendBtn.textContent = 'Enviando…';
+            submitImgDispute(mod, level, img, p, already.value, ta.value.trim()).then(function(ok){
+              if(ok){ already.disputed = true; saveResume(mod.id, level.id, 'imgLabel', rt); }
+              render();
+            });
+          };
+          const cancelDispute = el('button','act-btn is-ghost','Cancelar');
+          cancelDispute.type = 'button';
+          cancelDispute.onclick = ()=>{ rt.active.disputing = false; render(); };
+          disputeRow.appendChild(sendBtn); disputeRow.appendChild(cancelDispute);
+          panel.appendChild(disputeRow);
+        } else {
+          const disputeToggle = el('button','imglabel-dispute-toggle','¿Crees que tu respuesta también es correcta? Márcala para revisión →');
+          disputeToggle.type = 'button';
+          disputeToggle.onclick = ()=>{ rt.active.disputing = true; render(); };
+          panel.appendChild(disputeToggle);
+        }
+      }
+
       const closeBtn = el('button','act-btn','Continuar →');
       closeBtn.type = 'button';
       closeBtn.onclick = ()=>{ rt.active = null; render(); };
@@ -2429,8 +2608,9 @@ function viewImgLabel(){
       const submit = ()=>{
         const val = inp.value.trim();
         if(!val) return;
-        const res = checkLabelAnswer(val, p.answers);
-        rt.answers[pKey(p.n)] = { value: val, correct: res.correct, accentNote: res.accentNote, correctAnswer: res.correctAnswer };
+        const extra = _imgOverrides[imgOverrideKey(mod.id, level.id, img.file, p.n)] || [];
+        const res = checkLabelAnswer(val, p.answers.concat(extra));
+        rt.answers[pKey(p.n)] = { value: val, correct: res.correct, accentNote: res.accentNote, correctAnswer: res.correctAnswer, disputed:false };
         saveResume(mod.id, level.id, 'imgLabel', rt);
         render();
       };
@@ -2902,6 +3082,30 @@ function doubtGroupCard(g){
   ansWrap.appendChild(send);
   card.appendChild(ansWrap);
 
+  return card;
+}
+
+function imgDisputeCard(d){
+  const card = el('div','dgroup');
+  const top = el('div','dgroup-top');
+  top.appendChild(el('span','doubt-tag', esc((d.imgLabel || d.imgFile) + ' · punto ' + d.pointN)));
+  card.appendChild(top);
+  card.appendChild(el('p','doubt-q', esc(d.name || d.code) + ' (' + esc(d.code) + ') escribió: “' + esc(d.typed) + '”'));
+  if(d.acceptedAnswers && d.acceptedAnswers.length){
+    card.appendChild(el('div','dgroup-lvl', 'Respuestas aceptadas hoy: ' + esc(d.acceptedAnswers.join(' / '))));
+  }
+  if(d.justificacion){
+    card.appendChild(el('div','imgdispute-note', '💬 “' + esc(d.justificacion) + '”'));
+  }
+  const row = el('div','row');
+  const approve = el('button','act-btn', '✓ Aprobar como correcta');
+  approve.type = 'button';
+  approve.onclick = function(){ approve.disabled = true; approve.textContent = 'Aprobando…'; approveImgDispute(d); };
+  const reject = el('button','act-btn is-ghost', 'Descartar');
+  reject.type = 'button';
+  reject.onclick = function(){ reject.disabled = true; rejectImgDispute(d); };
+  row.appendChild(approve); row.appendChild(reject);
+  card.appendChild(row);
   return card;
 }
 
@@ -3379,6 +3583,7 @@ function viewMonitorLogin(){
       state.dashboardRows = null;      // los llenan los listeners de Firestore
       state.dashboardProfiles = null;
       state.dashboardDoubts = null;
+      state.dashboardImgDisputas = null;
       state.dashboardError = null;
       state.dashboardActivityId = null;
       state.view='dashboard';
@@ -3388,10 +3593,13 @@ function viewMonitorLogin(){
           subscribeMonitorDoubts();
           subscribeMonitorProfiles();
           subscribeMonitorResults();
+          subscribeMonitorImgDisputes();
           gapFillProfiles();
           gapFillResults();
+          loadImgOverrides();
         } else {
           state.dashboardDoubts = [];
+          state.dashboardImgDisputas = [];
           state._doubtError = 'Sin conexión con la base de datos en tiempo real.';
           Promise.all([
             apiGet({action:'listResults', pass: state.monitorPass}),
@@ -3426,6 +3634,7 @@ function viewDashboard(){
     state.dashboardRows=null;
     state.dashboardProfiles=null;
     state.dashboardDoubts=null;
+    state.dashboardImgDisputas=null;
     unsubscribeMonitor();
     state.view = homeView();
     render();
@@ -3530,6 +3739,20 @@ function viewDashboard(){
       det.appendChild(list);
       card.appendChild(det);
     }
+  }
+
+  // ---- Disputas de "señalar estructuras" (respuestas marcadas por revisar) ----
+  const disputes = state.dashboardImgDisputas;
+  card.appendChild(el('div','panel-section','Respuestas por revisar' +
+    (disputes && disputes.length ? ' · ' + disputes.length : '')));
+  if(disputes === null){
+    card.appendChild(el('p','panel-foot','Cargando…'));
+  } else if(!disputes.length){
+    card.appendChild(el('p','panel-foot','Ningún estudiante ha marcado una respuesta para revisión todavía. Aparecen aquí cuando alguien usa "¿Crees que tu respuesta también es correcta?" en "Señalar estructuras".'));
+  } else {
+    const list = el('div','dgroup-list');
+    disputes.forEach(function(d){ list.appendChild(imgDisputeCard(d)); });
+    card.appendChild(list);
   }
 
   // ---- Actividades (puntaje + tiempo por estudiante al entrar) ----
