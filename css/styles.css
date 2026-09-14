@@ -794,6 +794,23 @@
   .stat-cell .v.good{color:var(--state-correct);}
   .stat-cell .v.warn{color:var(--gold-dark);}
   .stat-cell .v.bad{color:var(--state-wrong);}
+  .stat-cell.is-clickable{
+    border:1.5px solid transparent;font:inherit;text-align:left;width:100%;cursor:pointer;
+  }
+  .stat-cell.is-clickable:hover{border-color:var(--accent-brand);}
+  .stat-cell.is-clickable.is-active{border-color:var(--accent-brand);background:var(--accent-brand-soft);}
+
+  .panel-tabs{display:flex;gap:4px;border-bottom:1px solid var(--hairline);flex-wrap:wrap;}
+  .panel-tab{
+    background:none;border:none;border-bottom:2.5px solid transparent;padding:10px 4px;margin-bottom:-1px;
+    font-family:var(--font-body);font-weight:800;font-size:13.5px;color:var(--text-soft);cursor:pointer;
+  }
+  .panel-tab:hover{color:var(--text);}
+  .panel-tab.is-active{color:var(--accent-brand-dark);border-bottom-color:var(--accent-brand);}
+  .panel-tab-badge{
+    display:inline-block;background:var(--bad);color:#fff;border-radius:var(--r-pill);
+    font-size:11px;font-weight:800;padding:1px 7px;margin-left:4px;
+  }
 
   .tag-list{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none;}
   .tag-list li{

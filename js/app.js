@@ -1058,6 +1058,7 @@ function logout(){
   state.dashboardImgDisputas=null;
   state.dashboardProfiles=null;
   state.dashboardRows=null;
+  state._monitorTab=null;
   state.monitorAuthed=false;
   state.monitorPass='';
   state.currentCategory=null;
@@ -3584,6 +3585,7 @@ function viewMonitorLogin(){
       state.dashboardProfiles = null;
       state.dashboardDoubts = null;
       state.dashboardImgDisputas = null;
+      state._monitorTab = null;
       state.dashboardError = null;
       state.dashboardActivityId = null;
       state.view='dashboard';
@@ -3635,6 +3637,7 @@ function viewDashboard(){
     state.dashboardProfiles=null;
     state.dashboardDoubts=null;
     state.dashboardImgDisputas=null;
+    state._monitorTab=null;
     unsubscribeMonitor();
     state.view = homeView();
     render();
@@ -3655,176 +3658,213 @@ function viewDashboard(){
 
   const rows=state.dashboardRows || [];
   const profiles=state.dashboardProfiles || [];
-  const refreshBtn=el('button','act-btn is-ghost', state._reloadingContent ? 'Buscando…' : '↻ Buscar contenido nuevo');
-  refreshBtn.type='button';
-  refreshBtn.disabled = !!state._reloadingContent;
-  refreshBtn.onclick=()=>{
-    state._reloadingContent = true; render();
-    _dynamicContentLoaded = false;
-    loadDynamicContent().then(function(){ state._reloadingContent = false; render(); });
-  };
-  card.appendChild(refreshBtn);
 
-  // ---- Dudas de los estudiantes (agrupadas por pregunta, en tiempo real) ----
   const allGroups = groupDoubts(state.dashboardDoubts || []);
-  const totalMarks = allGroups.reduce(function(s,g){ return s + g.total; }, 0);
   const totalPend = allGroups.reduce(function(s,g){ return s + g.pendCount; }, 0);
-
-  card.appendChild(el('div','panel-section','Dudas de los estudiantes' +
-    (totalPend ? ' · ' + totalPend + ' sin resolver' : '')));
-
-  if(state._doubtError){
-    card.appendChild(el('p','panel-note is-bad', esc(state._doubtError)));
-  }
-
-  if(state.dashboardDoubts === null){
-    card.appendChild(el('p','panel-foot','Cargando dudas…'));
-  } else if(!allGroups.length){
-    card.appendChild(el('p','panel-foot','Ningún estudiante ha marcado preguntas con dudas todavía. Aparecen aquí cuando alguien toca "No entiendo esta pregunta" durante una actividad.'));
-  } else {
-    // resumen
-    card.appendChild(el('p','panel-foot',
-      allGroups.length + ' pregunta' + (allGroups.length===1?'':'s') + ' · ' +
-      totalMarks + ' marca' + (totalMarks===1?'':'s') + ' en total'));
-
-    // filtro por módulo (solo si hay dudas de más de un módulo)
-    const modsWithDoubts = [];
-    allGroups.forEach(function(g){
-      if(!modsWithDoubts.some(function(m){ return m.id === g.mod; })){
-        modsWithDoubts.push({ id:g.mod, label:g.modT });
-      }
-    });
-    if(state._doubtFilter && !modsWithDoubts.some(function(m){ return m.id === state._doubtFilter; })){
-      state._doubtFilter = '';
-    }
-    if(modsWithDoubts.length > 1){
-      const chips = el('div','dfilter');
-      const mk = function(id, label, count){
-        const b = el('button','dfilter-chip' + ((state._doubtFilter||'') === id ? ' is-active' : ''),
-          esc(label) + ' (' + count + ')');
-        b.type = 'button';
-        b.onclick = function(){ state._doubtFilter = id; render(); };
-        return b;
-      };
-      chips.appendChild(mk('', 'Todos', allGroups.length));
-      modsWithDoubts.forEach(function(m){
-        chips.appendChild(mk(m.id, m.label, allGroups.filter(function(g){ return g.mod === m.id; }).length));
-      });
-      card.appendChild(chips);
-    }
-
-    const flt = state._doubtFilter || '';
-    const shown = flt ? allGroups.filter(function(g){ return g.mod === flt; }) : allGroups;
-    const active = shown.filter(function(g){ return !g.allResolved; });
-    const done = shown.filter(function(g){ return g.allResolved; });
-
-    if(active.length){
-      const list = el('div','dgroup-list');
-      active.forEach(function(g){ list.appendChild(doubtGroupCard(g)); });
-      card.appendChild(list);
-    } else {
-      card.appendChild(el('p','panel-foot','No hay preguntas pendientes en esta vista. 🎉'));
-    }
-
-    if(done.length){
-      const det = document.createElement('details');
-      det.className = 'dresolved';
-      if(state._resolvedOpen) det.open = true;
-      det.addEventListener('toggle', function(){ state._resolvedOpen = det.open; });
-      const sum = document.createElement('summary');
-      sum.textContent = 'Resueltas (' + done.length + ' pregunta' + (done.length===1?'':'s') + ')';
-      det.appendChild(sum);
-      const list = el('div','dgroup-list');
-      done.forEach(function(g){ list.appendChild(doubtGroupCard(g)); });
-      det.appendChild(list);
-      card.appendChild(det);
-    }
-  }
-
-  // ---- Disputas de "señalar estructuras" (respuestas marcadas por revisar) ----
   const disputes = state.dashboardImgDisputas;
-  card.appendChild(el('div','panel-section','Respuestas por revisar' +
-    (disputes && disputes.length ? ' · ' + disputes.length : '')));
-  if(disputes === null){
-    card.appendChild(el('p','panel-foot','Cargando…'));
-  } else if(!disputes.length){
-    card.appendChild(el('p','panel-foot','Ningún estudiante ha marcado una respuesta para revisión todavía. Aparecen aquí cuando alguien usa "¿Crees que tu respuesta también es correcta?" en "Señalar estructuras".'));
-  } else {
-    const list = el('div','dgroup-list');
-    disputes.forEach(function(d){ list.appendChild(imgDisputeCard(d)); });
-    card.appendChild(list);
-  }
+  const pendingDisputes = disputes ? disputes.length : 0;
+  const totalPendingAll = totalPend + pendingDisputes;
 
-  // ---- Actividades (puntaje + tiempo por estudiante al entrar) ----
-  // Solo se muestran las que están habilitadas para los estudiantes: no
-  // bloqueadas y con contenido cargado. Al habilitar una nueva, aparece aquí.
-  card.appendChild(el('div','panel-section','Actividades'));
-  if(state.dashboardProfiles === null){
-    card.appendChild(el('p','panel-foot','Cargando datos de los estudiantes…'));
+  // ---- franja de resumen (de un vistazo, siempre visible) ----
+  const stats = el('div','stat-row');
+  function statCell(icon, value, label, tab){
+    const c = el('button','stat-cell is-clickable' + ((state._monitorTab||defaultTab)===tab ? ' is-active':''));
+    c.type = 'button';
+    c.innerHTML = '<span class="k">'+icon+' '+esc(label)+'</span><span class="v">'+value+'</span>';
+    c.onclick = function(){ state._monitorTab = tab; render(); };
+    return c;
   }
-  const grid=el('div','mod-list');
-  let anyActivity=false;
-  Object.values(CATEGORIES).forEach(cat=>{
-    cat.moduleIds.forEach((mid,idx)=>{
-      const mod=MODULES[mid];
-      if(!mod || isModuleLocked(mid) || !mod.levels.length) return;
-      anyActivity=true;
-      const num=String(idx+1).padStart(2,'0');
-      let touched=0, sumScore=0, scoredCount=0, sumTime=0;
-      profiles.forEach(p=>{
-        const st = moduleStatsFromProfile(p, mid);
-        if(!st || st.status==='not_started') return;
-        touched++;
-        sumTime += st.elapsedSec;
-        if(st.avgScore!==null){ sumScore+=st.avgScore; scoredCount++; }
+  const defaultTab = totalPendingAll ? 'pendientes' : 'actividades';
+  stats.appendChild(statCell('🚩', totalPend, 'Dudas pendientes', 'pendientes'));
+  stats.appendChild(statCell('✏️', pendingDisputes, 'Por revisar', 'pendientes'));
+  stats.appendChild(statCell('👥', profiles.length, 'Perfiles', 'resumen'));
+  stats.appendChild(statCell('📊', rows.length, 'Informes', 'resumen'));
+  card.appendChild(stats);
+
+  // ---- pestañas: separan "qué necesita mi atención" de "solo consultar" ----
+  const tab = state._monitorTab || defaultTab;
+  const tabsRow = el('div','panel-tabs');
+  function tabBtn(id, label, badge){
+    const b = el('button','panel-tab' + (tab===id ? ' is-active':''),
+      esc(label) + (badge ? ' <span class="panel-tab-badge">'+badge+'</span>' : ''));
+    b.type = 'button';
+    b.onclick = function(){ state._monitorTab = id; render(); };
+    return b;
+  }
+  tabsRow.appendChild(tabBtn('pendientes', 'Pendientes', totalPendingAll || ''));
+  tabsRow.appendChild(tabBtn('actividades', 'Actividades'));
+  tabsRow.appendChild(tabBtn('resumen', 'Resumen general'));
+  card.appendChild(tabsRow);
+
+  if(tab === 'pendientes'){
+    // ---- Dudas de los estudiantes (agrupadas por pregunta, en tiempo real) ----
+    card.appendChild(el('div','panel-section','🚩 Dudas de los estudiantes' +
+      (totalPend ? ' · ' + totalPend + ' sin resolver' : '')));
+
+    if(state._doubtError){
+      card.appendChild(el('p','panel-note is-bad', esc(state._doubtError)));
+    }
+
+    if(state.dashboardDoubts === null){
+      card.appendChild(el('p','panel-foot','Cargando dudas…'));
+    } else if(!allGroups.length){
+      card.appendChild(el('p','panel-foot','Ningún estudiante ha marcado preguntas con dudas todavía. Aparecen aquí cuando alguien toca "No entiendo esta pregunta" durante una actividad.'));
+    } else {
+      const totalMarks = allGroups.reduce(function(s,g){ return s + g.total; }, 0);
+      card.appendChild(el('p','panel-foot',
+        allGroups.length + ' pregunta' + (allGroups.length===1?'':'s') + ' · ' +
+        totalMarks + ' marca' + (totalMarks===1?'':'s') + ' en total'));
+
+      // filtro por módulo (solo si hay dudas de más de un módulo)
+      const modsWithDoubts = [];
+      allGroups.forEach(function(g){
+        if(!modsWithDoubts.some(function(m){ return m.id === g.mod; })){
+          modsWithDoubts.push({ id:g.mod, label:g.modT });
+        }
       });
-      const avg = scoredCount? Math.round(sumScore/scoredCount) : null;
-      const avgTime = touched? sumTime/touched : 0;
+      if(state._doubtFilter && !modsWithDoubts.some(function(m){ return m.id === state._doubtFilter; })){
+        state._doubtFilter = '';
+      }
+      if(modsWithDoubts.length > 1){
+        const chips = el('div','dfilter');
+        const mk = function(id, label, count){
+          const b = el('button','dfilter-chip' + ((state._doubtFilter||'') === id ? ' is-active' : ''),
+            esc(label) + ' (' + count + ')');
+          b.type = 'button';
+          b.onclick = function(){ state._doubtFilter = id; render(); };
+          return b;
+        };
+        chips.appendChild(mk('', 'Todos', allGroups.length));
+        modsWithDoubts.forEach(function(m){
+          chips.appendChild(mk(m.id, m.label, allGroups.filter(function(g){ return g.mod === m.id; }).length));
+        });
+        card.appendChild(chips);
+      }
 
-      const actBtn=el('button','mod-card'+(touched?' is-ready':''));
-      actBtn.type='button';
-      const hd=el('div','mod-head');
-      hd.appendChild(el('span','mod-num', esc(num)));
-      hd.appendChild(el('span','mod-title2', esc(mod.title)));
-      actBtn.appendChild(hd);
-      actBtn.appendChild(el('p','mod-sub', touched
-        ? (touched+' estudiante'+(touched===1?'':'s')+' con actividad'+(avg!==null? ' · promedio '+avg+'%':''))
-        : 'Sin datos todavía'));
-      if(touched) actBtn.appendChild(el('div','mod-meta','⏱ prom. '+formatHMS(avgTime)));
-      actBtn.onclick=()=>{ state.dashboardActivityId=mid; state.view='dashboardActivity'; render(); };
-      grid.appendChild(actBtn);
-    });
-  });
-  if(anyActivity){ card.appendChild(grid); }
-  else { card.appendChild(el('p','panel-foot','Todavía no hay módulos con contenido cargado.')); }
+      const flt = state._doubtFilter || '';
+      const shown = flt ? allGroups.filter(function(g){ return g.mod === flt; }) : allGroups;
+      const active = shown.filter(function(g){ return !g.allResolved; });
+      const done = shown.filter(function(g){ return g.allResolved; });
 
-  // ---- Resumen general por estudiante (en tiempo real) ----
-  card.appendChild(el('div','panel-section','Resumen general' + (state.dashboardRows ? ' (' + rows.length + ' informe' + (rows.length===1?'':'s') + ')' : '')));
-  if(state.dashboardRows === null){
-    card.appendChild(el('p','panel-foot','Cargando informes…'));
-  } else if(rows.length===0){
-    card.appendChild(el('p','panel-foot','Ningún estudiante ha enviado su informe todavía (se envía automáticamente al completar un nivel).'));
-  } else {
-    const dw=el('div','data-wrap');
-    const table=document.createElement('table');
-    table.className='data-table';
-    table.innerHTML = '<thead><tr><th>Nombre</th><th class="mono">Código</th><th class="mono">General</th><th class="mono">Fecha</th></tr></thead>';
-    const tbody=document.createElement('tbody');
-    rows.forEach(r=>{
-      const tr=document.createElement('tr');
-      const cls = r.overall>=80?'good': r.overall>=60?'warn':'bad';
-      const date = r.timestamp? new Date(r.timestamp).toLocaleString('es-CO',{dateStyle:'short',timeStyle:'short'}) : '—';
-      tr.innerHTML = '<td>'+esc(r.name||'—')+'</td><td class="mono">'+esc(r.code||'—')+'</td>'+
-        '<td class="mono"><span class="pill-score '+cls+'">'+r.overall+'%</span></td>'+
-        '<td class="mono">'+esc(date)+'</td>';
-      tbody.appendChild(tr);
-    });
-    table.appendChild(tbody);
-    dw.appendChild(table);
-    card.appendChild(dw);
+      if(active.length){
+        const list = el('div','dgroup-list');
+        active.forEach(function(g){ list.appendChild(doubtGroupCard(g)); });
+        card.appendChild(list);
+      } else {
+        card.appendChild(el('p','panel-foot','No hay preguntas pendientes en esta vista. 🎉'));
+      }
+
+      if(done.length){
+        const det = document.createElement('details');
+        det.className = 'dresolved';
+        if(state._resolvedOpen) det.open = true;
+        det.addEventListener('toggle', function(){ state._resolvedOpen = det.open; });
+        const sum = document.createElement('summary');
+        sum.textContent = 'Resueltas (' + done.length + ' pregunta' + (done.length===1?'':'s') + ')';
+        det.appendChild(sum);
+        const list = el('div','dgroup-list');
+        done.forEach(function(g){ list.appendChild(doubtGroupCard(g)); });
+        det.appendChild(list);
+        card.appendChild(det);
+      }
+    }
+
+    // ---- Disputas de "señalar estructuras" (respuestas marcadas por revisar) ----
+    card.appendChild(el('div','panel-section','✏️ Respuestas por revisar' +
+      (disputes && disputes.length ? ' · ' + disputes.length : '')));
+    if(disputes === null){
+      card.appendChild(el('p','panel-foot','Cargando…'));
+    } else if(!disputes.length){
+      card.appendChild(el('p','panel-foot','Ningún estudiante ha marcado una respuesta para revisión todavía. Aparecen aquí cuando alguien usa "¿Crees que tu respuesta también es correcta?" en "Señalar estructuras".'));
+    } else {
+      const list = el('div','dgroup-list');
+      disputes.forEach(function(d){ list.appendChild(imgDisputeCard(d)); });
+      card.appendChild(list);
+    }
   }
 
-  card.appendChild(el('p','panel-foot','Cada estudiante inicia sesión con su código estudiantil, así que cada fila corresponde a una persona (no hay riesgo de duplicados por nombres repetidos).'));
+  if(tab === 'actividades'){
+    // ---- Actividades (puntaje + tiempo por estudiante al entrar) ----
+    // Solo se muestran las que están habilitadas para los estudiantes: no
+    // bloqueadas y con contenido cargado. Al habilitar una nueva, aparece aquí.
+    const refreshBtn=el('button','act-btn is-ghost', state._reloadingContent ? 'Buscando…' : '↻ Buscar contenido nuevo');
+    refreshBtn.type='button';
+    refreshBtn.disabled = !!state._reloadingContent;
+    refreshBtn.onclick=()=>{
+      state._reloadingContent = true; render();
+      _dynamicContentLoaded = false;
+      loadDynamicContent().then(function(){ state._reloadingContent = false; render(); });
+    };
+    card.appendChild(refreshBtn);
+
+    if(state.dashboardProfiles === null){
+      card.appendChild(el('p','panel-foot','Cargando datos de los estudiantes…'));
+    }
+    const grid=el('div','mod-list');
+    let anyActivity=false;
+    Object.values(CATEGORIES).forEach(cat=>{
+      cat.moduleIds.forEach((mid,idx)=>{
+        const mod=MODULES[mid];
+        if(!mod || isModuleLocked(mid) || !mod.levels.length) return;
+        anyActivity=true;
+        const num=String(idx+1).padStart(2,'0');
+        let touched=0, sumScore=0, scoredCount=0, sumTime=0;
+        profiles.forEach(p=>{
+          const st = moduleStatsFromProfile(p, mid);
+          if(!st || st.status==='not_started') return;
+          touched++;
+          sumTime += st.elapsedSec;
+          if(st.avgScore!==null){ sumScore+=st.avgScore; scoredCount++; }
+        });
+        const avg = scoredCount? Math.round(sumScore/scoredCount) : null;
+        const avgTime = touched? sumTime/touched : 0;
+
+        const actBtn=el('button','mod-card'+(touched?' is-ready':''));
+        actBtn.type='button';
+        const hd=el('div','mod-head');
+        hd.appendChild(el('span','mod-num', esc(num)));
+        hd.appendChild(el('span','mod-title2', esc(mod.title)));
+        actBtn.appendChild(hd);
+        actBtn.appendChild(el('p','mod-sub', touched
+          ? (touched+' estudiante'+(touched===1?'':'s')+' con actividad'+(avg!==null? ' · promedio '+avg+'%':''))
+          : 'Sin datos todavía'));
+        if(touched) actBtn.appendChild(el('div','mod-meta','⏱ prom. '+formatHMS(avgTime)));
+        actBtn.onclick=()=>{ state.dashboardActivityId=mid; state.view='dashboardActivity'; render(); };
+        grid.appendChild(actBtn);
+      });
+    });
+    if(anyActivity){ card.appendChild(grid); }
+    else { card.appendChild(el('p','panel-foot','Todavía no hay módulos con contenido cargado.')); }
+  }
+
+  if(tab === 'resumen'){
+    // ---- Resumen general por estudiante (en tiempo real) ----
+    card.appendChild(el('div','panel-section','Resumen general' + (state.dashboardRows ? ' (' + rows.length + ' informe' + (rows.length===1?'':'s') + ')' : '')));
+    if(state.dashboardRows === null){
+      card.appendChild(el('p','panel-foot','Cargando informes…'));
+    } else if(rows.length===0){
+      card.appendChild(el('p','panel-foot','Ningún estudiante ha enviado su informe todavía (se envía automáticamente al completar un nivel).'));
+    } else {
+      const dw=el('div','data-wrap');
+      const table=document.createElement('table');
+      table.className='data-table';
+      table.innerHTML = '<thead><tr><th>Nombre</th><th class="mono">Código</th><th class="mono">General</th><th class="mono">Fecha</th></tr></thead>';
+      const tbody=document.createElement('tbody');
+      rows.forEach(r=>{
+        const tr=document.createElement('tr');
+        const cls = r.overall>=80?'good': r.overall>=60?'warn':'bad';
+        const date = r.timestamp? new Date(r.timestamp).toLocaleString('es-CO',{dateStyle:'short',timeStyle:'short'}) : '—';
+        tr.innerHTML = '<td>'+esc(r.name||'—')+'</td><td class="mono">'+esc(r.code||'—')+'</td>'+
+          '<td class="mono"><span class="pill-score '+cls+'">'+r.overall+'%</span></td>'+
+          '<td class="mono">'+esc(date)+'</td>';
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      dw.appendChild(table);
+      card.appendChild(dw);
+    }
+    card.appendChild(el('p','panel-foot','Cada estudiante inicia sesión con su código estudiantil, así que cada fila corresponde a una persona (no hay riesgo de duplicados por nombres repetidos).'));
+  }
 
   wrap.appendChild(card);
   return wrap;
