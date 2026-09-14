@@ -464,7 +464,9 @@ let _monImgDisputesUnsub = null;
 function subscribeMonitorImgDisputes(){
   if(!_fs) return;
   if(_monImgDisputesUnsub){ _monImgDisputesUnsub(); _monImgDisputesUnsub = null; }
-  _monImgDisputesUnsub = _fs.collection('imgDisputas').where('resolved','==', false).onSnapshot(
+  // Trae todas (no solo las pendientes) para poder mostrar también las ya
+  // resueltas en su propia sección, igual que las dudas.
+  _monImgDisputesUnsub = _fs.collection('imgDisputas').onSnapshot(
     function(snap){
       const arr = [];
       snap.forEach(function(doc){ arr.push(Object.assign({ id: doc.id }, doc.data())); });
@@ -3087,26 +3089,31 @@ function doubtGroupCard(g){
 }
 
 function imgDisputeCard(d){
-  const card = el('div','dgroup');
+  const card = el('div','dgroup' + (d.resolved ? ' is-resolved' : ''));
   const top = el('div','dgroup-top');
   top.appendChild(el('span','doubt-tag', esc((d.imgLabel || d.imgFile) + ' · punto ' + d.pointN)));
+  if(d.resolved){
+    top.appendChild(el('span','dgroup-count is-done', d.approved ? '✓ Aprobada' : '✕ Descartada'));
+  }
   card.appendChild(top);
   card.appendChild(el('p','doubt-q', esc(d.name || d.code) + ' (' + esc(d.code) + ') escribió: “' + esc(d.typed) + '”'));
   if(d.acceptedAnswers && d.acceptedAnswers.length){
-    card.appendChild(el('div','dgroup-lvl', 'Respuestas aceptadas hoy: ' + esc(d.acceptedAnswers.join(' / '))));
+    card.appendChild(el('div','dgroup-lvl', 'Respuestas aceptadas en ese momento: ' + esc(d.acceptedAnswers.join(' / '))));
   }
   if(d.justificacion){
     card.appendChild(el('div','imgdispute-note', '💬 “' + esc(d.justificacion) + '”'));
   }
-  const row = el('div','row');
-  const approve = el('button','act-btn', '✓ Aprobar como correcta');
-  approve.type = 'button';
-  approve.onclick = function(){ approve.disabled = true; approve.textContent = 'Aprobando…'; approveImgDispute(d); };
-  const reject = el('button','act-btn is-ghost', 'Descartar');
-  reject.type = 'button';
-  reject.onclick = function(){ reject.disabled = true; rejectImgDispute(d); };
-  row.appendChild(approve); row.appendChild(reject);
-  card.appendChild(row);
+  if(!d.resolved){
+    const row = el('div','row');
+    const approve = el('button','act-btn', '✓ Aprobar como correcta');
+    approve.type = 'button';
+    approve.onclick = function(){ approve.disabled = true; approve.textContent = 'Aprobando…'; approveImgDispute(d); };
+    const reject = el('button','act-btn is-ghost', 'Descartar');
+    reject.type = 'button';
+    reject.onclick = function(){ reject.disabled = true; rejectImgDispute(d); };
+    row.appendChild(approve); row.appendChild(reject);
+    card.appendChild(row);
+  }
   return card;
 }
 
@@ -3666,23 +3673,23 @@ function viewDashboard(){
   const totalPendingAll = totalPend + pendingDisputes;
 
   // ---- franja de resumen (de un vistazo, siempre visible) ----
+  const defaultTab = totalPend ? 'dudas' : pendingDisputes ? 'disputas' : 'actividades';
+  const tab = state._monitorTab || defaultTab;
   const stats = el('div','stat-row');
-  function statCell(icon, value, label, tab){
-    const c = el('button','stat-cell is-clickable' + ((state._monitorTab||defaultTab)===tab ? ' is-active':''));
+  function statCell(icon, value, label, cellTab){
+    const c = el('button','stat-cell is-clickable' + (tab===cellTab ? ' is-active':''));
     c.type = 'button';
     c.innerHTML = '<span class="k">'+icon+' '+esc(label)+'</span><span class="v">'+value+'</span>';
-    c.onclick = function(){ state._monitorTab = tab; render(); };
+    c.onclick = function(){ state._monitorTab = cellTab; render(); };
     return c;
   }
-  const defaultTab = totalPendingAll ? 'pendientes' : 'actividades';
-  stats.appendChild(statCell('🚩', totalPend, 'Dudas pendientes', 'pendientes'));
-  stats.appendChild(statCell('✏️', pendingDisputes, 'Por revisar', 'pendientes'));
-  stats.appendChild(statCell('👥', profiles.length, 'Perfiles', 'resumen'));
-  stats.appendChild(statCell('📊', rows.length, 'Informes', 'resumen'));
+  stats.appendChild(statCell('🚩', totalPend, 'Dudas pendientes', 'dudas'));
+  stats.appendChild(statCell('✏️', pendingDisputes, 'Por revisar', 'disputas'));
+  stats.appendChild(statCell('👥', profiles.length, 'Perfiles', 'perfiles'));
+  stats.appendChild(statCell('📊', rows.length, 'Informes', 'informes'));
   card.appendChild(stats);
 
-  // ---- pestañas: separan "qué necesita mi atención" de "solo consultar" ----
-  const tab = state._monitorTab || defaultTab;
+  // ---- pestañas: una por estadística, cada una independiente ----
   const tabsRow = el('div','panel-tabs');
   function tabBtn(id, label, badge){
     const b = el('button','panel-tab' + (tab===id ? ' is-active':''),
@@ -3691,16 +3698,15 @@ function viewDashboard(){
     b.onclick = function(){ state._monitorTab = id; render(); };
     return b;
   }
-  tabsRow.appendChild(tabBtn('pendientes', 'Pendientes', totalPendingAll || ''));
+  tabsRow.appendChild(tabBtn('dudas', 'Dudas', totalPend || ''));
+  tabsRow.appendChild(tabBtn('disputas', 'Por revisar', pendingDisputes || ''));
   tabsRow.appendChild(tabBtn('actividades', 'Actividades'));
-  tabsRow.appendChild(tabBtn('resumen', 'Resumen general'));
+  tabsRow.appendChild(tabBtn('perfiles', 'Perfiles'));
+  tabsRow.appendChild(tabBtn('informes', 'Informes'));
   card.appendChild(tabsRow);
 
-  if(tab === 'pendientes'){
+  if(tab === 'dudas'){
     // ---- Dudas de los estudiantes (agrupadas por pregunta, en tiempo real) ----
-    card.appendChild(el('div','panel-section','🚩 Dudas de los estudiantes' +
-      (totalPend ? ' · ' + totalPend + ' sin resolver' : '')));
-
     if(state._doubtError){
       card.appendChild(el('p','panel-note is-bad', esc(state._doubtError)));
     }
@@ -3746,6 +3752,7 @@ function viewDashboard(){
       const active = shown.filter(function(g){ return !g.allResolved; });
       const done = shown.filter(function(g){ return g.allResolved; });
 
+      card.appendChild(el('div','panel-section','Por responder' + (active.length ? ' · ' + active.length : '')));
       if(active.length){
         const list = el('div','dgroup-list');
         active.forEach(function(g){ list.appendChild(doubtGroupCard(g)); });
@@ -3754,32 +3761,44 @@ function viewDashboard(){
         card.appendChild(el('p','panel-foot','No hay preguntas pendientes en esta vista. 🎉'));
       }
 
+      card.appendChild(el('div','panel-section','Respondidas' + (done.length ? ' · ' + done.length : '')));
       if(done.length){
-        const det = document.createElement('details');
-        det.className = 'dresolved';
-        if(state._resolvedOpen) det.open = true;
-        det.addEventListener('toggle', function(){ state._resolvedOpen = det.open; });
-        const sum = document.createElement('summary');
-        sum.textContent = 'Resueltas (' + done.length + ' pregunta' + (done.length===1?'':'s') + ')';
-        det.appendChild(sum);
         const list = el('div','dgroup-list');
         done.forEach(function(g){ list.appendChild(doubtGroupCard(g)); });
-        det.appendChild(list);
-        card.appendChild(det);
+        card.appendChild(list);
+      } else {
+        card.appendChild(el('p','panel-foot','Todavía no has respondido ninguna.'));
       }
     }
+  }
 
+  if(tab === 'disputas'){
     // ---- Disputas de "señalar estructuras" (respuestas marcadas por revisar) ----
-    card.appendChild(el('div','panel-section','✏️ Respuestas por revisar' +
-      (disputes && disputes.length ? ' · ' + disputes.length : '')));
     if(disputes === null){
       card.appendChild(el('p','panel-foot','Cargando…'));
     } else if(!disputes.length){
       card.appendChild(el('p','panel-foot','Ningún estudiante ha marcado una respuesta para revisión todavía. Aparecen aquí cuando alguien usa "¿Crees que tu respuesta también es correcta?" en "Señalar estructuras".'));
     } else {
-      const list = el('div','dgroup-list');
-      disputes.forEach(function(d){ list.appendChild(imgDisputeCard(d)); });
-      card.appendChild(list);
+      const pending = disputes.filter(function(d){ return !d.resolved; });
+      const resolved = disputes.filter(function(d){ return d.resolved; });
+
+      card.appendChild(el('div','panel-section','Por responder' + (pending.length ? ' · ' + pending.length : '')));
+      if(pending.length){
+        const list = el('div','dgroup-list');
+        pending.forEach(function(d){ list.appendChild(imgDisputeCard(d)); });
+        card.appendChild(list);
+      } else {
+        card.appendChild(el('p','panel-foot','No hay respuestas pendientes de revisar. 🎉'));
+      }
+
+      card.appendChild(el('div','panel-section','Respondidas' + (resolved.length ? ' · ' + resolved.length : '')));
+      if(resolved.length){
+        const list = el('div','dgroup-list');
+        resolved.forEach(function(d){ list.appendChild(imgDisputeCard(d)); });
+        card.appendChild(list);
+      } else {
+        card.appendChild(el('p','panel-foot','Todavía no has respondido ninguna.'));
+      }
     }
   }
 
@@ -3837,9 +3856,36 @@ function viewDashboard(){
     else { card.appendChild(el('p','panel-foot','Todavía no hay módulos con contenido cargado.')); }
   }
 
-  if(tab === 'resumen'){
-    // ---- Resumen general por estudiante (en tiempo real) ----
-    card.appendChild(el('div','panel-section','Resumen general' + (state.dashboardRows ? ' (' + rows.length + ' informe' + (rows.length===1?'':'s') + ')' : '')));
+  if(tab === 'perfiles'){
+    // ---- Perfiles registrados (nombre, código, avance, última actividad) ----
+    if(state.dashboardProfiles === null){
+      card.appendChild(el('p','panel-foot','Cargando perfiles…'));
+    } else if(profiles.length === 0){
+      card.appendChild(el('p','panel-foot','Todavía no hay ningún estudiante registrado (se crea un perfil automáticamente la primera vez que alguien entra con su código).'));
+    } else {
+      const sorted = profiles.slice().sort(function(a,b){ return String(b.updated_at||'').localeCompare(String(a.updated_at||'')); });
+      const dw = el('div','data-wrap');
+      const table = document.createElement('table');
+      table.className = 'data-table';
+      table.innerHTML = '<thead><tr><th>Nombre</th><th class="mono">Código</th><th class="mono">Niveles completados</th><th class="mono">Última actividad</th></tr></thead>';
+      const tbody = document.createElement('tbody');
+      sorted.forEach(function(p){
+        const doneCount = Object.keys(p.progress || {}).filter(function(k){ return k.indexOf('@') !== 0; }).length;
+        const date = p.updated_at ? new Date(p.updated_at).toLocaleString('es-CO',{dateStyle:'short',timeStyle:'short'}) : '—';
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td>'+esc(p.name||'—')+'</td><td class="mono">'+esc(p.code||'—')+'</td>'+
+          '<td class="mono">'+doneCount+'</td><td class="mono">'+esc(date)+'</td>';
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      dw.appendChild(table);
+      card.appendChild(dw);
+    }
+    card.appendChild(el('p','panel-foot','Se crea un perfil automáticamente la primera vez que un estudiante entra con su código, aunque todavía no complete ninguna actividad.'));
+  }
+
+  if(tab === 'informes'){
+    // ---- Informes enviados por estudiante (en tiempo real) ----
     if(state.dashboardRows === null){
       card.appendChild(el('p','panel-foot','Cargando informes…'));
     } else if(rows.length===0){
