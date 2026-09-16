@@ -148,7 +148,7 @@ const MODULES = {
   E: { id:'E', title:'Huesos del tórax', subtitle:'Selecciona el tipo de actividad', placeholder:true, levels:[], subActivities:SUB_ACTIVITY_TEMPLATE() },
   F: { id:'F', title:'Huesos de la cintura escapular y miembro superior', subtitle:'Selecciona el tipo de actividad', placeholder:true, levels:[], subActivities:SUB_ACTIVITY_TEMPLATE() },
   G: { id:'G', title:'Huesos de la pelvis y del miembro inferior', subtitle:'Selecciona el tipo de actividad', placeholder:true, levels:[], subActivities:SUB_ACTIVITY_TEMPLATE() },
-  H: { id:'H', title:'Histología, fisiología y envejecimiento del tejido óseo', subtitle:'Selecciona el tipo de actividad', placeholder:true, levels:[], subActivities:SUB_ACTIVITY_TEMPLATE() }
+  H: { id:'H', title:'Histología, fisiología y envejecimiento del tejido óseo', subtitle:'Selecciona una actividad', placeholder:true, levels:[], subActivities:[] }
 };
 
 // Actividad "señalar estructuras": imágenes con flechas ya dibujadas por el
@@ -241,6 +241,141 @@ MODULES.G.levels.push({
   ]
 });
 MODULES.G.subActivities.find(s=>s.id==='img').ready = true;
+
+// Módulo H — histología, formación y consolidación ósea. Contenido entregado
+// por el profesor (banco de actividades). Se arma a mano, como el módulo G,
+// porque incluye tipos de actividad (varias respuestas correctas, ordenar
+// en secuencia) que todavía no vienen del flujo de Google Sheets.
+MODULES.H.subActivities = [
+  { id:'h-act1', title:'Bloque 1 · Relacionar: células óseas', icon:'🔗', ready:true },
+  { id:'h-act2', title:'Bloque 1 · Varias respuestas: hueso compacto', icon:'☑️', ready:true },
+  { id:'h-act4', title:'Bloque 1 · Clasificar: compacto vs. esponjoso', icon:'🗂️', ready:true },
+  { id:'h-act5', title:'Bloque 2 · Secuencia: osificación endocondral', icon:'🔢', ready:true },
+  { id:'h-act6', title:'Bloque 2 · Secuencia: osificación intramembranosa', icon:'🔢', ready:true },
+  { id:'h-act7', title:'Bloque 2 · Clasificar: ¿etapa específica o toda la vida?', icon:'🗂️', ready:true },
+  { id:'h-act8', title:'Bloque 2 · Relacionar: factores del crecimiento óseo', icon:'🔗', ready:true },
+  { id:'h-act9', title:'Bloque 3 · Relacionar: tipos de fractura', icon:'🔗', ready:true },
+  { id:'h-act10', title:'Bloque 3 · Secuencia: consolidación ósea', icon:'🔢', ready:true },
+  { id:'h-act11', title:'Bloque 3 · Clasificar: reducción cerrada o abierta', icon:'🗂️', ready:true }
+];
+
+MODULES.H.levels = [
+  { id:'h-act1', type:'match', title:'Células óseas: célula ↔ función',
+    instructions:'Toca un término y luego su definición correcta.',
+    pairs:[
+      ['Osteogénica','Célula madre derivada del mesénquima; única capaz de dividirse; da origen a los osteoblastos'],
+      ['Osteoblasto','Secreta la matriz osteoide e inicia la calcificación del hueso nuevo'],
+      ['Osteocito','Célula ósea madura que mantiene el metabolismo diario; ya no se divide'],
+      ['Osteoclasto','Célula gigante multinucleada que realiza la resorción ósea']
+    ]
+  },
+  { id:'h-act2', type:'mcMulti', title:'Hueso compacto: varias respuestas correctas',
+    instructions:'Selecciona TODAS las opciones correctas. Puedes obtener puntaje parcial.',
+    questions:[
+      { q:'Seleccione todas las características correctas del hueso compacto.',
+        opts:[
+          'Está organizado en osteonas (sistemas de Havers)',
+          'Representa aproximadamente el 80% del esqueleto',
+          'Resiste la flexión y la carga de peso',
+          'Forma la capa externa de los huesos y la diáfisis de los huesos largos',
+          'Está formado por trabéculas',
+          'Aloja directamente la médula ósea roja en sus espacios'
+        ],
+        correct:[0,1,2,3]
+      }
+    ]
+  },
+  { id:'h-act4', type:'sort', title:'Clasificar: hueso compacto vs. esponjoso',
+    instructions:'Arrastra (o toca y luego toca la columna) cada término a donde corresponda.',
+    buckets:[ {key:'compacto', label:'Hueso compacto'}, {key:'esponjoso', label:'Hueso esponjoso'} ],
+    items:[
+      {term:'Osteona / sistema de Havers', cat:'compacto'},
+      {term:'Laminillas concéntricas', cat:'compacto'},
+      {term:'~80% del esqueleto', cat:'compacto'},
+      {term:'Resiste la flexión', cat:'compacto'},
+      {term:'Diáfisis', cat:'compacto'},
+      {term:'Trabécula', cat:'esponjoso'},
+      {term:'Médula ósea roja', cat:'esponjoso'},
+      {term:'~20% del esqueleto', cat:'esponjoso'},
+      {term:'Hemopoyesis', cat:'esponjoso'},
+      {term:'Epífisis', cat:'esponjoso'}
+    ]
+  },
+  { id:'h-act5', type:'sequence', title:'Osificación endocondral: ordene los pasos',
+    instructions:'Arrastra los pasos (o usa las flechas) hasta ordenarlos correctamente, de principio a fin.',
+    steps:[
+      {title:'Aparición del molde cartilaginoso', text:'Condroblastos forman el molde de cartílago hialino; aparece el pericondrio.'},
+      {title:'Crecimiento del molde cartilaginoso', text:'Se alarga (crecimiento intersticial) y se engrosa (crecimiento por aposición).'},
+      {title:'Aparición del centro primario de osificación', text:'Una arteria nutricia induce la formación de hueso desde el centro de la diáfisis hacia los extremos.'},
+      {title:'Aparición de la cavidad medular', text:'Los osteoclastos destruyen trabéculas recién formadas y abren un espacio hueco en la diáfisis.'},
+      {title:'Aparición del centro secundario de osificación', text:'Vasos epifisarios ingresan (al nacer); el hueso crece del centro de cada epífisis hacia la superficie.'},
+      {title:'Formación del cartílago articular y la placa epifisaria', text:'El cartílago restante se reparte entre la superficie articular y la placa de crecimiento.'}
+    ]
+  },
+  { id:'h-act6', type:'sequence', title:'Osificación intramembranosa: ordene los pasos',
+    instructions:'Arrastra los pasos (o usa las flechas) hasta ordenarlos correctamente, de principio a fin.',
+    steps:[
+      {title:'Aparición del centro de osificación', text:'Los osteoblastos secretan matriz osteoide.'},
+      {title:'Calcificación', text:'Se depositan calcio y otras sales minerales; la matriz osteoide se endurece.'},
+      {title:'Formación de trabéculas', text:'La matriz osteoide se diferencia en trabéculas que se fusionan y forman hueso esponjoso.'},
+      {title:'Formación del periostio', text:'El mesénquima periférico se transforma en periostio; una capa de hueso compacto reemplaza las capas superficiales de hueso esponjoso.'}
+    ]
+  },
+  { id:'h-act7', type:'sort', title:'¿Etapa específica de la vida o toda la vida?',
+    instructions:'Arrastra (o toca y luego toca la columna) cada proceso a donde corresponda.',
+    buckets:[ {key:'especifica', label:'Etapa específica de la vida'}, {key:'toda_la_vida', label:'A lo largo de toda la vida'} ],
+    items:[
+      {term:'Formación de huesos embrionarios y fetales', cat:'especifica'},
+      {term:'Crecimiento óseo (lactancia, infancia, adolescencia)', cat:'especifica'},
+      {term:'Remodelación ósea', cat:'toda_la_vida'},
+      {term:'Consolidación de fracturas', cat:'toda_la_vida'}
+    ]
+  },
+  { id:'h-act8', type:'match', title:'Factores del crecimiento óseo: factor ↔ función',
+    instructions:'Toca un término y luego su definición correcta.',
+    pairs:[
+      ['Vitamina A','Estimula la actividad de los osteoblastos'],
+      ['Vitamina C','Necesaria para sintetizar colágeno, la principal proteína del hueso'],
+      ['Vitamina D','Estimula la absorción intestinal de calcio de la dieta'],
+      ['Vitaminas K y B12','Necesarias para la síntesis de las proteínas del hueso'],
+      ['Estrógenos','Cierran la placa epifisaria (antes en mujeres, por sus mayores niveles)'],
+      ['Insulina','Promueve el crecimiento óseo aumentando la síntesis de proteínas óseas']
+    ]
+  },
+  { id:'h-act9', type:'match', title:'Tipos de fractura: nombre ↔ descripción',
+    instructions:'Toca un término y luego su definición correcta.',
+    pairs:[
+      ['Expuesta','Los cabos óseos protruyen a través de la piel (en la cerrada, la piel está indemne)'],
+      ['Conminuta','El hueso está astillado, aplastado o roto en múltiples fragmentos'],
+      ['En tallo verde','Un lado del hueso se rompe, el otro se dobla; solo ocurre en niños'],
+      ['Impactada','Un cabo de la fractura queda encajado dentro del otro'],
+      ['Pott','Fractura del extremo distal del peroné, con lesión de la articulación tibio-peronea'],
+      ['Pouteau-Colles','Fractura del extremo distal del radio, con desplazamiento dorsal del fragmento']
+    ]
+  },
+  { id:'h-act10', type:'sequence', title:'Consolidación ósea: ordene las fases',
+    instructions:'Arrastra los pasos (o usa las flechas) hasta ordenarlos correctamente, de principio a fin.',
+    noteAfterCheck:'Recuerda: el callo óseo dura entre 3 y 4 SEMANAS, no meses — es el error más frecuente en este tema.',
+    steps:[
+      {title:'Hematoma fracturario', text:'Se forma entre 6 y 8 horas tras la lesión; puede prolongarse varias semanas mientras fagocitos y osteoclastos limpian el tejido necrosado.'},
+      {title:'Callo fibrocartilaginoso', text:'Fibroblastos y condroblastos producen colágeno y fibrocartílago, uniendo temporalmente los fragmentos.'},
+      {title:'Callo óseo', text:'Osteoblastos producen trabéculas de hueso esponjoso; se mantiene entre 3 y 4 semanas (no meses).'},
+      {title:'Remodelación ósea', text:'Osteoclastos reabsorben las áreas necróticas; el hueso esponjoso es reemplazado por hueso compacto; puede tardar meses.'}
+    ]
+  },
+  { id:'h-act11', type:'sort', title:'Clasificar: reducción cerrada o abierta',
+    instructions:'Arrastra (o toca y luego toca la columna) cada característica a donde corresponda.',
+    buckets:[ {key:'cerrada', label:'Reducción cerrada'}, {key:'abierta', label:'Reducción abierta'} ],
+    items:[
+      {term:'Los cabos óseos se alinean por manipulación manual', cat:'cerrada'},
+      {term:'La piel permanece intacta', cat:'cerrada'},
+      {term:'Se inmoviliza después con yeso o férula', cat:'cerrada'},
+      {term:'Se alinean mediante cirugía', cat:'abierta'},
+      {term:'Se usan tornillos, placas, clavos o alambres', cat:'abierta'},
+      {term:'Requiere incisión quirúrgica (fijación interna)', cat:'abierta'}
+    ]
+  }
+];
 
 const CATEGORIES = {
   oseo: {
@@ -1097,7 +1232,7 @@ function shuffle(arr){
 }
 function pct(correct,total){ return total? Math.round((correct/total)*100) : 0; }
 
-const MODULE_TIMER_VIEWS = ['sort','match','mc','completar','imgLabel','levelDone'];
+const MODULE_TIMER_VIEWS = ['sort','match','mc','completar','imgLabel','mcMulti','sequence','levelDone'];
 
 function render(){
   if(_activeTimerModule && !(MODULE_TIMER_VIEWS.includes(state.view) && state.currentModule===_activeTimerModule)){
@@ -1115,6 +1250,8 @@ function render(){
     mc: viewMC,
     completar: viewFill,
     imgLabel: viewImgLabel,
+    mcMulti: viewMcMulti,
+    sequence: viewSequence,
     levelDone: viewLevelDone,
     boss: viewBoss,
     bossDone: viewBossDone,
@@ -1221,7 +1358,7 @@ function navRow(){
   const nav = el('nav','app-nav');
   nav.setAttribute('aria-label','Navegación');
   const v = state.view;
-  const inTheme = ['menu','moduleSubmenu','comingSoon','sort','match','mc','completar','imgLabel','levelDone','boss','bossDone'].indexOf(v) !== -1;
+  const inTheme = ['menu','moduleSubmenu','comingSoon','sort','match','mc','completar','imgLabel','mcMulti','sequence','levelDone','boss','bossDone'].indexOf(v) !== -1;
   const inDash = ['dashboard','monitorLogin','dashboardActivity'].indexOf(v) !== -1;
 
   function link(label, active, onClick){
@@ -1859,7 +1996,9 @@ const ACTIVITY_TYPE_LABEL = {
   truefalse:'Verdadero o falso',
   label:'Identificar estructuras',
   hotspot:'Señala la estructura',
-  imgLabel:'Señalar estructuras'
+  imgLabel:'Señalar estructuras',
+  mcMulti:'Varias respuestas correctas',
+  sequence:'Ordenar en secuencia'
 };
 
 function beginActivity(opts){
@@ -2253,6 +2392,246 @@ function viewMC(){
   }
 
   return A.root;
+}
+
+/* ============================================================
+   VISTA: SELECCIÓN MÚLTIPLE DE VARIAS RESPUESTAS (mcMulti)
+   El estudiante marca TODAS las opciones que crea correctas.
+   Puntaje parcial por pregunta: (aciertos − errores) / total de
+   opciones correctas, sin bajar de 0 — para no premiar marcarlas todas.
+   ============================================================ */
+function viewMcMulti(){
+  const mod=MODULES[state.currentModule];
+  const level=mod.levels[state.currentLevelIdx];
+  const idx=state.currentLevelIdx;
+
+  if(!state._levelRuntime){
+    state._levelRuntime = loadResume(mod.id, level.id, 'mcMulti', level) || {
+      qIdx:0, correctSum:0, answered:false, selected:[], lastScore:0,
+      qOrder: shuffle(level.questions.map((_,i)=>i)),
+      optOrder: level.questions.map(qq=> shuffle(qq.opts.map((_,i)=>i)))
+    };
+  }
+  const rt = state._levelRuntime;
+  const qi = rt.qOrder[rt.qIdx];
+  const q = level.questions[qi];
+  const perm = rt.optOrder[qi];
+  const total = level.questions.length;
+
+  const A = beginActivity({ mod:mod, level:level, idx:idx,
+    progress:{ label:'Pregunta '+(rt.qIdx+1)+' de '+total,
+               frac:(rt.qIdx + (rt.answered?1:0)) / total } });
+
+  if(level.instructions){ A.content.appendChild(el('p','act-instr', esc(level.instructions))); }
+  A.content.appendChild(el('p','act-prompt', esc(q.q)));
+  A.content.appendChild(el('p','act-instr','Marca todas las que apliquen.'));
+
+  const optsWrap = el('div','act-options cols-2');
+  perm.forEach((origIdx, displayIdx)=>{
+    const isCorrect = q.correct.indexOf(origIdx) !== -1;
+    const isSelected = rt.selected.indexOf(origIdx) !== -1;
+    const btn = el('button','opt2');
+    btn.type = 'button';
+    btn.innerHTML = '<span class="k">'+(OPTION_LETTERS[displayIdx]||(displayIdx+1))+'</span><span class="t">'+esc(q.opts[origIdx])+'</span>';
+    if(rt.answered){
+      btn.disabled = true;
+      if(isCorrect && isSelected) btn.classList.add('is-correct');
+      else if(isCorrect && !isSelected) btn.classList.add('is-missed');
+      else if(!isCorrect && isSelected) btn.classList.add('is-wrong');
+    } else {
+      if(isSelected){ btn.classList.add('is-selected'); btn.setAttribute('aria-pressed','true'); }
+      btn.onclick = ()=>{
+        const i = rt.selected.indexOf(origIdx);
+        if(i===-1) rt.selected.push(origIdx); else rt.selected.splice(i,1);
+        render();
+      };
+    }
+    optsWrap.appendChild(btn);
+  });
+  A.content.appendChild(optsWrap);
+
+  appendDoubtControl(A, { mod:mod, level:level, origQIdx:qi, qText:q.q });
+
+  const last = rt.qIdx+1 >= total;
+  const mainBtn = el('button','act-btn',
+    rt.answered ? (last ? 'Finalizar actividad →' : 'Continuar →') : 'Comprobar respuesta →');
+  if(!rt.answered){
+    mainBtn.disabled = rt.selected.length===0;
+    mainBtn.onclick = ()=>{
+      if(rt.selected.length===0) return;
+      const tp = rt.selected.filter(i=> q.correct.indexOf(i)!==-1).length;
+      const fp = rt.selected.length - tp;
+      const score = Math.max(0, (tp - fp) / q.correct.length);
+      rt.correctSum += score;
+      rt.lastScore = score;
+      rt.answered = true;
+      render();
+    };
+  } else {
+    mainBtn.onclick = ()=>{
+      if(last){ finishLevel(mod.id, level.id, Math.round(rt.correctSum*10)/10, total); }
+      else {
+        rt.qIdx++; rt.answered=false; rt.selected=[];
+        saveResume(mod.id, level.id, 'mcMulti', rt);
+        render();
+      }
+    };
+  }
+  A.actions.appendChild(mainBtn);
+  appendResetControl(A, mod, level, rt, rt.qIdx > 0 || rt.answered);
+
+  if(rt.answered){
+    const pct100 = Math.round((rt.lastScore||0)*100);
+    const ok = pct100 === 100;
+    let body = '<b>'+pct100+'%</b> de esta pregunta' + (pct100<100 ? ' (se resta por cada opción incorrecta marcada)' : '') + '.';
+    if(q.explain) body += '<br>' + esc(q.explain);
+    A.feedback({ ok: ok, title: ok ? '¡Correcto!' : (pct100>0 ? 'Parcialmente correcto' : 'No es correcto'), body: body });
+  }
+
+  return A.root;
+}
+
+/* ============================================================
+   VISTA: ORDENAR EN SECUENCIA (sequence)
+   El estudiante arrastra (o usa ▲▼) los pasos hasta ordenarlos.
+   Puntaje parcial: pasos en la posición correcta / total de pasos.
+   ============================================================ */
+function viewSequence(){
+  const mod=MODULES[state.currentModule];
+  const level=mod.levels[state.currentLevelIdx];
+  const idx=state.currentLevelIdx;
+  const steps = level.steps;
+  const total = steps.length;
+
+  if(!state._levelRuntime){
+    state._levelRuntime = loadResume(mod.id, level.id, 'sequence', level) || {
+      order: shuffle(steps.map((_,i)=>i)), answered:false, score:0, touched:false
+    };
+  }
+  const rt = state._levelRuntime;
+
+  const A = beginActivity({ mod:mod, level:level, idx:idx,
+    progress:{ label: rt.answered ? 'Comprobado' : 'Ordena los pasos', frac: rt.answered ? 1 : 0 } });
+
+  if(level.instructions){ A.content.appendChild(el('p','act-instr', esc(level.instructions))); }
+
+  const list = el('div','seq-list');
+  function renderItems(){
+    list.innerHTML = '';
+    rt.order.forEach(function(stepIdx, pos){
+      const step = steps[stepIdx];
+      const isRight = stepIdx === pos;
+      const item = el('div','seq-item' + (rt.answered ? (isRight ? ' is-correct' : ' is-wrong') : ''));
+      item.dataset.step = stepIdx;
+      item._stepIdx = stepIdx;
+      item.appendChild(el('span','seq-num', String(pos+1)));
+      if(!rt.answered) item.appendChild(el('span','seq-handle','⠿'));
+      const body = el('div','seq-body');
+      body.appendChild(el('div','seq-title', esc(step.title)));
+      if(step.text) body.appendChild(el('div','seq-text', esc(step.text)));
+      item.appendChild(body);
+      if(!rt.answered){
+        const arrows = el('div','seq-arrows');
+        const up = el('button','seq-arrow','▲'); up.type='button'; up.disabled = pos===0;
+        up.onclick = ()=>{ if(pos>0){ const o=rt.order; [o[pos-1],o[pos]]=[o[pos],o[pos-1]]; rt.touched=true; saveResume(mod.id, level.id, 'sequence', rt); render(); } };
+        const down = el('button','seq-arrow','▼'); down.type='button'; down.disabled = pos===total-1;
+        down.onclick = ()=>{ if(pos<total-1){ const o=rt.order; [o[pos+1],o[pos]]=[o[pos],o[pos+1]]; rt.touched=true; saveResume(mod.id, level.id, 'sequence', rt); render(); } };
+        arrows.appendChild(up); arrows.appendChild(down);
+        item.appendChild(arrows);
+        attachSeqDrag(item, rt, level, mod, list);
+      } else if(!isRight){
+        item.appendChild(el('div','seq-correctpos', 'Va en el puesto ' + (stepIdx+1)));
+      }
+      list.appendChild(item);
+    });
+  }
+  renderItems();
+  A.content.appendChild(list);
+
+  const mainBtn = el('button','act-btn', rt.answered ? 'Finalizar actividad →' : 'Comprobar orden →');
+  mainBtn.type = 'button';
+  if(!rt.answered){
+    mainBtn.onclick = ()=>{
+      let right = 0;
+      rt.order.forEach(function(stepIdx, pos){ if(stepIdx===pos) right++; });
+      rt.score = right / total;
+      rt.answered = true;
+      render();
+    };
+  } else {
+    mainBtn.onclick = ()=>{
+      finishLevel(mod.id, level.id, Math.round(rt.score*10)/10, 1);
+    };
+  }
+  A.actions.appendChild(mainBtn);
+  appendResetControl(A, mod, level, rt, rt.touched || rt.answered);
+
+  if(rt.answered){
+    const pct100 = Math.round(rt.score*100);
+    let body = '<b>'+pct100+'%</b> en la posición correcta.';
+    if(level.noteAfterCheck) body += '<br>' + esc(level.noteAfterCheck);
+    A.feedback({ ok: pct100===100, title: pct100===100 ? '¡Orden correcto!' : 'Revisa el orden correcto arriba', body: body });
+  }
+
+  return A.root;
+}
+
+function attachSeqDrag(itemEl, rt, level, mod, container){
+  let startY=0, origRect=null, dragging=false;
+  itemEl.addEventListener('pointerdown', (e)=>{
+    if(e.target.closest('.seq-arrows')) return;
+    itemEl.setPointerCapture(e.pointerId);
+    startY = e.clientY;
+    origRect = itemEl.getBoundingClientRect();
+    dragging = false;
+  });
+  itemEl.addEventListener('pointermove', (e)=>{
+    if(origRect===null) return;
+    const dy = e.clientY - startY;
+    if(!dragging && Math.abs(dy) > 6){
+      dragging = true;
+      itemEl.classList.add('dragging');
+      itemEl.style.width = origRect.width + 'px';
+      itemEl.style.left = origRect.left + 'px';
+    }
+    if(dragging){
+      itemEl.style.top = (origRect.top + dy) + 'px';
+      const stepIdx = itemEl._stepIdx;
+      const siblings = Array.from(container.querySelectorAll('.seq-item')).filter(function(el2){ return el2!==itemEl; });
+      const curCenterY = origRect.top + dy + origRect.height/2;
+      let targetIndex = siblings.length;
+      for(let i=0;i<siblings.length;i++){
+        const r = siblings[i].getBoundingClientRect();
+        if(curCenterY < r.top + r.height/2){ targetIndex = i; break; }
+      }
+      const curIdx = rt.order.indexOf(stepIdx);
+      if(curIdx !== -1){
+        rt.order.splice(curIdx,1);
+        rt.order.splice(targetIndex,0,stepIdx);
+      }
+      rt.order.forEach(function(si){
+        if(si===stepIdx) return;
+        const el2 = container.querySelector('.seq-item[data-step="'+si+'"]');
+        if(el2) container.appendChild(el2);
+      });
+      container.appendChild(itemEl);
+      const items = Array.from(container.querySelectorAll('.seq-item'));
+      items.forEach(function(el2, i){
+        const numEl = el2.querySelector('.seq-num');
+        if(numEl) numEl.textContent = String(i+1);
+      });
+    }
+  });
+  itemEl.addEventListener('pointerup', ()=>{
+    if(dragging){
+      itemEl.classList.remove('dragging');
+      itemEl.style.top=''; itemEl.style.left=''; itemEl.style.width='';
+      rt.touched = true;
+      saveResume(mod.id, level.id, 'sequence', rt);
+      render();
+    }
+    dragging = false; origRect = null;
+  });
 }
 
 // Botón discreto "reiniciar" al final de una actividad por preguntas;
@@ -2687,6 +3066,12 @@ function loadResume(modId, levelId, type, level){
     const imgIdx = Math.min(Math.max(0, s.imgIdx|0), Math.max(0, totalImgs - 1));
     return { imgIdx: imgIdx, answers: s.answers, active: null };
   }
+  if(type === 'sequence'){
+    const total = (level.steps || []).length;
+    if(!Array.isArray(s.order) || s.order.length !== total) return null;
+    if(!s.order.some(function(si,i){ return si!==i; })) return null; // no movió nada, empieza igual que uno nuevo
+    return { order: s.order.slice(), answered:false, score:0, touched:true };
+  }
   const n = level.questions.length;
   if(!Array.isArray(s.qOrder) || s.qOrder.length !== n) return null; // el contenido cambió
   const qIdx = Math.min(Math.max(0, s.qIdx|0), n - 1);
@@ -2694,6 +3079,11 @@ function loadResume(modId, levelId, type, level){
   if(type === 'mc'){
     if(!Array.isArray(s.optOrder) || s.optOrder.length !== n) return null;
     return { qIdx:qIdx, correct:s.correct|0, answered:false, selected:null, pending:null,
+             qOrder:s.qOrder, optOrder:s.optOrder };
+  }
+  if(type === 'mcMulti'){
+    if(!Array.isArray(s.optOrder) || s.optOrder.length !== n) return null;
+    return { qIdx:qIdx, correctSum:s.correctSum||0, answered:false, selected:[], lastScore:0,
              qOrder:s.qOrder, optOrder:s.optOrder };
   }
   if(type === 'completar'){
@@ -2711,9 +3101,17 @@ function saveResume(modId, levelId, type, rt){
     saveProfile();
     return;
   }
+  if(type === 'sequence'){
+    if(!rt.order.some(function(si,i){ return si!==i; })){ delete state.progress[k]; }
+    else { state.progress[k] = { type:'sequence', order: rt.order }; }
+    saveProfile();
+    return;
+  }
   const n = rt.qOrder ? rt.qOrder.length : 0;
   if(rt.qIdx <= 0 || rt.qIdx >= n){
     delete state.progress[k];
+  } else if(type === 'mcMulti'){
+    state.progress[k] = { type:type, qIdx:rt.qIdx, correctSum:rt.correctSum||0, qOrder:rt.qOrder, optOrder:rt.optOrder };
   } else {
     const s = { type:type, qIdx:rt.qIdx, correct:rt.correct|0, qOrder:rt.qOrder };
     if(type === 'mc') s.optOrder = rt.optOrder;
