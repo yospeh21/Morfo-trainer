@@ -242,6 +242,7 @@ MODULES.G.levels.push({
   ]
 });
 MODULES.G.subActivities.find(s=>s.id==='img').ready = true;
+MODULES.G.subActivities = MODULES.G.subActivities.filter(s=> s.id !== 'cases');
 
 // Módulo H — histología, formación y consolidación ósea. Contenido entregado
 // por el profesor (banco de actividades). Se arma a mano, como el módulo G,
@@ -251,14 +252,17 @@ MODULES.G.subActivities.find(s=>s.id==='img').ready = true;
 // bloque temático (mod.groupedActivities + level.group) — dentro de cada
 // botón se navega con chips numerados + "Siguiente actividad", como los
 // módulos A/B, pero el alcance de los chips se limita a las actividades
-// con el mismo `group` que el sub-botón elegido.
+// que comparten `group` (histología/fisiología) y `kind` (diversa/quiz)
+// con el sub-botón elegido.
 MODULES.H.subActivities = [
-  { id:'h-histologia', title:'Histología, fractura y consolidación ósea', icon:'🦴', ready:true, group:'histologia' },
-  { id:'h-fisiologia', title:'Fisiología', icon:'⚗️', ready:true, group:'fisiologia' }
+  { id:'h-histologia-diversas', title:'Histología: actividades diversas', icon:'🧩', ready:true, group:'histologia', kind:'diverse' },
+  { id:'h-histologia-quiz', title:'Histología: selección múltiple y completar', icon:'✅', ready:true, group:'histologia', kind:'quiz' },
+  { id:'h-fisiologia-diversas', title:'Fisiología: actividades diversas', icon:'🧩', ready:true, group:'fisiologia', kind:'diverse' },
+  { id:'h-fisiologia-quiz', title:'Fisiología: selección múltiple y completar', icon:'✅', ready:true, group:'fisiologia', kind:'quiz' }
 ];
 
 MODULES.H.levels = [
-  { id:'h-act1', group:'histologia', type:'match', title:'Células óseas: célula ↔ función',
+  { id:'h-act1', group:'histologia', kind:'diverse', type:'match', title:'Células óseas: célula ↔ función',
     instructions:'Toca un término y luego su definición correcta.',
     pairs:[
       ['Osteogénica','Célula madre derivada del mesénquima; única capaz de dividirse; da origen a los osteoblastos'],
@@ -267,7 +271,7 @@ MODULES.H.levels = [
       ['Osteoclasto','Célula gigante multinucleada que realiza la resorción ósea']
     ]
   },
-  { id:'h-act2', group:'histologia', type:'mcMulti', title:'Hueso compacto: varias respuestas correctas',
+  { id:'h-act2', group:'histologia', kind:'quiz', type:'mcMulti', title:'Hueso compacto: varias respuestas correctas',
     instructions:'Selecciona TODAS las opciones correctas. Puedes obtener puntaje parcial.',
     questions:[
       { q:'Seleccione todas las características correctas del hueso compacto.',
@@ -283,7 +287,7 @@ MODULES.H.levels = [
       }
     ]
   },
-  { id:'h-act4', group:'histologia', type:'sort', title:'Clasificar: hueso compacto vs. esponjoso',
+  { id:'h-act4', group:'histologia', kind:'diverse', type:'sort', title:'Clasificar: hueso compacto vs. esponjoso',
     instructions:'Arrastra (o toca y luego toca la columna) cada término a donde corresponda.',
     buckets:[ {key:'compacto', label:'Hueso compacto'}, {key:'esponjoso', label:'Hueso esponjoso'} ],
     items:[
@@ -299,7 +303,7 @@ MODULES.H.levels = [
       {term:'Epífisis', cat:'esponjoso'}
     ]
   },
-  { id:'h-act5', group:'histologia', type:'sequence', title:'Osificación endocondral: ordene los pasos',
+  { id:'h-act5', group:'histologia', kind:'diverse', type:'sequence', title:'Osificación endocondral: ordene los pasos',
     instructions:'Arrastra los pasos (o usa las flechas) hasta ordenarlos correctamente, de principio a fin.',
     steps:[
       {title:'Aparición del molde cartilaginoso', text:'Condroblastos forman el molde de cartílago hialino; aparece el pericondrio.'},
@@ -310,7 +314,7 @@ MODULES.H.levels = [
       {title:'Formación del cartílago articular y la placa epifisaria', text:'El cartílago restante se reparte entre la superficie articular y la placa de crecimiento.'}
     ]
   },
-  { id:'h-act6', group:'histologia', type:'sequence', title:'Osificación intramembranosa: ordene los pasos',
+  { id:'h-act6', group:'histologia', kind:'diverse', type:'sequence', title:'Osificación intramembranosa: ordene los pasos',
     instructions:'Arrastra los pasos (o usa las flechas) hasta ordenarlos correctamente, de principio a fin.',
     steps:[
       {title:'Aparición del centro de osificación', text:'Los osteoblastos secretan matriz osteoide.'},
@@ -319,7 +323,7 @@ MODULES.H.levels = [
       {title:'Formación del periostio', text:'El mesénquima periférico se transforma en periostio; una capa de hueso compacto reemplaza las capas superficiales de hueso esponjoso.'}
     ]
   },
-  { id:'h-act7', group:'histologia', type:'sort', title:'¿Etapa específica de la vida o toda la vida?',
+  { id:'h-act7', group:'histologia', kind:'diverse', type:'sort', title:'¿Etapa específica de la vida o toda la vida?',
     instructions:'Arrastra (o toca y luego toca la columna) cada proceso a donde corresponda.',
     buckets:[ {key:'especifica', label:'Etapa específica de la vida'}, {key:'toda_la_vida', label:'A lo largo de toda la vida'} ],
     items:[
@@ -329,7 +333,7 @@ MODULES.H.levels = [
       {term:'Consolidación de fracturas', cat:'toda_la_vida'}
     ]
   },
-  { id:'h-act8', group:'histologia', type:'match', title:'Factores del crecimiento óseo: factor ↔ función',
+  { id:'h-act8', group:'histologia', kind:'diverse', type:'match', title:'Factores del crecimiento óseo: factor ↔ función',
     instructions:'Toca un término y luego su definición correcta.',
     pairs:[
       ['Vitamina A','Estimula la actividad de los osteoblastos'],
@@ -340,7 +344,7 @@ MODULES.H.levels = [
       ['Insulina','Promueve el crecimiento óseo aumentando la síntesis de proteínas óseas']
     ]
   },
-  { id:'h-act9', group:'histologia', type:'match', title:'Tipos de fractura: nombre ↔ descripción',
+  { id:'h-act9', group:'histologia', kind:'diverse', type:'match', title:'Tipos de fractura: nombre ↔ descripción',
     instructions:'Toca un término y luego su definición correcta.',
     pairs:[
       ['Expuesta','Los cabos óseos protruyen a través de la piel (en la cerrada, la piel está indemne)'],
@@ -351,7 +355,7 @@ MODULES.H.levels = [
       ['Pouteau-Colles','Fractura del extremo distal del radio, con desplazamiento dorsal del fragmento']
     ]
   },
-  { id:'h-act10', group:'histologia', type:'sequence', title:'Consolidación ósea: ordene las fases',
+  { id:'h-act10', group:'histologia', kind:'diverse', type:'sequence', title:'Consolidación ósea: ordene las fases',
     instructions:'Arrastra los pasos (o usa las flechas) hasta ordenarlos correctamente, de principio a fin.',
     noteAfterCheck:'Recuerda: el callo óseo dura entre 3 y 4 SEMANAS, no meses — es el error más frecuente en este tema.',
     steps:[
@@ -361,7 +365,7 @@ MODULES.H.levels = [
       {title:'Remodelación ósea', text:'Osteoclastos reabsorben las áreas necróticas; el hueso esponjoso es reemplazado por hueso compacto; puede tardar meses.'}
     ]
   },
-  { id:'h-act11', group:'histologia', type:'sort', title:'Clasificar: reducción cerrada o abierta',
+  { id:'h-act11', group:'histologia', kind:'diverse', type:'sort', title:'Clasificar: reducción cerrada o abierta',
     instructions:'Arrastra (o toca y luego toca la columna) cada característica a donde corresponda.',
     buckets:[ {key:'cerrada', label:'Reducción cerrada'}, {key:'abierta', label:'Reducción abierta'} ],
     items:[
@@ -373,7 +377,7 @@ MODULES.H.levels = [
       {term:'Requiere incisión quirúrgica (fijación interna)', cat:'abierta'}
     ]
   },
-  { id:'h-act12', group:'fisiologia', type:'match', title:'Las 6 funciones del hueso',
+  { id:'h-act12', group:'fisiologia', kind:'diverse', type:'match', title:'Las 6 funciones del hueso',
     instructions:'Toca un término y luego su definición correcta.',
     pairs:[
       ['Sostén','Soporta tejidos blandos y permite la inserción muscular'],
@@ -384,7 +388,7 @@ MODULES.H.levels = [
       ['Reserva de triglicéridos','Médula ósea amarilla: reserva energética']
     ]
   },
-  { id:'h-act13', group:'fisiologia', type:'mc', title:'Calcemia: verdadero o falso',
+  { id:'h-act13', group:'fisiologia', kind:'quiz', type:'mc', title:'Calcemia: verdadero o falso',
     instructions:'Indica si la afirmación es verdadera o falsa.',
     questions:[
       { q:'El 99% del calcio corporal está en el hueso.', opts:['Verdadero','Falso'], correct:0 },
@@ -395,7 +399,7 @@ MODULES.H.levels = [
       { q:'Un déficit de Ca²⁺ en sangre puede causar paro respiratorio.', opts:['Verdadero','Falso'], correct:0 }
     ]
   },
-  { id:'h-act14', group:'fisiologia', type:'sort', title:'PTH vs. calcitonina',
+  { id:'h-act14', group:'fisiologia', kind:'diverse', type:'sort', title:'PTH vs. calcitonina',
     instructions:'Arrastra (o toca y luego toca la columna) cada efecto a la hormona que corresponde.',
     buckets:[ {key:'pth', label:'Eleva la calcemia (PTH)'}, {key:'calcitonina', label:'Disminuye la calcemia (Calcitonina)'} ],
     items:[
@@ -410,7 +414,7 @@ MODULES.H.levels = [
       {term:'Estimula la excreción renal de Ca²⁺ y PO₄³⁻', cat:'calcitonina'}
     ]
   },
-  { id:'h-act15', group:'fisiologia', type:'sequence', title:'Síntesis de vitamina D: ordene la ruta',
+  { id:'h-act15', group:'fisiologia', kind:'diverse', type:'sequence', title:'Síntesis de vitamina D: ordene la ruta',
     instructions:'Arrastra los pasos (o usa las flechas) hasta ordenarlos correctamente, de principio a fin.',
     steps:[
       {title:'Piel: formación de previtamina D₃', text:'El 7-dehidrocolesterol (provitamina D₃) se convierte en previtamina D₃ por acción de la radiación UV.'},
@@ -420,7 +424,7 @@ MODULES.H.levels = [
       {title:'Acción del calcitriol', text:'Actúa sobre el intestino (↑ absorción de Ca²⁺ y fosfato), el hueso (↑ resorción) y el riñón (↓ excreción de Ca²⁺).'}
     ]
   },
-  { id:'h-act16', group:'fisiologia', type:'match', title:'Órgano, enzima y producto',
+  { id:'h-act16', group:'fisiologia', kind:'diverse', type:'match', title:'Órgano, enzima y producto',
     instructions:'Toca un órgano y luego la enzima/producto que le corresponde.',
     pairs:[
       ['Piel','7-dehidrocolesterol → colecalciferol'],
@@ -428,7 +432,7 @@ MODULES.H.levels = [
       ['Riñón','Alfa-1-hidroxilasa (CYP27B1) → calcitriol']
     ]
   },
-  { id:'h-act17', group:'fisiologia', type:'sequence', title:'Las 4 etapas de la remodelación ósea',
+  { id:'h-act17', group:'fisiologia', kind:'diverse', type:'sequence', title:'Las 4 etapas de la remodelación ósea',
     instructions:'Arrastra los pasos (o usa las flechas) hasta ordenarlos correctamente, de principio a fin.',
     steps:[
       {title:'Niñez / adolescencia', text:'Se forma más hueso del que se pierde.'},
@@ -2008,10 +2012,15 @@ function viewModuleSubmenu(){
 
   function subCard(sub){
     const grouped = mod.groupedActivities;
-    // Si el sub-botón declara `group`, sus chips/progreso se limitan a los
-    // niveles con ese mismo `level.group` (p. ej. Histología vs. Fisiología
-    // dentro del mismo módulo H); si no, abarca todo mod.levels.
-    const groupLevels = grouped ? (sub.group ? mod.levels.filter(l=> l.group === sub.group) : mod.levels) : null;
+    // Si el sub-botón declara `group` y/o `kind`, sus chips/progreso se
+    // limitan a los niveles que compartan esos mismos campos (p. ej.
+    // Histología vs. Fisiología, y dentro de cada una, actividades
+    // "diversas" vs. de "selección múltiple y completar" en el módulo H);
+    // el campo que no se declare no filtra (abarca todos los valores).
+    const groupLevels = grouped ? mod.levels.filter(l=>
+      (sub.group == null || l.group === sub.group) &&
+      (sub.kind == null || l.kind === sub.kind)
+    ) : null;
     let doneInfo = null, doneCount = 0, totalCount = 0, avg = 0;
     if(grouped){
       totalCount = groupLevels.length;
@@ -2209,10 +2218,13 @@ function beginActivity(opts){
   // "multi": módulos con progresión real de niveles (A/B, y H por ser
   // groupedActivities). Los módulos con sub-actividades sueltas (C–G) tratan
   // cada nivel como una actividad independiente. Si el nivel actual tiene
-  // `group` (p. ej. H separa Histología/Fisiología bajo el mismo módulo),
-  // los chips se limitan a los niveles de ese mismo grupo.
+  // `group`/`kind` (p. ej. H separa Histología/Fisiología, y dentro de cada
+  // una, diversas vs. selección múltiple), los chips se limitan a los
+  // niveles que compartan esos mismos campos con el nivel actual.
   const multi = mod.levels.length > 1 && (!mod.subActivities || mod.groupedActivities);
-  const groupLevels = multi ? (level.group ? mod.levels.filter(l=> l.group === level.group) : mod.levels) : null;
+  const groupLevels = multi ? mod.levels.filter(l=>
+    l.group === level.group && l.kind === level.kind
+  ) : null;
   const groupIdx = multi ? groupLevels.indexOf(level) : idx;
   head.appendChild(el('div','act-type',
     multi ? ('Nivel '+(groupIdx+1)+' · '+esc(level.title))
@@ -3725,7 +3737,9 @@ function viewLevelDone(){
   const score=pct(p.correct, p.total);
   const tier=resultTier(score);
   const multi = mod.levels.length > 1 && (!mod.subActivities || mod.groupedActivities);
-  const groupLevels = multi ? (level.group ? mod.levels.filter(l=> l.group === level.group) : mod.levels) : null;
+  const groupLevels = multi ? mod.levels.filter(l=>
+    l.group === level.group && l.kind === level.kind
+  ) : null;
   const groupIdx = multi ? groupLevels.indexOf(level) : idx;
   const t = ensureTimer(mod.id);
 
