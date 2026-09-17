@@ -373,7 +373,7 @@ MODULES.H.levels = [
       {term:'Requiere incisión quirúrgica (fijación interna)', cat:'abierta'}
     ]
   },
-  { id:'h-act12', group:'fisiologia', type:'match', title:'Bloque 4 · Las 6 funciones del hueso',
+  { id:'h-act12', group:'fisiologia', type:'match', title:'Las 6 funciones del hueso',
     instructions:'Toca un término y luego su definición correcta.',
     pairs:[
       ['Sostén','Soporta tejidos blandos y permite la inserción muscular'],
@@ -384,7 +384,7 @@ MODULES.H.levels = [
       ['Reserva de triglicéridos','Médula ósea amarilla: reserva energética']
     ]
   },
-  { id:'h-act13', group:'fisiologia', type:'mc', title:'Bloque 4 · Calcemia: verdadero o falso',
+  { id:'h-act13', group:'fisiologia', type:'mc', title:'Calcemia: verdadero o falso',
     instructions:'Indica si la afirmación es verdadera o falsa.',
     questions:[
       { q:'El 99% del calcio corporal está en el hueso.', opts:['Verdadero','Falso'], correct:0 },
@@ -395,7 +395,7 @@ MODULES.H.levels = [
       { q:'Un déficit de Ca²⁺ en sangre puede causar paro respiratorio.', opts:['Verdadero','Falso'], correct:0 }
     ]
   },
-  { id:'h-act14', group:'fisiologia', type:'sort', title:'Bloque 5 · PTH vs. calcitonina',
+  { id:'h-act14', group:'fisiologia', type:'sort', title:'PTH vs. calcitonina',
     instructions:'Arrastra (o toca y luego toca la columna) cada efecto a la hormona que corresponde.',
     buckets:[ {key:'pth', label:'Eleva la calcemia (PTH)'}, {key:'calcitonina', label:'Disminuye la calcemia (Calcitonina)'} ],
     items:[
@@ -410,7 +410,7 @@ MODULES.H.levels = [
       {term:'Estimula la excreción renal de Ca²⁺ y PO₄³⁻', cat:'calcitonina'}
     ]
   },
-  { id:'h-act15', group:'fisiologia', type:'sequence', title:'Bloque 5 · Síntesis de vitamina D: ordene la ruta',
+  { id:'h-act15', group:'fisiologia', type:'sequence', title:'Síntesis de vitamina D: ordene la ruta',
     instructions:'Arrastra los pasos (o usa las flechas) hasta ordenarlos correctamente, de principio a fin.',
     steps:[
       {title:'Piel: formación de previtamina D₃', text:'El 7-dehidrocolesterol (provitamina D₃) se convierte en previtamina D₃ por acción de la radiación UV.'},
@@ -420,7 +420,7 @@ MODULES.H.levels = [
       {title:'Acción del calcitriol', text:'Actúa sobre el intestino (↑ absorción de Ca²⁺ y fosfato), el hueso (↑ resorción) y el riñón (↓ excreción de Ca²⁺).'}
     ]
   },
-  { id:'h-act16', group:'fisiologia', type:'match', title:'Bloque 5 · Órgano, enzima y producto',
+  { id:'h-act16', group:'fisiologia', type:'match', title:'Órgano, enzima y producto',
     instructions:'Toca un órgano y luego la enzima/producto que le corresponde.',
     pairs:[
       ['Piel','7-dehidrocolesterol → colecalciferol'],
@@ -428,7 +428,7 @@ MODULES.H.levels = [
       ['Riñón','Alfa-1-hidroxilasa (CYP27B1) → calcitriol']
     ]
   },
-  { id:'h-act17', group:'fisiologia', type:'sequence', title:'Bloque 6 · Las 4 etapas de la remodelación ósea',
+  { id:'h-act17', group:'fisiologia', type:'sequence', title:'Las 4 etapas de la remodelación ósea',
     instructions:'Arrastra los pasos (o usa las flechas) hasta ordenarlos correctamente, de principio a fin.',
     steps:[
       {title:'Niñez / adolescencia', text:'Se forma más hueso del que se pierde.'},
@@ -445,7 +445,7 @@ MODULES.I.subActivities = [
   { id:'i-all', title:'Articulaciones: generalidades y clasificación', icon:'🦵', ready:true }
 ];
 MODULES.I.levels = [
-  { id:'i-act1', type:'match', title:'Bloque 1 · Clasificación estructural ↔ funcional',
+  { id:'i-act1', type:'match', title:'Clasificación estructural ↔ funcional',
     instructions:'Toca un término y luego su definición correcta.',
     pairs:[
       ['Fibrosa','Sinartrosis (inmóvil)'],
@@ -453,7 +453,7 @@ MODULES.I.levels = [
       ['Sinovial','Diartrosis (gran rango de movimiento)']
     ]
   },
-  { id:'i-act2', type:'match', title:'Bloque 2 · Subtipo y ejemplo',
+  { id:'i-act2', type:'match', title:'Subtipo y ejemplo',
     instructions:'Toca un subtipo y luego su ejemplo correcto.',
     pairs:[
       ['Sutura','Sutura coronal del cráneo'],
@@ -463,7 +463,7 @@ MODULES.I.levels = [
       ['Sínfisis','Sínfisis del pubis']
     ]
   },
-  { id:'i-act3', type:'sort', title:'Bloque 2 · Clasificar: fibrosa o cartilaginosa',
+  { id:'i-act3', type:'sort', title:'Clasificar: fibrosa o cartilaginosa',
     instructions:'Arrastra (o toca y luego toca la columna) cada término a donde corresponda.',
     buckets:[ {key:'fibrosa', label:'Fibrosa'}, {key:'cartilaginosa', label:'Cartilaginosa'} ],
     items:[
@@ -474,7 +474,7 @@ MODULES.I.levels = [
       {term:'Sínfisis', cat:'cartilaginosa'}
     ]
   },
-  { id:'i-act4', type:'match', title:'Bloque 3 · Componentes de la articulación sinovial',
+  { id:'i-act4', type:'match', title:'Componentes de la articulación sinovial',
     instructions:'Toca un componente y luego su función correcta.',
     pairs:[
       ['Cartílago hialino','Reduce el rozamiento y amortigua los golpes'],
@@ -484,7 +484,7 @@ MODULES.I.levels = [
       ['Líquido sinovial','Lubrica, amortigua, oxigena y nutre']
     ]
   },
-  { id:'i-act5', type:'sort', title:'Bloque 3 · Bursas o vainas tendinosas',
+  { id:'i-act5', type:'sort', title:'Bursas o vainas tendinosas',
     instructions:'Arrastra (o toca y luego toca la columna) cada característica a donde corresponda.',
     buckets:[ {key:'bursas', label:'Bursas'}, {key:'vainas', label:'Vainas tendinosas'} ],
     items:[
@@ -496,7 +496,7 @@ MODULES.I.levels = [
       {term:'Típicas de manos y pies', cat:'vainas'}
     ]
   },
-  { id:'i-act6', type:'match', title:'Bloque 3 · Mnemotecnia CATETER',
+  { id:'i-act6', type:'match', title:'Mnemotecnia CATETER',
     instructions:'Toca un tipo de articulación sinovial y luego su ejemplo correcto.',
     pairs:[
       ['Condílea','Radiocarpiana (muñeca)'],
@@ -507,7 +507,7 @@ MODULES.I.levels = [
       ['Encaje recíproco','Carpometacarpiana del pulgar']
     ]
   },
-  { id:'i-act7', type:'match', title:'Bloque 3 · Clasificación por región',
+  { id:'i-act7', type:'match', title:'Clasificación por región',
     instructions:'Toca una articulación y luego su clasificación correcta.',
     pairs:[
       ['Suturas craneales','Fibrosa (sutura) — sinartrosis'],
@@ -519,7 +519,7 @@ MODULES.I.levels = [
       ['Radiocubital','Sinovial (trocoide) — diartrosis, uniaxial']
     ]
   },
-  { id:'i-act8', type:'mc', title:'Bloque 3 · Casos regionales: verdadero o falso',
+  { id:'i-act8', type:'mc', title:'Casos regionales: verdadero o falso',
     instructions:'Indica si la afirmación es verdadera o falsa.',
     questions:[
       { q:'La articulación esternocostal del 1.er par de costillas es sinovial.', opts:['Verdadero','Falso'], correct:1,
