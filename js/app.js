@@ -148,7 +148,7 @@ const MODULES = {
   E: { id:'E', title:'Huesos del tórax', subtitle:'Selecciona el tipo de actividad', placeholder:true, levels:[], subActivities:SUB_ACTIVITY_TEMPLATE() },
   F: { id:'F', title:'Huesos de la cintura escapular y miembro superior', subtitle:'Selecciona el tipo de actividad', placeholder:true, levels:[], subActivities:SUB_ACTIVITY_TEMPLATE() },
   G: { id:'G', title:'Huesos de la pelvis y del miembro inferior', subtitle:'Selecciona el tipo de actividad', placeholder:true, levels:[], subActivities:SUB_ACTIVITY_TEMPLATE() },
-  H: { id:'H', title:'Histología, fisiología y envejecimiento del tejido óseo', subtitle:'Selecciona una actividad', placeholder:true, levels:[], subActivities:[] }
+  H: { id:'H', title:'Histología, fisiología y envejecimiento del tejido óseo', subtitle:'Selecciona una actividad', placeholder:true, levels:[], subActivities:[], groupedActivities:true }
 };
 
 // Actividad "señalar estructuras": imágenes con flechas ya dibujadas por el
@@ -246,17 +246,11 @@ MODULES.G.subActivities.find(s=>s.id==='img').ready = true;
 // por el profesor (banco de actividades). Se arma a mano, como el módulo G,
 // porque incluye tipos de actividad (varias respuestas correctas, ordenar
 // en secuencia) que todavía no vienen del flujo de Google Sheets.
+// A diferencia de C-G, las 10 actividades de H se agrupan bajo un solo
+// botón (mod.groupedActivities) — se navegan entre sí como los módulos A/B
+// (chips numerados + "Siguiente actividad"), no como sub-actividades sueltas.
 MODULES.H.subActivities = [
-  { id:'h-act1', title:'Bloque 1 · Relacionar: células óseas', icon:'🔗', ready:true },
-  { id:'h-act2', title:'Bloque 1 · Varias respuestas: hueso compacto', icon:'☑️', ready:true },
-  { id:'h-act4', title:'Bloque 1 · Clasificar: compacto vs. esponjoso', icon:'🗂️', ready:true },
-  { id:'h-act5', title:'Bloque 2 · Secuencia: osificación endocondral', icon:'🔢', ready:true },
-  { id:'h-act6', title:'Bloque 2 · Secuencia: osificación intramembranosa', icon:'🔢', ready:true },
-  { id:'h-act7', title:'Bloque 2 · Clasificar: ¿etapa específica o toda la vida?', icon:'🗂️', ready:true },
-  { id:'h-act8', title:'Bloque 2 · Relacionar: factores del crecimiento óseo', icon:'🔗', ready:true },
-  { id:'h-act9', title:'Bloque 3 · Relacionar: tipos de fractura', icon:'🔗', ready:true },
-  { id:'h-act10', title:'Bloque 3 · Secuencia: consolidación ósea', icon:'🔢', ready:true },
-  { id:'h-act11', title:'Bloque 3 · Clasificar: reducción cerrada o abierta', icon:'🗂️', ready:true }
+  { id:'h-all', title:'Histología, fractura y consolidación ósea', icon:'🦴', ready:true }
 ];
 
 MODULES.H.levels = [
@@ -1851,24 +1845,41 @@ function viewModuleSubmenu(){
   const standalone = subs.filter(s=> s.standalone);
 
   function subCard(sub){
-    const doneInfo = state.progress[levelKey(mod.id, sub.id)];
-    const kind = !sub.ready ? 'is-soon' : doneInfo ? 'is-done' : 'is-ready';
+    const grouped = mod.groupedActivities;
+    let doneInfo = null, doneCount = 0, totalCount = 0, avg = 0;
+    if(grouped){
+      totalCount = mod.levels.length;
+      let sumPct = 0;
+      mod.levels.forEach(l=>{
+        const p = state.progress[levelKey(mod.id, l.id)];
+        if(p){ doneCount++; sumPct += pct(p.correct, p.total); }
+      });
+      avg = doneCount ? Math.round(sumPct/doneCount) : 0;
+    } else {
+      doneInfo = state.progress[levelKey(mod.id, sub.id)];
+    }
+    const allDone = grouped ? (totalCount>0 && doneCount>=totalCount) : !!doneInfo;
+    const kind = !sub.ready ? 'is-soon' : allDone ? 'is-done' : (grouped && doneCount>0) ? 'is-progress' : 'is-ready';
     const card = el('button','mod-card ' + kind);
     card.type = 'button';
     const hd = el('div','mod-head');
     hd.appendChild(el('span','mod-num', esc(sub.icon || '•')));
     hd.appendChild(el('span','mod-title2', esc(sub.title)));
     if(!sub.ready) hd.appendChild(badge('Próximamente','locked'));
+    else if(grouped) hd.appendChild(badge(doneCount+'/'+totalCount+' actividades', allDone ? 'done' : 'progress'));
     else if(doneInfo) hd.appendChild(badge('Completado','done'));
     else hd.appendChild(badge('Disponible','progress'));
     card.appendChild(hd);
-    if(sub.ready && doneInfo){
+    if(grouped){
+      card.appendChild(progressBar(doneCount, totalCount, { unit:'actividades', avg: avg }));
+    } else if(sub.ready && doneInfo){
       card.appendChild(el('div','mod-meta','✓ ' + pct(doneInfo.correct, doneInfo.total) + '% en tu último intento'));
     } else if(!sub.ready){
       card.appendChild(el('p','mod-sub','Todavía no tiene contenido cargado.'));
     }
     card.onclick = ()=>{
       if(sub.ready){
+        if(grouped){ goToLevel(mod.id, firstIncompleteLevelIdx(mod)); return; }
         const idx = mod.levels.findIndex(l=> l.id === sub.id);
         if(idx >= 0){ goToLevel(mod.id, idx); return; }
       }
@@ -2024,9 +2035,10 @@ function beginActivity(opts){
   topline.appendChild(timer);
   head.appendChild(topline);
 
-  // "multi": módulos con progresión real de niveles (A/B). Los módulos con
-  // sub-actividades (C–H) tratan cada nivel como una actividad independiente.
-  const multi = mod.levels.length > 1 && !mod.subActivities;
+  // "multi": módulos con progresión real de niveles (A/B, y H por ser
+  // groupedActivities). Los módulos con sub-actividades sueltas (C–G) tratan
+  // cada nivel como una actividad independiente.
+  const multi = mod.levels.length > 1 && (!mod.subActivities || mod.groupedActivities);
   head.appendChild(el('div','act-type',
     multi ? ('Nivel '+(idx+1)+' · '+esc(level.title))
           : esc(ACTIVITY_TYPE_LABEL[level.type] || level.title || 'Actividad')));
@@ -3536,7 +3548,7 @@ function viewLevelDone(){
   const p=state.progress[levelKey(mod.id, level.id)];
   const score=pct(p.correct, p.total);
   const tier=resultTier(score);
-  const multi = mod.levels.length > 1 && !mod.subActivities;
+  const multi = mod.levels.length > 1 && (!mod.subActivities || mod.groupedActivities);
   const t = ensureTimer(mod.id);
 
   const root = el('div','act');
