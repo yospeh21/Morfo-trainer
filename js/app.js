@@ -451,16 +451,95 @@ MODULES.H.levels = [
       {title:'Edad media', text:'↓ hormonas sexuales → la resorción empieza a superar al depósito.'},
       {title:'Edad avanzada', text:'La resorción osteoclástica excede de forma sostenida al depósito osteoblástico.'}
     ]
+  },
+  { id:'h-act18', group:'histologia', kind:'quiz', type:'mc', title:'Preguntas de repaso (examen)',
+    questions:[
+      { q:'¿Qué porcentaje aproximado de la matriz ósea extracelular corresponde a sales minerales cristalizadas (hidroxiapatita)?',
+        opts:['15 %','30 %','55 %','80 %'], correct:2 },
+      { q:'El núcleo mineral del hueso (hidroxiapatita) se forma principalmente por la combinación de:',
+        opts:['Carbonato de calcio y magnesio','Fosfato de calcio e hidróxido de calcio','Sulfato de potasio y flúor','Colágeno tipo I y agua'], correct:1 },
+      { q:'¿Cuál es la única célula ósea capaz de dividirse dentro de la secuencia de diferenciación del tejido óseo?',
+        opts:['Osteoblasto','Osteocito','Osteoclasto','Célula osteogénica'], correct:3 },
+      { q:'Los osteoclastos son células que:',
+        opts:['Producen nuevas células','Construyen y secretan matriz','Mantienen el tejido diario','Rompen/disuelven la matriz para liberar minerales'], correct:3 },
+      { q:'La unidad estructural característica del hueso compacto es:',
+        opts:['La trabécula','El díploe','La osteona','El canal medular'], correct:2 },
+      { q:'Durante una biopsia de médula ósea, el dolor del procedimiento se explica principalmente porque la aguja debe atravesar:',
+        opts:['El hueso esponjoso, que es muy sensible','El periostio, inervado por fibras sensitivas del dolor','La médula ósea amarilla','El endostio, capa avascular'], correct:1 },
+      { q:'La osificación endocondral se caracteriza por:',
+        opts:['Formarse directamente en el mesénquima, como en los huesos planos del cráneo','Reemplazar un molde preexistente de cartílago hialino, como ocurre en la mayoría de los huesos largos','No producir hueso maduro, solo cartílago permanente','Ocurrir exclusivamente durante la consolidación de fracturas'], correct:1 },
+      { q:'Un niño de 8 años sufre una caída de su bicicleta y presenta una fractura del antebrazo en la que, según la radiografía, un lado del hueso está roto mientras el otro permanece doblado sin romperse por completo. ¿Qué tipo de fractura es?',
+        opts:['Fractura conminuta','Fractura en tallo verde','Fractura Pott','Fractura de Pouteau-Colles'], correct:1 },
+      { q:'Un motociclista sufre un accidente y en la radiografía del húmero se observa el hueso astillado y roto en múltiples fragmentos pequeños en el sitio de la lesión. ¿Cómo se clasifica este tipo de fractura?',
+        opts:['Expuesta','En tallo verde','Conminuta','Impactada'], correct:2 },
+      { q:'Un paciente cae sobre la mano extendida y la radiografía del extremo distal del radio muestra que el fragmento distal se desplazó hacia dorsal. ¿Qué fractura, típica de esta caída, se describe?',
+        opts:['Fractura de Pott','Fractura de Pouteau-Colles','Fractura de Jones','Fractura en tallo verde'], correct:1 },
+      { q:'Tras un esguince severo de tobillo con inversión forzada, la radiografía muestra fractura del maléolo lateral junto con lesión de la articulación tibioperonea distal. ¿Qué nombre recibe esta fractura?',
+        opts:['Fractura de Pouteau-Colles','Fractura de Pott','Fractura Putt','Fractura Patt'], correct:1 },
+      { q:'Un cirujano ortopedista alinea manualmente los fragmentos de una fractura de muñeca sin necesidad de abrir la piel, y posteriormente coloca un yeso. ¿Qué procedimiento describe este manejo?',
+        opts:['Reducción abierta','Reducción cerrada','Osteosíntesis con clavos','Artrodesis'], correct:1 },
+      { q:'En una fractura expuesta de tibia con gran desplazamiento, el cirujano decide alinear los fragmentos mediante cirugía, colocando placas y tornillos. ¿Qué tipo de reducción se está realizando?',
+        opts:['Reducción cerrada','Reducción abierta','Reducción espontánea','Consolidación primaria'], correct:1 },
+      { q:'A los 10 días de una fractura de tibia, una radiografía de control muestra la formación de un tejido blando compuesto por fibroblastos, condroblastos y cartílago que rodea el sitio de fractura. ¿A qué etapa de la consolidación ósea corresponde este hallazgo?',
+        opts:['Formación del hematoma fracturario','Formación del callo fibrocartilaginoso','Formación del callo óseo','Remodelación ósea'], correct:1 },
+      { q:'Varias semanas después de una fractura, los osteoclastos comienzan a remover el exceso de hueso compacto recién formado para devolver al hueso su forma original. ¿A qué etapa de la consolidación corresponde este proceso?',
+        opts:['Formación del hematoma fracturario','Formación del callo fibrocartilaginoso','Formación del callo óseo','Remodelación ósea'], correct:3 },
+      { q:'La osteona es la unidad estructural característica del hueso esponjoso.',
+        opts:['Verdadero','Falso'], correct:1 }
+    ]
+  },
+  { id:'h-act19', group:'fisiologia', kind:'quiz', type:'mc', title:'Preguntas de repaso (examen)',
+    questions:[
+      { q:'En la osteoporosis, el desequilibrio extremo entre resorción y depósito óseo se debe principalmente a:',
+        opts:['Osteoblastos hiperactivos y osteoclastos débiles','Osteoblastos débiles y osteoclastos hiperactivos','Ausencia total de osteocitos','Exceso de matriz osteoide'], correct:1 },
+      { q:'El rango normal y estricto de la calcemia es de:',
+        opts:['3–5 mg/100 mL','9–11 mg/100 mL','15–20 mg/100 mL','25–30 mg/100 mL'], correct:1 },
+      { q:'La hormona paratiroidea (PTH) se libera en respuesta a:',
+        opts:['Un aumento del calcio circulante','Una disminución del calcio circulante','Un aumento del fosfato circulante','Una disminución de la vitamina D'], correct:1 },
+      { q:'El efecto neto de la PTH sobre la calcemia es:',
+        opts:['Disminuirla, depositando calcio en el hueso','Elevarla, liberando calcio del hueso hacia la sangre','No tiene efecto directo sobre la calcemia','Elevarla, inhibiendo a los osteoclastos'], correct:1 },
+      { q:'La calcitonina es secretada por:',
+        opts:['Las glándulas paratiroides','Las células parafoliculares de la tiroides','La corteza suprarrenal','El hígado'], correct:1 },
+      { q:'A nivel renal, la PTH:',
+        opts:['Aumenta la pérdida urinaria de calcio y estimula la producción de calcitriol','Disminuye la pérdida urinaria de calcio y estimula la producción de calcitriol','Disminuye la pérdida urinaria de calcio y estimula la producción de calcidiol','Aumenta la pérdida urinaria de calcio e inhibe la producción de calcitriol'], correct:1 },
+      { q:'La conversión de calcidiol en calcitriol (forma activa de la vitamina D) ocurre principalmente en:',
+        opts:['La piel, por acción de la luz solar','El hígado, por la 25-hidroxilasa','El riñón, por la alfa-1-hidroxilasa','El intestino delgado'], correct:2 },
+      { q:'La fragilidad ósea asociada al envejecimiento se explica principalmente por:',
+        opts:['El aumento de la síntesis de colágeno','La disminución en la síntesis de proteínas (colágeno)','El exceso de sales minerales cristalizadas','El aumento de la hormona de crecimiento'], correct:1 },
+      { q:'Una mujer de 60 años con osteoporosis sufre una caída leve y se fractura la muñeca. Al analizar el mecanismo fisiopatológico de base de su enfermedad, ¿cuál es la alteración celular principal?',
+        opts:['Osteoblastos hiperactivos y osteoclastos débiles','Osteoclastos hiperactivos y osteoblastos débiles','Ausencia congénita de osteocitos','Exceso de matriz osteoide mineralizada'], correct:1 },
+      { q:'Un paciente con insuficiencia renal crónica no puede activar adecuadamente la vitamina D a nivel renal. ¿Qué enzima, normalmente producida en el riñón, está afectada?',
+        opts:['25-hidroxilasa (CYP2R1)','Alfa-1-hidroxilasa (CYP27B1)','Isomerasa térmica','Fosfatasa alcalina'], correct:1 },
+      { q:'Un paciente con insuficiencia hepática grave presenta niveles bajos de calcidiol (25-hidroxivitamina D). ¿Qué proceso hepático está comprometido?',
+        opts:['La síntesis de colecalciferol en la piel','La hidroxilación de la vitamina D3 por la 25-hidroxilasa','La producción de calcitriol','La reabsorción tubular de calcio'], correct:1 },
+      { q:'Un paciente presenta hipocalcemia severa con espasmos musculares. Las glándulas paratiroides responden fisiológicamente aumentando la secreción de PTH. ¿Cuál es el efecto esperado de la PTH sobre el hueso en este contexto?',
+        opts:['Disminuye la resorción ósea mediada por osteoclastos, liberando calcio a la sangre','Aumenta la resorción ósea mediada por osteoclastos, liberando calcio a la sangre','Aumenta la resorción ósea mediada por osteoclastos, depositando calcio al hueso','No tiene efecto sobre el tejido óseo'], correct:1 },
+      { q:'Un estudiante de medicina afirma que "la PTH deposita calcio en el hueso para fortalecerlo". Según lo revisado, esta afirmación es:',
+        opts:['Correcta, ya que la PTH siempre deposita calcio','Incorrecta; la PTH aumenta la resorción ósea, y es la calcitonina la que favorece el depósito de calcio en el hueso','Correcta solo en niños','Incorrecta, porque la PTH no actúa sobre el hueso'], correct:1 },
+      { q:'Un paciente con un carcinoma medular de tiroides presenta niveles elevados de calcitonina. ¿Qué efecto se esperaría sobre la calcemia y el hueso?',
+        opts:['Aumento de la calcemia por resorción ósea','Disminución de la calcemia por depósito de calcio en el hueso e inhibición de la resorción','Disminución de la calcemia por liberación de calcio en la sangre e inhibición de la resorción','Disminución de la calcemia por depósito de calcio en el hueso e inhibición de la reabsorción'], correct:1 },
+      { q:'Una mujer de 52 años, dos años después de la menopausia, comienza a experimentar mayor pérdida de masa ósea. Según el envejecimiento óseo, ¿qué mecanismo hormonal explica principalmente este cambio?',
+        opts:['Aumento de la hormona de crecimiento','Descenso de estrógenos, que favorece que la resorción supere al depósito óseo','Descenso de estrógenos, que favorece que el depósito óseo supere a la resorción','Aumento de estrógenos, que favorece que la resorción supere al depósito óseo'], correct:1 },
+      { q:'Un hombre de 55 años consulta preocupado porque, a diferencia de su esposa, aún no presenta pérdida significativa de masa ósea. ¿Por qué la desmineralización suele iniciar más tarde en los hombres?',
+        opts:['Porque los hombres no tienen calcio en el hueso','Porque la caída hormonal relevante ocurre más tardíamente que en la mujer, cuya pérdida de estrógenos es más abrupta en la menopausia','Porque los hombres tienen mayor actividad osteoclástica desde jóvenes','Porque los hombres no producen calcitonina'], correct:1 },
+      { q:'La vitamina D estimula principalmente la absorción intestinal de calcio.',
+        opts:['Verdadero','Falso'], correct:0 },
+      { q:'La calcitonina aumenta la calcemia al estimular la resorción ósea.',
+        opts:['Verdadero','Falso'], correct:1 }
+    ]
   }
 ];
 
 // Módulo I — articulaciones. Mismo tratamiento que H: contenido entregado
-// por el profesor, agrupado bajo un solo botón con navegación por chips.
+// por el profesor, agrupado con navegación por chips. Dos botones planos
+// (sin anidar, es un solo tema) separados por `kind`, igual que los hijos
+// de Histología/Fisiología en el módulo H.
 MODULES.I.subActivities = [
-  { id:'i-all', title:'Articulaciones: generalidades y clasificación', icon:'🦵', ready:true }
+  { id:'i-diversas', title:'Actividades varias', icon:'🧩', ready:true, kind:'diverse' },
+  { id:'i-quiz', title:'Preguntas de selección múltiple', icon:'✅', ready:true, kind:'quiz' }
 ];
 MODULES.I.levels = [
-  { id:'i-act1', type:'match', title:'Clasificación estructural ↔ funcional',
+  { id:'i-act1', kind:'diverse', type:'match', title:'Clasificación estructural ↔ funcional',
     instructions:'Toca un término y luego su definición correcta.',
     pairs:[
       ['Fibrosa','Sinartrosis (inmóvil)'],
@@ -468,7 +547,7 @@ MODULES.I.levels = [
       ['Sinovial','Diartrosis (gran rango de movimiento)']
     ]
   },
-  { id:'i-act2', type:'match', title:'Subtipo y ejemplo',
+  { id:'i-act2', kind:'diverse', type:'match', title:'Subtipo y ejemplo',
     instructions:'Toca un subtipo y luego su ejemplo correcto.',
     pairs:[
       ['Sutura','Sutura coronal del cráneo'],
@@ -478,7 +557,7 @@ MODULES.I.levels = [
       ['Sínfisis','Sínfisis del pubis']
     ]
   },
-  { id:'i-act3', type:'sort', title:'Clasificar: fibrosa o cartilaginosa',
+  { id:'i-act3', kind:'diverse', type:'sort', title:'Clasificar: fibrosa o cartilaginosa',
     instructions:'Arrastra (o toca y luego toca la columna) cada término a donde corresponda.',
     buckets:[ {key:'fibrosa', label:'Fibrosa'}, {key:'cartilaginosa', label:'Cartilaginosa'} ],
     items:[
@@ -489,7 +568,7 @@ MODULES.I.levels = [
       {term:'Sínfisis', cat:'cartilaginosa'}
     ]
   },
-  { id:'i-act4', type:'match', title:'Componentes de la articulación sinovial',
+  { id:'i-act4', kind:'diverse', type:'match', title:'Componentes de la articulación sinovial',
     instructions:'Toca un componente y luego su función correcta.',
     pairs:[
       ['Cartílago hialino','Reduce el rozamiento y amortigua los golpes'],
@@ -499,7 +578,7 @@ MODULES.I.levels = [
       ['Líquido sinovial','Lubrica, amortigua, oxigena y nutre']
     ]
   },
-  { id:'i-act5', type:'sort', title:'Bursas o vainas tendinosas',
+  { id:'i-act5', kind:'diverse', type:'sort', title:'Bursas o vainas tendinosas',
     instructions:'Arrastra (o toca y luego toca la columna) cada característica a donde corresponda.',
     buckets:[ {key:'bursas', label:'Bursas'}, {key:'vainas', label:'Vainas tendinosas'} ],
     items:[
@@ -511,7 +590,7 @@ MODULES.I.levels = [
       {term:'Típicas de manos y pies', cat:'vainas'}
     ]
   },
-  { id:'i-act6', type:'match', title:'Mnemotecnia CATETER',
+  { id:'i-act6', kind:'diverse', type:'match', title:'Mnemotecnia CATETER',
     instructions:'Toca un tipo de articulación sinovial y luego su ejemplo correcto.',
     pairs:[
       ['Condílea','Radiocarpiana (muñeca)'],
@@ -522,7 +601,7 @@ MODULES.I.levels = [
       ['Encaje recíproco','Carpometacarpiana del pulgar']
     ]
   },
-  { id:'i-act7', type:'match', title:'Clasificación por región',
+  { id:'i-act7', kind:'diverse', type:'match', title:'Clasificación por región',
     instructions:'Toca una articulación y luego su clasificación correcta.',
     pairs:[
       ['Suturas craneales','Fibrosa (sutura) — sinartrosis'],
@@ -534,7 +613,7 @@ MODULES.I.levels = [
       ['Radiocubital','Sinovial (trocoide) — diartrosis, uniaxial']
     ]
   },
-  { id:'i-act8', type:'mc', title:'Casos regionales: verdadero o falso',
+  { id:'i-act8', kind:'quiz', type:'mc', title:'Casos regionales: verdadero o falso',
     instructions:'Indica si la afirmación es verdadera o falsa.',
     questions:[
       { q:'La articulación esternocostal del 1.er par de costillas es sinovial.', opts:['Verdadero','Falso'], correct:1,
@@ -544,6 +623,48 @@ MODULES.I.levels = [
         explain:'Es una unión muscular (sisarcosis), no una articulación verdadera.' },
       { q:'La tibioperonea proximal y la distal son del mismo tipo estructural.', opts:['Verdadero','Falso'], correct:1,
         explain:'La proximal es sinovial (artrodia) y la distal es fibrosa (sindesmosis).' }
+    ]
+  },
+  { id:'i-act9', kind:'quiz', type:'mc', title:'Preguntas de repaso (examen)',
+    questions:[
+      { q:'Una articulación es un punto de contacto entre:',
+        opts:['Dos músculos únicamente','Dos huesos, entre hueso y cartílago, o entre huesos y dientes','Dos ligamentos','Dos superficies sinoviales exclusivamente'], correct:1 },
+      { q:'Las articulaciones fibrosas se caracterizan por:',
+        opts:['Tener cavidad sinovial y estar unidas por tejido conectivo denso regular','No tener cavidad sinovial y estar unidas por tejido conectivo denso irregular','Tener cavidad sinovial y estar unidas por tejido conectivo denso irregular','No tener cavidad sinovial y estar unidas por tejido conectivo denso regular'], correct:1 },
+      { q:'Una sutura craneal se clasifica funcionalmente como:',
+        opts:['Diartrosis','Anfiartrosis','Sinartrosis','Sínfisis'], correct:2 },
+      { q:'La sindesmosis entre la tibia y el peroné (articulación tibioperonea distal) se clasifica funcionalmente como:',
+        opts:['Sinartrosis','Anfiartrosis','Diartrosis','Sisarcosis'], correct:1 },
+      { q:'La placa epifisaria de crecimiento es un ejemplo clásico de:',
+        opts:['Sínfisis','Sincondrosis','Sutura','Articulación sinovial'], correct:1 },
+      { q:'El líquido sinovial es secretado por:',
+        opts:['Los osteoclastos','Las células fibroblásticas de la membrana sinovial y el líquido intersticial filtrado del plasma','El cartílago hialino','Los condrocitos de la cápsula articular'], correct:1 },
+      { q:'Las bolsas sinoviales (bursas) tienen como función principal:',
+        opts:['Producir líquido sinovial de forma exclusiva','Actuar como cojines que absorben impactos entre huesos, tendones, músculos o piel','Envolver completamente a los tendones en manos y pies','Formar la cápsula articular'], correct:1 },
+      { q:'Una articulación en la que una superficie ovalada convexa encaja en una depresión ovalada de otro hueso, permitiendo movimiento biaxial, se denomina:',
+        opts:['Trocoide','Condílea','Enartrosis','Artrodia'], correct:1 },
+      { q:'La articulación del hombro y de la cadera son ejemplos clásicos de articulación sinovial tipo:',
+        opts:['Gínglimo (bisagra)','Trocoide (pivote)','Enartrosis (esferoidea)','Silla de montar'], correct:2 },
+      { q:'Un paciente de 70 años presenta rigidez progresiva y fusión ósea de las suturas craneales, un proceso que normalmente avanza con la edad. Funcionalmente, estas articulaciones se clasifican como:',
+        opts:['Diartrosis','Anfiartrosis','Sinartrosis','Sisarcosis'], correct:2 },
+      { q:'Una mujer embarazada refiere dolor en la región púbica anterior, con mayor movilidad de la sínfisis del pubis durante el tercer trimestre. Estructuralmente, esta articulación se clasifica como:',
+        opts:['Sinovial','Fibrosa','Cartilaginosa','Sisarcosis'], correct:2 },
+      { q:'Un paciente presenta derrame e inflamación de un saco lleno de líquido sinovial ubicado entre la piel y el olécranon del codo (bursitis olecraneana). ¿Qué estructura accesoria está afectada?',
+        opts:['Una vaina tendinosa','Una bursa','Un menisco','Un ligamento intraarticular'], correct:1 },
+      { q:'En un paciente con luxación de hombro, se pierde la relación normal entre la cabeza humeral (esférica) y la cavidad glenoidea (en forma de copa). ¿A qué tipo de articulación sinovial, según la forma de sus superficies, corresponde el hombro?',
+        opts:['Gínglimo','Trocoide','Enartrosis','Artrodia'], correct:2 },
+      { q:'Un paciente presenta dolor y limitación de la rotación del antebrazo (pronosupinación) tras una fractura que compromete la articulación radiocubital. ¿Qué tipo de movimiento sinovial, según la forma de sus superficies, caracteriza a esta articulación?',
+        opts:['Trocoide, uniaxial','Trocoide, biaxial','Trocoide, triaxial','Silla de montar, biaxial'], correct:0 },
+      { q:'Un jugador de baloncesto sufre un traumatismo directo en el codo y no puede realizar flexión ni extensión del antebrazo. Según la clasificación por forma de superficies, la articulación del codo (humerocubital) es de tipo:',
+        opts:['Artrodia','Gínglimo','Trocoide','Silla de montar'], correct:1 },
+      { q:'Un paciente con osteoartritis en la base del pulgar (rizartrosis) tiene comprometida la articulación entre el trapecio y el primer metacarpiano. ¿Qué tipo de articulación sinovial, por la forma de sus superficies, es esta?',
+        opts:['Silla de montar','Trocoide','Enartrosis','Gínglimo'], correct:0 },
+      { q:'Un paciente presenta dolor articular sacroilíaco que se agrava durante el embarazo por el aumento fisiológico de la movilidad de esta articulación. Estructural y funcionalmente, la articulación sacroilíaca se clasifica como:',
+        opts:['Sinovial (artrodia), sinartrosis','Sinovial (artrodia), anfiartrosis','Sinovial (artrodia), diartrosis','Sinovial (enartrosis), diartrosis'], correct:2 },
+      { q:'Todas las articulaciones sinoviales son diartrosis.',
+        opts:['Verdadero','Falso'], correct:0 },
+      { q:'La sínfisis del pubis es una articulación sinovial.',
+        opts:['Verdadero','Falso'], correct:1 }
     ]
   }
 ];
