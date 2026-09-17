@@ -148,7 +148,8 @@ const MODULES = {
   E: { id:'E', title:'Huesos del tórax', subtitle:'Selecciona el tipo de actividad', placeholder:true, levels:[], subActivities:SUB_ACTIVITY_TEMPLATE() },
   F: { id:'F', title:'Huesos de la cintura escapular y miembro superior', subtitle:'Selecciona el tipo de actividad', placeholder:true, levels:[], subActivities:SUB_ACTIVITY_TEMPLATE() },
   G: { id:'G', title:'Huesos de la pelvis y del miembro inferior', subtitle:'Selecciona el tipo de actividad', placeholder:true, levels:[], subActivities:SUB_ACTIVITY_TEMPLATE() },
-  H: { id:'H', title:'Histología, fisiología y envejecimiento del tejido óseo', subtitle:'Selecciona una actividad', placeholder:true, levels:[], subActivities:[], groupedActivities:true }
+  H: { id:'H', title:'Histología, fisiología y envejecimiento del tejido óseo', subtitle:'Selecciona una actividad', placeholder:true, levels:[], subActivities:[], groupedActivities:true },
+  I: { id:'I', title:'Articulaciones: generalidades y clasificación', subtitle:'Selecciona una actividad', placeholder:true, levels:[], subActivities:[], groupedActivities:true }
 };
 
 // Actividad "señalar estructuras": imágenes con flechas ya dibujadas por el
@@ -368,6 +369,164 @@ MODULES.H.levels = [
       {term:'Se usan tornillos, placas, clavos o alambres', cat:'abierta'},
       {term:'Requiere incisión quirúrgica (fijación interna)', cat:'abierta'}
     ]
+  },
+  { id:'h-act12', type:'match', title:'Bloque 4 · Las 6 funciones del hueso',
+    instructions:'Toca un término y luego su definición correcta.',
+    pairs:[
+      ['Sostén','Soporta tejidos blandos y permite la inserción muscular'],
+      ['Protección','Protege órganos internos vitales'],
+      ['Movimiento','Los músculos traccionan el hueso para generar desplazamiento'],
+      ['Homeostasis mineral','Almacena el 99% del calcio corporal; libera o capta Ca²⁺'],
+      ['Producción de células sanguíneas','Médula ósea roja: hemopoyesis'],
+      ['Reserva de triglicéridos','Médula ósea amarilla: reserva energética']
+    ]
+  },
+  { id:'h-act13', type:'mc', title:'Bloque 4 · Calcemia: verdadero o falso',
+    instructions:'Indica si la afirmación es verdadera o falsa.',
+    questions:[
+      { q:'El 99% del calcio corporal está en el hueso.', opts:['Verdadero','Falso'], correct:0 },
+      { q:'El rango normal de calcemia es de 9 a 11 mg/100 mL.', opts:['Verdadero','Falso'], correct:0 },
+      { q:'Todo el calcio en la sangre circula libre.', opts:['Verdadero','Falso'], correct:1,
+        explain:'Solo el 45-50% está libre; el resto está unido a proteínas o complejado.' },
+      { q:'Un exceso de Ca²⁺ en sangre puede causar paro cardíaco.', opts:['Verdadero','Falso'], correct:0 },
+      { q:'Un déficit de Ca²⁺ en sangre puede causar paro respiratorio.', opts:['Verdadero','Falso'], correct:0 }
+    ]
+  },
+  { id:'h-act14', type:'sort', title:'Bloque 5 · PTH vs. calcitonina',
+    instructions:'Arrastra (o toca y luego toca la columna) cada efecto a la hormona que corresponde.',
+    buckets:[ {key:'pth', label:'Eleva la calcemia (PTH)'}, {key:'calcitonina', label:'Disminuye la calcemia (Calcitonina)'} ],
+    items:[
+      {term:'Secretada por las paratiroides', cat:'pth'},
+      {term:'Estímulo: ↓ Ca²⁺ circulante', cat:'pth'},
+      {term:'Estimula la disolución de cristales de CaPO₄ en el hueso', cat:'pth'},
+      {term:'Estimula la resorción renal de Ca²⁺', cat:'pth'},
+      {term:'Estimula la producción de 1,25-dihidroxivitamina D₃', cat:'pth'},
+      {term:'Secretada por células parafoliculares de la tiroides', cat:'calcitonina'},
+      {term:'Estímulo: ↑ Ca²⁺ circulante', cat:'calcitonina'},
+      {term:'Inhibe la disolución de cristales de CaPO₄ en el hueso', cat:'calcitonina'},
+      {term:'Estimula la excreción renal de Ca²⁺ y PO₄³⁻', cat:'calcitonina'}
+    ]
+  },
+  { id:'h-act15', type:'sequence', title:'Bloque 5 · Síntesis de vitamina D: ordene la ruta',
+    instructions:'Arrastra los pasos (o usa las flechas) hasta ordenarlos correctamente, de principio a fin.',
+    steps:[
+      {title:'Piel: formación de previtamina D₃', text:'El 7-dehidrocolesterol (provitamina D₃) se convierte en previtamina D₃ por acción de la radiación UV.'},
+      {title:'Piel: isomerización térmica', text:'La previtamina D₃ se transforma en colecalciferol (vitamina D₃).'},
+      {title:'Hígado: formación de calcidiol', text:'La 25-hidroxilasa (CYP2R1) convierte el colecalciferol en calcidiol (25-hidroxivitamina D₃).'},
+      {title:'Riñón: formación de calcitriol', text:'La alfa-1-hidroxilasa (CYP27B1) convierte el calcidiol en calcitriol (1,25-dihidroxivitamina D₃), la forma activa.'},
+      {title:'Acción del calcitriol', text:'Actúa sobre el intestino (↑ absorción de Ca²⁺ y fosfato), el hueso (↑ resorción) y el riñón (↓ excreción de Ca²⁺).'}
+    ]
+  },
+  { id:'h-act16', type:'match', title:'Bloque 5 · Órgano, enzima y producto',
+    instructions:'Toca un órgano y luego la enzima/producto que le corresponde.',
+    pairs:[
+      ['Piel','7-dehidrocolesterol → colecalciferol'],
+      ['Hígado','25-hidroxilasa (CYP2R1) → calcidiol'],
+      ['Riñón','Alfa-1-hidroxilasa (CYP27B1) → calcitriol']
+    ]
+  },
+  { id:'h-act17', type:'sequence', title:'Bloque 6 · Las 4 etapas de la remodelación ósea',
+    instructions:'Arrastra los pasos (o usa las flechas) hasta ordenarlos correctamente, de principio a fin.',
+    steps:[
+      {title:'Niñez / adolescencia', text:'Se forma más hueso del que se pierde.'},
+      {title:'Adultez joven', text:'Depósito y resorción son aproximadamente equivalentes.'},
+      {title:'Edad media', text:'↓ hormonas sexuales → la resorción empieza a superar al depósito.'},
+      {title:'Edad avanzada', text:'La resorción osteoclástica excede de forma sostenida al depósito osteoblástico.'}
+    ]
+  }
+];
+
+// Módulo I — articulaciones. Mismo tratamiento que H: contenido entregado
+// por el profesor, agrupado bajo un solo botón con navegación por chips.
+MODULES.I.subActivities = [
+  { id:'i-all', title:'Articulaciones: generalidades y clasificación', icon:'🦵', ready:true }
+];
+MODULES.I.levels = [
+  { id:'i-act1', type:'match', title:'Bloque 1 · Clasificación estructural ↔ funcional',
+    instructions:'Toca un término y luego su definición correcta.',
+    pairs:[
+      ['Fibrosa','Sinartrosis (inmóvil)'],
+      ['Cartilaginosa','Anfiartrosis (movimiento limitado)'],
+      ['Sinovial','Diartrosis (gran rango de movimiento)']
+    ]
+  },
+  { id:'i-act2', type:'match', title:'Bloque 2 · Subtipo y ejemplo',
+    instructions:'Toca un subtipo y luego su ejemplo correcto.',
+    pairs:[
+      ['Sutura','Sutura coronal del cráneo'],
+      ['Sindesmosis','Articulación tibioperonea distal'],
+      ['Membrana interósea','Entre radio y cúbito'],
+      ['Sincondrosis','Placa epifisaria'],
+      ['Sínfisis','Sínfisis del pubis']
+    ]
+  },
+  { id:'i-act3', type:'sort', title:'Bloque 2 · Clasificar: fibrosa o cartilaginosa',
+    instructions:'Arrastra (o toca y luego toca la columna) cada término a donde corresponda.',
+    buckets:[ {key:'fibrosa', label:'Fibrosa'}, {key:'cartilaginosa', label:'Cartilaginosa'} ],
+    items:[
+      {term:'Sutura', cat:'fibrosa'},
+      {term:'Sindesmosis', cat:'fibrosa'},
+      {term:'Membrana interósea', cat:'fibrosa'},
+      {term:'Sincondrosis', cat:'cartilaginosa'},
+      {term:'Sínfisis', cat:'cartilaginosa'}
+    ]
+  },
+  { id:'i-act4', type:'match', title:'Bloque 3 · Componentes de la articulación sinovial',
+    instructions:'Toca un componente y luego su función correcta.',
+    pairs:[
+      ['Cartílago hialino','Reduce el rozamiento y amortigua los golpes'],
+      ['Cápsula articular','Fibras elásticas que envuelven la articulación'],
+      ['Ligamentos de sostén','Resisten el estiramiento y limitan el movimiento'],
+      ['Membrana sinovial','Forma la cavidad articular'],
+      ['Líquido sinovial','Lubrica, amortigua, oxigena y nutre']
+    ]
+  },
+  { id:'i-act5', type:'sort', title:'Bloque 3 · Bursas o vainas tendinosas',
+    instructions:'Arrastra (o toca y luego toca la columna) cada característica a donde corresponda.',
+    buckets:[ {key:'bursas', label:'Bursas'}, {key:'vainas', label:'Vainas tendinosas'} ],
+    items:[
+      {term:'Pequeños sacos con líquido sinovial', cat:'bursas'},
+      {term:'Absorben impactos entre tejidos duros y blandos', cat:'bursas'},
+      {term:'Se ubican cerca de articulaciones en general', cat:'bursas'},
+      {term:'Tubos/membranas dobles que envuelven tendones', cat:'vainas'},
+      {term:'Facilitan el deslizamiento del tendón', cat:'vainas'},
+      {term:'Típicas de manos y pies', cat:'vainas'}
+    ]
+  },
+  { id:'i-act6', type:'match', title:'Bloque 3 · Mnemotecnia CATETER',
+    instructions:'Toca un tipo de articulación sinovial y luego su ejemplo correcto.',
+    pairs:[
+      ['Condílea','Radiocarpiana (muñeca)'],
+      ['Artrodia','Intercarpianas'],
+      ['Trocoide','Atlantoaxoidea'],
+      ['Enartrosis','Hombro y cadera'],
+      ['Troclear / gínglimo','Codo, tobillo'],
+      ['Encaje recíproco','Carpometacarpiana del pulgar']
+    ]
+  },
+  { id:'i-act7', type:'match', title:'Bloque 3 · Clasificación por región',
+    instructions:'Toca una articulación y luego su clasificación correcta.',
+    pairs:[
+      ['Suturas craneales','Fibrosa (sutura) — sinartrosis'],
+      ['Atlantoaxoidea','Sinovial (trocoide) — diartrosis, uniaxial'],
+      ['Cuerpos intervertebrales','Cartilaginosa (sínfisis) — anfiartrosis'],
+      ['Esternocostal, 1.er par','Cartilaginosa (sincondrosis) — sinartrosis'],
+      ['Sacroilíaca','Sinovial (artrodia) — diartrosis'],
+      ['Sínfisis del pubis','Cartilaginosa (sínfisis) — anfiartrosis'],
+      ['Radiocubital','Sinovial (trocoide) — diartrosis, uniaxial']
+    ]
+  },
+  { id:'i-act8', type:'mc', title:'Bloque 3 · Casos regionales: verdadero o falso',
+    instructions:'Indica si la afirmación es verdadera o falsa.',
+    questions:[
+      { q:'La articulación esternocostal del 1.er par de costillas es sinovial.', opts:['Verdadero','Falso'], correct:1,
+        explain:'Es cartilaginosa (sincondrosis), a diferencia del 2.º al 7.º par, que sí son sinoviales.' },
+      { q:'La sacroilíaca aumenta su movimiento durante el embarazo.', opts:['Verdadero','Falso'], correct:0 },
+      { q:'La escapulotorácica es una articulación sinovial verdadera.', opts:['Verdadero','Falso'], correct:1,
+        explain:'Es una unión muscular (sisarcosis), no una articulación verdadera.' },
+      { q:'La tibioperonea proximal y la distal son del mismo tipo estructural.', opts:['Verdadero','Falso'], correct:1,
+        explain:'La proximal es sinovial (artrodia) y la distal es fibrosa (sindesmosis).' }
+    ]
   }
 ];
 
@@ -377,7 +536,7 @@ const CATEGORIES = {
     emoji:'🦴',
     title:'Estructuras y funciones del sistema óseo',
     subtitle:'Divisiones del esqueleto, clasificación ósea, accidentes óseos y más',
-    moduleIds:['A','B','C','D','E','F','G','H']
+    moduleIds:['A','B','C','D','E','F','G','H','I']
   },
   muscular: {
     id:'muscular',
