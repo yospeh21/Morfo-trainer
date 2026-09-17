@@ -247,15 +247,18 @@ MODULES.G.subActivities.find(s=>s.id==='img').ready = true;
 // por el profesor (banco de actividades). Se arma a mano, como el módulo G,
 // porque incluye tipos de actividad (varias respuestas correctas, ordenar
 // en secuencia) que todavía no vienen del flujo de Google Sheets.
-// A diferencia de C-G, las 10 actividades de H se agrupan bajo un solo
-// botón (mod.groupedActivities) — se navegan entre sí como los módulos A/B
-// (chips numerados + "Siguiente actividad"), no como sub-actividades sueltas.
+// A diferencia de C-G, las actividades de H se agrupan bajo botones por
+// bloque temático (mod.groupedActivities + level.group) — dentro de cada
+// botón se navega con chips numerados + "Siguiente actividad", como los
+// módulos A/B, pero el alcance de los chips se limita a las actividades
+// con el mismo `group` que el sub-botón elegido.
 MODULES.H.subActivities = [
-  { id:'h-all', title:'Histología, fractura y consolidación ósea', icon:'🦴', ready:true }
+  { id:'h-histologia', title:'Histología, fractura y consolidación ósea', icon:'🦴', ready:true, group:'histologia' },
+  { id:'h-fisiologia', title:'Fisiología', icon:'⚗️', ready:true, group:'fisiologia' }
 ];
 
 MODULES.H.levels = [
-  { id:'h-act1', type:'match', title:'Células óseas: célula ↔ función',
+  { id:'h-act1', group:'histologia', type:'match', title:'Células óseas: célula ↔ función',
     instructions:'Toca un término y luego su definición correcta.',
     pairs:[
       ['Osteogénica','Célula madre derivada del mesénquima; única capaz de dividirse; da origen a los osteoblastos'],
@@ -264,7 +267,7 @@ MODULES.H.levels = [
       ['Osteoclasto','Célula gigante multinucleada que realiza la resorción ósea']
     ]
   },
-  { id:'h-act2', type:'mcMulti', title:'Hueso compacto: varias respuestas correctas',
+  { id:'h-act2', group:'histologia', type:'mcMulti', title:'Hueso compacto: varias respuestas correctas',
     instructions:'Selecciona TODAS las opciones correctas. Puedes obtener puntaje parcial.',
     questions:[
       { q:'Seleccione todas las características correctas del hueso compacto.',
@@ -280,7 +283,7 @@ MODULES.H.levels = [
       }
     ]
   },
-  { id:'h-act4', type:'sort', title:'Clasificar: hueso compacto vs. esponjoso',
+  { id:'h-act4', group:'histologia', type:'sort', title:'Clasificar: hueso compacto vs. esponjoso',
     instructions:'Arrastra (o toca y luego toca la columna) cada término a donde corresponda.',
     buckets:[ {key:'compacto', label:'Hueso compacto'}, {key:'esponjoso', label:'Hueso esponjoso'} ],
     items:[
@@ -296,7 +299,7 @@ MODULES.H.levels = [
       {term:'Epífisis', cat:'esponjoso'}
     ]
   },
-  { id:'h-act5', type:'sequence', title:'Osificación endocondral: ordene los pasos',
+  { id:'h-act5', group:'histologia', type:'sequence', title:'Osificación endocondral: ordene los pasos',
     instructions:'Arrastra los pasos (o usa las flechas) hasta ordenarlos correctamente, de principio a fin.',
     steps:[
       {title:'Aparición del molde cartilaginoso', text:'Condroblastos forman el molde de cartílago hialino; aparece el pericondrio.'},
@@ -307,7 +310,7 @@ MODULES.H.levels = [
       {title:'Formación del cartílago articular y la placa epifisaria', text:'El cartílago restante se reparte entre la superficie articular y la placa de crecimiento.'}
     ]
   },
-  { id:'h-act6', type:'sequence', title:'Osificación intramembranosa: ordene los pasos',
+  { id:'h-act6', group:'histologia', type:'sequence', title:'Osificación intramembranosa: ordene los pasos',
     instructions:'Arrastra los pasos (o usa las flechas) hasta ordenarlos correctamente, de principio a fin.',
     steps:[
       {title:'Aparición del centro de osificación', text:'Los osteoblastos secretan matriz osteoide.'},
@@ -316,7 +319,7 @@ MODULES.H.levels = [
       {title:'Formación del periostio', text:'El mesénquima periférico se transforma en periostio; una capa de hueso compacto reemplaza las capas superficiales de hueso esponjoso.'}
     ]
   },
-  { id:'h-act7', type:'sort', title:'¿Etapa específica de la vida o toda la vida?',
+  { id:'h-act7', group:'histologia', type:'sort', title:'¿Etapa específica de la vida o toda la vida?',
     instructions:'Arrastra (o toca y luego toca la columna) cada proceso a donde corresponda.',
     buckets:[ {key:'especifica', label:'Etapa específica de la vida'}, {key:'toda_la_vida', label:'A lo largo de toda la vida'} ],
     items:[
@@ -326,7 +329,7 @@ MODULES.H.levels = [
       {term:'Consolidación de fracturas', cat:'toda_la_vida'}
     ]
   },
-  { id:'h-act8', type:'match', title:'Factores del crecimiento óseo: factor ↔ función',
+  { id:'h-act8', group:'histologia', type:'match', title:'Factores del crecimiento óseo: factor ↔ función',
     instructions:'Toca un término y luego su definición correcta.',
     pairs:[
       ['Vitamina A','Estimula la actividad de los osteoblastos'],
@@ -337,7 +340,7 @@ MODULES.H.levels = [
       ['Insulina','Promueve el crecimiento óseo aumentando la síntesis de proteínas óseas']
     ]
   },
-  { id:'h-act9', type:'match', title:'Tipos de fractura: nombre ↔ descripción',
+  { id:'h-act9', group:'histologia', type:'match', title:'Tipos de fractura: nombre ↔ descripción',
     instructions:'Toca un término y luego su definición correcta.',
     pairs:[
       ['Expuesta','Los cabos óseos protruyen a través de la piel (en la cerrada, la piel está indemne)'],
@@ -348,7 +351,7 @@ MODULES.H.levels = [
       ['Pouteau-Colles','Fractura del extremo distal del radio, con desplazamiento dorsal del fragmento']
     ]
   },
-  { id:'h-act10', type:'sequence', title:'Consolidación ósea: ordene las fases',
+  { id:'h-act10', group:'histologia', type:'sequence', title:'Consolidación ósea: ordene las fases',
     instructions:'Arrastra los pasos (o usa las flechas) hasta ordenarlos correctamente, de principio a fin.',
     noteAfterCheck:'Recuerda: el callo óseo dura entre 3 y 4 SEMANAS, no meses — es el error más frecuente en este tema.',
     steps:[
@@ -358,7 +361,7 @@ MODULES.H.levels = [
       {title:'Remodelación ósea', text:'Osteoclastos reabsorben las áreas necróticas; el hueso esponjoso es reemplazado por hueso compacto; puede tardar meses.'}
     ]
   },
-  { id:'h-act11', type:'sort', title:'Clasificar: reducción cerrada o abierta',
+  { id:'h-act11', group:'histologia', type:'sort', title:'Clasificar: reducción cerrada o abierta',
     instructions:'Arrastra (o toca y luego toca la columna) cada característica a donde corresponda.',
     buckets:[ {key:'cerrada', label:'Reducción cerrada'}, {key:'abierta', label:'Reducción abierta'} ],
     items:[
@@ -370,7 +373,7 @@ MODULES.H.levels = [
       {term:'Requiere incisión quirúrgica (fijación interna)', cat:'abierta'}
     ]
   },
-  { id:'h-act12', type:'match', title:'Bloque 4 · Las 6 funciones del hueso',
+  { id:'h-act12', group:'fisiologia', type:'match', title:'Bloque 4 · Las 6 funciones del hueso',
     instructions:'Toca un término y luego su definición correcta.',
     pairs:[
       ['Sostén','Soporta tejidos blandos y permite la inserción muscular'],
@@ -381,7 +384,7 @@ MODULES.H.levels = [
       ['Reserva de triglicéridos','Médula ósea amarilla: reserva energética']
     ]
   },
-  { id:'h-act13', type:'mc', title:'Bloque 4 · Calcemia: verdadero o falso',
+  { id:'h-act13', group:'fisiologia', type:'mc', title:'Bloque 4 · Calcemia: verdadero o falso',
     instructions:'Indica si la afirmación es verdadera o falsa.',
     questions:[
       { q:'El 99% del calcio corporal está en el hueso.', opts:['Verdadero','Falso'], correct:0 },
@@ -392,7 +395,7 @@ MODULES.H.levels = [
       { q:'Un déficit de Ca²⁺ en sangre puede causar paro respiratorio.', opts:['Verdadero','Falso'], correct:0 }
     ]
   },
-  { id:'h-act14', type:'sort', title:'Bloque 5 · PTH vs. calcitonina',
+  { id:'h-act14', group:'fisiologia', type:'sort', title:'Bloque 5 · PTH vs. calcitonina',
     instructions:'Arrastra (o toca y luego toca la columna) cada efecto a la hormona que corresponde.',
     buckets:[ {key:'pth', label:'Eleva la calcemia (PTH)'}, {key:'calcitonina', label:'Disminuye la calcemia (Calcitonina)'} ],
     items:[
@@ -407,7 +410,7 @@ MODULES.H.levels = [
       {term:'Estimula la excreción renal de Ca²⁺ y PO₄³⁻', cat:'calcitonina'}
     ]
   },
-  { id:'h-act15', type:'sequence', title:'Bloque 5 · Síntesis de vitamina D: ordene la ruta',
+  { id:'h-act15', group:'fisiologia', type:'sequence', title:'Bloque 5 · Síntesis de vitamina D: ordene la ruta',
     instructions:'Arrastra los pasos (o usa las flechas) hasta ordenarlos correctamente, de principio a fin.',
     steps:[
       {title:'Piel: formación de previtamina D₃', text:'El 7-dehidrocolesterol (provitamina D₃) se convierte en previtamina D₃ por acción de la radiación UV.'},
@@ -417,7 +420,7 @@ MODULES.H.levels = [
       {title:'Acción del calcitriol', text:'Actúa sobre el intestino (↑ absorción de Ca²⁺ y fosfato), el hueso (↑ resorción) y el riñón (↓ excreción de Ca²⁺).'}
     ]
   },
-  { id:'h-act16', type:'match', title:'Bloque 5 · Órgano, enzima y producto',
+  { id:'h-act16', group:'fisiologia', type:'match', title:'Bloque 5 · Órgano, enzima y producto',
     instructions:'Toca un órgano y luego la enzima/producto que le corresponde.',
     pairs:[
       ['Piel','7-dehidrocolesterol → colecalciferol'],
@@ -425,7 +428,7 @@ MODULES.H.levels = [
       ['Riñón','Alfa-1-hidroxilasa (CYP27B1) → calcitriol']
     ]
   },
-  { id:'h-act17', type:'sequence', title:'Bloque 6 · Las 4 etapas de la remodelación ósea',
+  { id:'h-act17', group:'fisiologia', type:'sequence', title:'Bloque 6 · Las 4 etapas de la remodelación ósea',
     instructions:'Arrastra los pasos (o usa las flechas) hasta ordenarlos correctamente, de principio a fin.',
     steps:[
       {title:'Niñez / adolescencia', text:'Se forma más hueso del que se pierde.'},
@@ -2005,11 +2008,15 @@ function viewModuleSubmenu(){
 
   function subCard(sub){
     const grouped = mod.groupedActivities;
+    // Si el sub-botón declara `group`, sus chips/progreso se limitan a los
+    // niveles con ese mismo `level.group` (p. ej. Histología vs. Fisiología
+    // dentro del mismo módulo H); si no, abarca todo mod.levels.
+    const groupLevels = grouped ? (sub.group ? mod.levels.filter(l=> l.group === sub.group) : mod.levels) : null;
     let doneInfo = null, doneCount = 0, totalCount = 0, avg = 0;
     if(grouped){
-      totalCount = mod.levels.length;
+      totalCount = groupLevels.length;
       let sumPct = 0;
-      mod.levels.forEach(l=>{
+      groupLevels.forEach(l=>{
         const p = state.progress[levelKey(mod.id, l.id)];
         if(p){ doneCount++; sumPct += pct(p.correct, p.total); }
       });
@@ -2038,7 +2045,12 @@ function viewModuleSubmenu(){
     }
     card.onclick = ()=>{
       if(sub.ready){
-        if(grouped){ goToLevel(mod.id, firstIncompleteLevelIdx(mod)); return; }
+        if(grouped){
+          let gi = groupLevels.findIndex(l=> !state.progress[levelKey(mod.id, l.id)]);
+          if(gi === -1) gi = 0;
+          goToLevel(mod.id, mod.levels.indexOf(groupLevels[gi]));
+          return;
+        }
         const idx = mod.levels.findIndex(l=> l.id === sub.id);
         if(idx >= 0){ goToLevel(mod.id, idx); return; }
       }
@@ -2196,17 +2208,22 @@ function beginActivity(opts){
 
   // "multi": módulos con progresión real de niveles (A/B, y H por ser
   // groupedActivities). Los módulos con sub-actividades sueltas (C–G) tratan
-  // cada nivel como una actividad independiente.
+  // cada nivel como una actividad independiente. Si el nivel actual tiene
+  // `group` (p. ej. H separa Histología/Fisiología bajo el mismo módulo),
+  // los chips se limitan a los niveles de ese mismo grupo.
   const multi = mod.levels.length > 1 && (!mod.subActivities || mod.groupedActivities);
+  const groupLevels = multi ? (level.group ? mod.levels.filter(l=> l.group === level.group) : mod.levels) : null;
+  const groupIdx = multi ? groupLevels.indexOf(level) : idx;
   head.appendChild(el('div','act-type',
-    multi ? ('Nivel '+(idx+1)+' · '+esc(level.title))
+    multi ? ('Nivel '+(groupIdx+1)+' · '+esc(level.title))
           : esc(ACTIVITY_TYPE_LABEL[level.type] || level.title || 'Actividad')));
 
   if(multi){
     const chips = el('div','act-levels');
-    mod.levels.forEach((l,i)=>{
+    groupLevels.forEach((l,gi)=>{
+      const i = mod.levels.indexOf(l);
       const done = !!state.progress[levelKey(mod.id, l.id)];
-      const b = el('button', (done && i!==idx) ? 'done' : '', String(i+1));
+      const b = el('button', (done && i!==idx) ? 'done' : '', String(gi+1));
       b.type = 'button';
       b.title = l.title;
       if(i===idx){ b.setAttribute('aria-current','true'); b.disabled = true; }
@@ -3708,6 +3725,8 @@ function viewLevelDone(){
   const score=pct(p.correct, p.total);
   const tier=resultTier(score);
   const multi = mod.levels.length > 1 && (!mod.subActivities || mod.groupedActivities);
+  const groupLevels = multi ? (level.group ? mod.levels.filter(l=> l.group === level.group) : mod.levels) : null;
+  const groupIdx = multi ? groupLevels.indexOf(level) : idx;
   const t = ensureTimer(mod.id);
 
   const root = el('div','act');
@@ -3720,7 +3739,7 @@ function viewLevelDone(){
   card.appendChild(el('div','act-topic', esc(String(mod.title).toUpperCase())));
   card.appendChild(el('div','result-eyebrow','Actividad completada'));
   card.appendChild(el('div','act-type',
-    multi ? ('Nivel '+(idx+1)+' · '+esc(level.title))
+    multi ? ('Nivel '+(groupIdx+1)+' · '+esc(level.title))
           : esc(ACTIVITY_TYPE_LABEL[level.type] || level.title || 'Actividad')));
 
   card.appendChild(el('div','result-score '+tier.cls, score+'%'));
@@ -3733,11 +3752,12 @@ function viewLevelDone(){
   card.appendChild(stats);
 
   const actions = el('div','act-actions');
-  const hasNext = multi && idx+1 < mod.levels.length;
+  const hasNext = multi && groupIdx+1 < groupLevels.length;
   if(hasNext){
-    const nextBtn = el('button','act-btn', 'Siguiente: '+esc(mod.levels[idx+1].title)+' →');
+    const nextLevel = groupLevels[groupIdx+1];
+    const nextBtn = el('button','act-btn', 'Siguiente: '+esc(nextLevel.title)+' →');
     nextBtn.type='button';
-    nextBtn.onclick=()=>{ goToLevel(mod.id, idx+1); };
+    nextBtn.onclick=()=>{ goToLevel(mod.id, mod.levels.indexOf(nextLevel)); };
     actions.appendChild(nextBtn);
   }
   const backLabel = levelBackTarget()==='moduleSubmenu' ? 'Volver a las actividades' : 'Volver al panel';
