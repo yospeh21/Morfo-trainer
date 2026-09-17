@@ -253,12 +253,23 @@ MODULES.G.subActivities = MODULES.G.subActivities.filter(s=> s.id !== 'cases');
 // botón se navega con chips numerados + "Siguiente actividad", como los
 // módulos A/B, pero el alcance de los chips se limita a las actividades
 // que comparten `group` (histología/fisiología) y `kind` (diversa/quiz)
-// con el sub-botón elegido.
+// con el sub-botón elegido. Estructura de 2 niveles: los 2 botones de
+// arriba (Histología/Fisiología) tienen `children` — al tocarlos se
+// muestran sus 2 sub-botones (Actividades varias / Selección múltiple)
+// en vez de entrar directo a un nivel (ver `state._subMenuParent`).
 MODULES.H.subActivities = [
-  { id:'h-histologia-diversas', title:'Histología: actividades diversas', icon:'🧩', ready:true, group:'histologia', kind:'diverse' },
-  { id:'h-histologia-quiz', title:'Histología: selección múltiple y completar', icon:'✅', ready:true, group:'histologia', kind:'quiz' },
-  { id:'h-fisiologia-diversas', title:'Fisiología: actividades diversas', icon:'🧩', ready:true, group:'fisiologia', kind:'diverse' },
-  { id:'h-fisiologia-quiz', title:'Fisiología: selección múltiple y completar', icon:'✅', ready:true, group:'fisiologia', kind:'quiz' }
+  { id:'h-histologia', title:'Histología, formación, consolidación y fracturas', icon:'🦴', ready:true, group:'histologia',
+    children:[
+      { id:'h-histologia-diversas', title:'Actividades varias', icon:'🧩', ready:true, group:'histologia', kind:'diverse' },
+      { id:'h-histologia-quiz', title:'Preguntas de selección múltiple', icon:'✅', ready:true, group:'histologia', kind:'quiz' }
+    ]
+  },
+  { id:'h-fisiologia', title:'Fisiología ósea', icon:'⚗️', ready:true, group:'fisiologia',
+    children:[
+      { id:'h-fisiologia-diversas', title:'Actividades varias', icon:'🧩', ready:true, group:'fisiologia', kind:'diverse' },
+      { id:'h-fisiologia-quiz', title:'Preguntas de selección múltiple', icon:'✅', ready:true, group:'fisiologia', kind:'quiz' }
+    ]
+  }
 ];
 
 MODULES.H.levels = [
@@ -579,6 +590,7 @@ const state = {
   currentCategory:null,
   currentModule:null,
   currentSubActivity:null,
+  _subMenuParent:null, // id del sub-botón padre elegido (submenú de 2 niveles, p. ej. módulo H)
   currentLevelIdx:0,
   bossPool:null,
   bossIdx:0,
@@ -1873,6 +1885,7 @@ function moduleCard(mod, num){
   card.onclick = ()=>{
     state.currentModule = mod.id;
     state.currentSubActivity = null;
+    state._subMenuParent = null;
     state.view = (subs.length) ? 'moduleSubmenu' : 'comingSoon';
     render();
   };
@@ -1999,18 +2012,54 @@ function viewModuleSubmenu(){
     return contentLoadingView(mod.title, 'Volver al panel', ()=>{ state.view='menu'; render(); });
   }
   const wrap = el('div','home');
-  wrap.appendChild(backButton('Volver al panel', ()=>{ state.view='menu'; render(); }));
+
+  // Sub-menú de 2 niveles: un sub-botón puede declarar `children` (p. ej.
+  // Histología/Fisiología en el módulo H) — al tocarlo se entra a ver sus
+  // hijos (Actividades varias / Selección múltiple) en vez de un nivel.
+  // `state._subMenuParent` guarda el id del padre elegido, o null en la
+  // vista de arriba de todo.
+  const topSubs = (mod && mod.subActivities) || [];
+  const parent = state._subMenuParent ? topSubs.find(s=> s.id === state._subMenuParent) : null;
+  const subs = parent ? (parent.children || []) : topSubs;
+
+  wrap.appendChild(backButton(parent ? 'Volver a ' + mod.title : 'Volver al panel', ()=>{
+    if(parent){ state._subMenuParent = null; } else { state.view='menu'; }
+    render();
+  }));
 
   const head = el('div','home-head');
-  head.appendChild(el('h1','', mod ? esc(mod.title) : 'Actividad'));
+  head.appendChild(el('h1','', esc(parent ? parent.title : (mod ? mod.title : 'Actividad'))));
   head.appendChild(el('p','','Elige el tipo de actividad. Tu profesor las habilita una por una.'));
   wrap.appendChild(head);
 
-  const subs = (mod && mod.subActivities) || [];
   const regular = subs.filter(s=> !s.standalone);
   const standalone = subs.filter(s=> s.standalone);
 
   function subCard(sub){
+    if(sub.children && sub.children.length){
+      // Botón padre: agrega el progreso de TODOS sus hijos (sin filtrar
+      // por `kind`) y, al tocarlo, entra a la lista de hijos.
+      const childLevels = mod.levels.filter(l=> l.group === sub.group);
+      let doneCount = 0, sumPct = 0;
+      childLevels.forEach(l=>{
+        const p = state.progress[levelKey(mod.id, l.id)];
+        if(p){ doneCount++; sumPct += pct(p.correct, p.total); }
+      });
+      const totalCount = childLevels.length;
+      const avg = doneCount ? Math.round(sumPct/doneCount) : 0;
+      const allDone = totalCount>0 && doneCount>=totalCount;
+      const kind = allDone ? 'is-done' : doneCount>0 ? 'is-progress' : 'is-ready';
+      const card = el('button','mod-card ' + kind);
+      card.type = 'button';
+      const hd = el('div','mod-head');
+      hd.appendChild(el('span','mod-num', esc(sub.icon || '•')));
+      hd.appendChild(el('span','mod-title2', esc(sub.title)));
+      hd.appendChild(badge(doneCount+'/'+totalCount+' actividades', allDone ? 'done' : 'progress'));
+      card.appendChild(hd);
+      card.appendChild(progressBar(doneCount, totalCount, { unit:'actividades', avg: avg }));
+      card.onclick = ()=>{ state._subMenuParent = sub.id; render(); };
+      return card;
+    }
     const grouped = mod.groupedActivities;
     // Si el sub-botón declara `group` y/o `kind`, sus chips/progreso se
     // limitan a los niveles que compartan esos mismos campos (p. ej.
