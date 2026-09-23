@@ -783,6 +783,73 @@ MODULES.MU1 = {
   ]
 };
 
+// Sistema muscular (MU1) — "señalar estructuras": mismas reglas que miembro inferior.
+MODULES.MU1.levels.push({
+  id:'img', type:'imgLabel', title:'Imágenes anatómicas',
+  instructions:'Toca cada marcador y escribe el nombre de la estructura que señala la flecha. No importan las mayúsculas ni las tildes.',
+  images:[
+    { file:'assets/img/muscular/mimica-masticacion-cuello-torax-dorso/1.png', label:'Mímica · vista frontal', points:[
+      {n:1, x:69.93, y:6.76, answers:['Músculo prócer']},
+      {n:2, x:82.33, y:19.44, answers:['Músculo orbicular del ojo, porción palpebral','porción palpebral del músculo orbicular del ojo','porción palpebral']},
+      {n:3, x:82.18, y:62.7, answers:['Músculo nasal, porción transversa','porción transversa del músculo nasal','porción transversa']},
+      {n:4, x:79.04, y:72.63, answers:['Músculo cigomático mayor']},
+      {n:5, x:55.49, y:95.33, answers:['Músculo depresor del labio inferior']},
+      {n:6, x:16.73, y:85.79, answers:['Músculo orbicular de la boca, porción marginal','porción marginal del músculo orbicular de la boca','porción marginal']},
+      {n:7, x:12.02, y:72.81, answers:['Músculo risorio']},
+      {n:8, x:10.45, y:62.56, answers:['Músculo cigomático menor']},
+      {n:9, x:9.35, y:31.06, answers:['Músculo auricular anterior']},
+      {n:10, x:16.88, y:11.72, answers:['Músculo occipitofrontal','vientre anterior del músculo occipitofrontal','vientre anterior']}
+    ]},
+    { file:'assets/img/muscular/mimica-masticacion-cuello-torax-dorso/2.png', label:'Masticación · vista lateral', points:[
+      {n:1, x:84.85, y:60.4, answers:['Músculo temporal']},
+      {n:2, x:66.95, y:71.68, answers:['Músculo masetero','músculo masetero, porción superficial','porción superficial del músculo masetero']},
+      {n:3, x:44.51, y:87.23, answers:['Músculo buccinador']},
+      {n:4, x:30.7, y:93.37, answers:['Músculo depresor del ángulo de la boca']},
+      {n:5, x:8.41, y:93.5, answers:['Músculo mentoniano']}
+    ]},
+    { file:'assets/img/muscular/mimica-masticacion-cuello-torax-dorso/3.png', label:'Cuello · vista lateral', points:[
+      {n:1, x:20.34, y:30.28, answers:['Músculo masetero']},
+      {n:2, x:16.73, y:37.59, answers:['Músculo estilohioideo']},
+      {n:3, x:26.3, y:43.74, answers:['Músculo esternocleidomastoideo']},
+      {n:4, x:10.29, y:63.47, answers:['Músculo trapecio','porción descendente del músculo trapecio']},
+      {n:5, x:53.61, y:83.86, answers:['Vientre inferior del músculo omohioideo','músculo omohioideo, vientre inferior']},
+      {n:6, x:78.25, y:47.79, answers:['Vientre anterior del músculo digástrico','músculo digástrico, vientre anterior']}
+    ]},
+    { file:'assets/img/muscular/mimica-masticacion-cuello-torax-dorso/4.png', label:'Cuello · vista anterior', points:[
+      {n:1, x:33.99, y:15.82, answers:['Vientre anterior del músculo digástrico','músculo digástrico, vientre anterior','vientre anterior']},
+      {n:2, x:68.37, y:15.43, answers:['Músculo milohioideo']},
+      {n:3, x:80.29, y:37.65, answers:['Músculo tirohioideo']},
+      {n:4, x:81.55, y:48.37, answers:['Músculo esternotiroideo']},
+      {n:5, x:10.76, y:77.12, answers:['Vientre inferior del músculo omohioideo','músculo omohioideo, vientre inferior']},
+      {n:6, x:14.37, y:58.82, answers:['Músculo esternohioideo','Músculo esternocleidohioideo']},
+      {n:7, x:24.26, y:45.23, answers:['Vientre superior del músculo omohioideo','músculo omohioideo, vientre superior']}
+    ]},
+    { file:'assets/img/muscular/mimica-masticacion-cuello-torax-dorso/5.png', label:'Masticación · pterigoideos', points:[
+      {n:1, x:75.11, y:14.35, answers:['Músculo pterigoideo lateral','cabeza inferior del músculo pterigoideo lateral']},
+      {n:2, x:9.98, y:69.79, answers:['Músculo pterigoideo medial','músculo pterigoideo medial, porción profunda','porción profunda del músculo pterigoideo medial']}
+    ]},
+    { file:'assets/img/muscular/mimica-masticacion-cuello-torax-dorso/6.png', label:'Dorso · vista posterior', points:[
+      {n:1, x:64.76, y:14.61, answers:['Músculo esplenio de la cabeza']},
+      {n:2, x:64.76, y:23.49, answers:['Músculo elevador de la escápula']},
+      {n:3, x:80.61, y:32.91, answers:['Músculo romboides mayor']},
+      {n:4, x:72.92, y:65.6, answers:['Músculo serrato posteroinferior']},
+      {n:5, x:21.59, y:62.07, answers:['Músculo dorsal ancho']},
+      {n:6, x:15, y:46.91, answers:['Porción ascendente del músculo trapecio','porción inferior del trapecio']},
+      {n:7, x:28.34, y:23.52, answers:['Músculo trapecio, porción transversa','porción media del trapecio']},
+      {n:8, x:28.66, y:11.12, answers:['Porción descendente del trapecio','porción superior del trapecio']}
+    ]},
+    { file:'assets/img/muscular/mimica-masticacion-cuello-torax-dorso/7.png', label:'Tórax · diafragma', points:[
+      {n:1, x:9.66, y:41.96, answers:['Músculo diafragma']},
+      {n:2, x:32.58, y:20.53, answers:['Foramen de la vena cava']},
+      {n:3, x:51.73, y:14.61, answers:['Centro tendinoso','foliolo anterior del centro tendinoso']},
+      {n:4, x:73.07, y:22.06, answers:['Hiato esofágico']},
+      {n:5, x:85, y:35.65, answers:['Foliolo izquierdo del centro tendinoso','foliolo izquierdo']},
+      {n:6, x:73.07, y:74.11, answers:['Pilar izquierdo del diafragma','diafragma, pilar izquierdo']}
+    ]}
+  ]
+});
+MODULES.MU1.subActivities.push({ id:'img', title:'Imágenes anatómicas', icon:'🖼️', ready:true });
+
 const CATEGORIES = {
   oseo: {
     id:'oseo',
@@ -3194,13 +3261,31 @@ function normLabel(s){
     .replace(/\s+/g,' ')
     .trim();
 }
-function describeAccentDiff(typedLower, ansLower){
-  const wt = typedLower.split(' '), wa = ansLower.split(' ');
-  const parts = [];
-  for(let i=0;i<wa.length;i++){
-    if(wt[i] !== wa[i]) parts.push('"'+wa[i]+'"');
+// "músculo estilohioideo" y "estilohioideo" valen lo mismo: se ignora el
+// "músculo" inicial tanto en lo escrito como en la respuesta.
+function stripMusculo(s){ return String(s==null?'':s).trim().replace(/^m[uú]sculo\s+/i, ''); }
+
+// Señala EN QUÉ palabra está la diferencia entre lo escrito y la respuesta:
+// tilde faltante (misma palabra sin tilde) o error de escritura (otras
+// letras). Devuelve null si no hay diferencia más allá de mayúsculas.
+function describeLabelDiff(typed, ans){
+  const wt = fillCleanWords(typed), wa = fillCleanWords(ans);
+  if(wt.length !== wa.length){
+    return normLabel(typed) === normLabel(ans) ? null : 'Revisa la ortografía: se escribe "' + ans + '".';
   }
-  return parts.length ? ('Recuerda escribir con tilde: ' + parts.join(', ') + '.') : null;
+  const tildes = [], ortho = [];
+  for(let i=0;i<wa.length;i++){
+    if(wt[i] === wa[i]) continue;
+    if(normLabel(wt[i]) === normLabel(wa[i])) tildes.push(wa[i]);
+    else ortho.push({ ok:wa[i], typed:wt[i] });
+  }
+  const msgs = [];
+  if(tildes.length){
+    msgs.push(tildes.length === 1 ? 'Falta la tilde en "' + tildes[0] + '".'
+      : 'Faltan tildes en: ' + tildes.map(function(w){ return '"' + w + '"'; }).join(', ') + '.');
+  }
+  ortho.forEach(function(o){ msgs.push('Revisa la ortografía de "' + o.ok + '" (escribiste "' + o.typed + '").'); });
+  return msgs.length ? msgs.join(' ') : null;
 }
 // Distancia de edición (Levenshtein) simple, para tolerar una letra de
 // más/menos/cambiada (errores de tipeo reales, no solo tildes).
@@ -3220,29 +3305,26 @@ function levenshtein(a, b){
   return dp[n];
 }
 function checkLabelAnswer(typed, answers){
-  const t = normLabel(typed);
+  const st = stripMusculo(typed);
+  const t = normLabel(st);
   if(!t) return null;
   const list = answers || [];
   for(const ans of list){
-    if(normLabel(ans) === t){
-      const typedLower = String(typed).trim().toLowerCase().replace(/\s+/g,' ');
-      const ansLower = String(ans).trim().toLowerCase();
-      if(typedLower === ansLower) return { correct:true, accentNote:null, correctAnswer:ans };
-      return { correct:true, accentNote: describeAccentDiff(typedLower, ansLower), correctAnswer: ans };
+    if(normLabel(stripMusculo(ans)) === t){
+      return { correct:true, accentNote: describeLabelDiff(st, stripMusculo(ans)), correctAnswer: ans };
     }
   }
   // Sin coincidencia exacta (ni ignorando tildes): admite una sola letra de
   // diferencia en respuestas suficientemente largas, para no penalizar un
-  // error de tipeo real. Muestra la ortografía correcta de todas formas.
+  // error de tipeo real. Señala la palabra mal escrita.
   let best = null;
   for(const ans of list){
-    const na = normLabel(ans);
+    const na = normLabel(stripMusculo(ans));
     if(na.length < 5) continue;
-    const dist = levenshtein(t, na);
-    if(dist === 1 && (!best || dist < best.dist)) best = { ans, dist };
+    if(!best && levenshtein(t, na) === 1) best = ans;
   }
   if(best){
-    return { correct:true, accentNote: 'Revisa la ortografía: se escribe "' + best.ans + '".', correctAnswer: best.ans };
+    return { correct:true, accentNote: describeLabelDiff(st, stripMusculo(best)), correctAnswer: best };
   }
   return { correct:false, accentNote:null, correctAnswer: (list && list[0]) || '' };
 }
