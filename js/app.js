@@ -679,9 +679,16 @@ function PQ_MC(q, opts, correct){ return { t:'mc', q:q, opts:opts, correct:corre
 function PQ_TF(q, correct){ return { t:'tf', q:q, correct:correct }; }
 function PQ_FILL(q, blanks, anyOrder){ return { t:'fill', q:q, blanks:blanks, anyOrder:!!anyOrder }; }
 
+// Cada grupo muscular es un módulo del tema (botón), con sus actividades
+// dentro. MU1 = cabeza, cuello y tronco; el resto de grupos musculares
+// (extremidades, etc.) va en otro módulo cuando el profesor entregue el material.
+// Las imágenes de MU1 se guardarán en assets/img/muscular/mimica-masticacion-cuello-torax-dorso/.
 MODULES.MU1 = {
-  id:'MU1', title:'Preguntas de práctica',
-  subtitle:'Músculos de la mímica, de la masticación, del cuello, del tórax y del dorso',
+  id:'MU1', title:'Músculos de la mímica, de la masticación, del cuello, del tórax y del dorso',
+  subtitle:'Selecciona el tipo de actividad', placeholder:true,
+  subActivities:[
+    { id:'mu-practica', title:'Preguntas de práctica', icon:'📝', ready:true }
+  ],
   levels:[
     { id:'mu-practica', type:'practice', title:'Anatomía y casos clínicos',
       questions:[
@@ -2079,20 +2086,7 @@ function moduleCard(mod, num){
     let done = 0, sumPct = 0;
     mod.levels.forEach(l=>{ const p = state.progress[levelKey(mod.id, l.id)]; if(p){ done++; sumPct += pct(p.correct, p.total); } });
     const avg = done ? Math.round(sumPct / done) : 0;
-    // Módulo de un solo nivel "practice": la barra cuenta preguntas respondidas
-    // (leídas del avance parcial), no "niveles", para que se vea el avance real.
-    const pl = (mod.levels.length === 1 && mod.levels[0].type === 'practice') ? mod.levels[0] : null;
-    let pp = null;
-    if(pl){
-      const fin = state.progress[levelKey(mod.id, pl.id)];
-      const snap = state.progress[resumeKey(mod.id, pl.id)];
-      const ansObj = (!fin && snap && snap.type === 'practice' && snap.ans) ? snap.ans : {};
-      const keys = Object.keys(ansObj);
-      const okN = keys.filter(function(k){ return ansObj[k] && ansObj[k].ok; }).length;
-      pp = fin ? { answered: fin.total, total: fin.total, avg: pct(fin.correct, fin.total) }
-               : { answered: keys.length, total: pl.questions.length, avg: keys.length ? Math.round(okN / keys.length * 100) : 0 };
-    }
-    const kind = done >= total ? 'is-done' : (done > 0 || (pp && pp.answered > 0)) ? 'is-progress' : '';
+    const kind = done >= total ? 'is-done' : done > 0 ? 'is-progress' : '';
     const timerT = state.timers[mod.id];
     const timeLabel = timerT && (timerT.elapsedSec > 0 || timerT.status !== 'not_started')
       ? '⏱ ' + formatHMS(currentElapsed(mod.id)) + (timerT.status === 'completed' ? ' · tiempo final' : '') : '';
@@ -2104,9 +2098,7 @@ function moduleCard(mod, num){
     head.appendChild(el('span','mod-title2', esc(mod.title)));
     card.appendChild(head);
     if(mod.subtitle) card.appendChild(el('p','mod-sub', esc(mod.subtitle)));
-    card.appendChild(pp
-      ? progressBar(pp.answered, pp.total, { unit:'preguntas respondidas', avg: pp.avg })
-      : progressBar(done, total, { avg: avg }));
+    card.appendChild(progressBar(done, total, { avg: avg }));
     if(timeLabel) card.appendChild(el('div','mod-meta', timeLabel));
     card.onclick = ()=>{ goToLevel(mod.id, firstIncompleteLevelIdx(mod)); };
     return card;
@@ -2250,6 +2242,21 @@ function resetZone(){
   return zone;
 }
 
+// Avance parcial de un nivel `practice` (respondidas / total y % de aciertos),
+// leído del snapshot de reanudar; null si no es `practice`, ya está completo
+// o todavía no hay respuestas.
+function practiceSnapshot(mod, sub){
+  const level = mod.levels.find(l=> l.id === sub.id);
+  if(!level || level.type !== 'practice') return null;
+  if(state.progress[levelKey(mod.id, level.id)]) return null;
+  const snap = state.progress[resumeKey(mod.id, level.id)];
+  if(!snap || snap.type !== 'practice' || !snap.ans) return null;
+  const keys = Object.keys(snap.ans);
+  if(!keys.length) return null;
+  const okN = keys.filter(function(k){ return snap.ans[k] && snap.ans[k].ok; }).length;
+  return { answered: keys.length, total: level.questions.length, avg: Math.round(okN / keys.length * 100) };
+}
+
 function viewModuleSubmenu(){
   const mod = MODULES[state.currentModule];
   if(mod && mod.placeholder && !mod.levels.length && !_dynamicContentLoaded){
@@ -2342,6 +2349,10 @@ function viewModuleSubmenu(){
       card.appendChild(progressBar(doneCount, totalCount, { unit:'actividades', avg: avg }));
     } else if(sub.ready && doneInfo){
       card.appendChild(el('div','mod-meta','✓ ' + pct(doneInfo.correct, doneInfo.total) + '% en tu último intento'));
+    } else if(sub.ready && practiceSnapshot(mod, sub)){
+      // "Preguntas de práctica" a medias: muestra cuántas lleva respondidas.
+      const ps = practiceSnapshot(mod, sub);
+      card.appendChild(progressBar(ps.answered, ps.total, { unit:'preguntas respondidas', avg: ps.avg }));
     } else if(!sub.ready){
       card.appendChild(el('p','mod-sub','Todavía no tiene contenido cargado.'));
     }
