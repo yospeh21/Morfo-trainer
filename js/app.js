@@ -669,6 +669,113 @@ MODULES.I.levels = [
   }
 ];
 
+// Sistema muscular — banco de "Preguntas de práctica" (músculos de la mímica,
+// masticación, cuello, tórax y dorso). Contenido entregado por el profesor:
+// anatomía y casos clínicos van JUNTOS en un solo nivel de tipo `practice`,
+// con selección múltiple (t:'mc'), verdadero/falso (t:'tf') y completar
+// (t:'fill'). La numeración que ve el estudiante es la del arreglo (1..N),
+// no la del Word (que salta números).
+function PQ_MC(q, opts, correct){ return { t:'mc', q:q, opts:opts, correct:correct }; }
+function PQ_TF(q, correct){ return { t:'tf', q:q, correct:correct }; }
+function PQ_FILL(q, blanks, anyOrder){ return { t:'fill', q:q, blanks:blanks, anyOrder:!!anyOrder }; }
+
+MODULES.MU1 = {
+  id:'MU1', title:'Preguntas de práctica',
+  subtitle:'Músculos de la mímica, de la masticación, del cuello, del tórax y del dorso',
+  levels:[
+    { id:'mu-practica', type:'practice', title:'Anatomía y casos clínicos',
+      questions:[
+        // ---- Selección múltiple: anatomía ----
+        PQ_MC('¿Qué nervio inerva todos los músculos de la mímica?', ['Nervio mandibular (V3)','Nervio facial (NC VII)','Nervio accesorio (NC XI)','Nervio hipogloso (NC XII)'], 1),
+        PQ_MC('El vientre frontal del occipitofrontal se inserta en:', ['La línea nucal superior','La piel de la ceja','La galea aponeurótica','La fascia temporal'], 2),
+        PQ_MC('¿Qué músculo cierra los párpados y favorece el drenaje lagrimal hacia el saco lagrimal y la nariz?', ['Corrugador superciliar','Prócer','Orbicular del ojo','Depresor superciliar'], 2),
+        PQ_MC('Músculo que se origina en el rafe pterigomandibular, forma parte de la mejilla y está perforado por el conducto parotídeo:', ['Masetero','Buccinador','Risorio','Cigomático mayor'], 1),
+        PQ_MC('Se origina en el hueso cigomático, lateral al cigomático menor, y eleva el ángulo de la boca:', ['Cigomático menor','Elevador del labio superior','Elevador del ángulo de la boca','Cigomático mayor'], 3),
+        PQ_MC('Sobre las porciones del músculo nasal, es correcto:', ['La porción transversa dilata el orificio nasal y la alar lo contrae','La porción transversa contrae el orificio nasal y la alar lo dilata, llevando el ala de la nariz hacia lateral','Ambas porciones se insertan en el cartílago alar','Ambas porciones están inervadas por el V3'], 1),
+        PQ_MC('Los cuatro músculos de la masticación están inervados por:', ['El nervio facial','El nervio maxilar (V2)','El nervio mandibular (V3)','El nervio oftálmico (V1)'], 2),
+        PQ_MC('¿Cuál es el principal músculo masticador, cuya contracción cierra la boca?', ['Temporal','Masetero','Pterigoideo lateral','Buccinador'], 1),
+        PQ_MC('El pterigoideo medial se inserta en:', ['La tuberosidad pterigoidea, en la cara lateral del ángulo de la mandíbula','La tuberosidad pterigoidea, en la cara medial del ángulo de la mandíbula','La tuberosidad masetérica, en la cara lateral del ángulo de la mandíbula','El sistema discocapsular de la ATM'], 1),
+        PQ_MC('La cabeza inferior del pterigoideo lateral se origina en:', ['La cara inferior del ala mayor del esfenoides','La fosa pterigoidea y la tuberosidad del maxilar','La lámina lateral de la apófisis pterigoides','La línea temporal inferior'], 2),
+        PQ_MC('Para llevar el mentón hacia la derecha (laterotrusión o diducción), el músculo principal es el:', ['Pterigoideo lateral derecho','Masetero derecho','Pterigoideo lateral izquierdo','Pterigoideo medial izquierdo'], 2),
+        PQ_MC('El esternocleidomastoideo se origina en:', ['El manubrio del esternón y la cara superior del tercio medio de la clavícula','La apófisis mastoides y la línea nucal superior','La cara posterior del manubrio y el extremo medial de la clavícula','El manubrio del esternón y la cara superior del tercio lateral de la clavícula'], 0),
+        PQ_MC('El esternocleidomastoideo está inervado por:', ['El ramo cervical del nervio facial','El ramo externo del nervio accesorio y ramos de C2–C3','El asa cervical (C2–C3)','Los ramos anteriores de C4 a C6'], 1),
+        PQ_MC('El platisma está inervado por:', ['El ramo externo del nervio accesorio','El asa cervical','El nervio mandibular','El ramo cervical del nervio facial'], 3),
+        PQ_MC('¿Qué escaleno tiene su inserción en el borde superior de la segunda costilla y la eleva durante la inspiración forzada?', ['Anterior','Medio','Posterior','Mínimo'], 2),
+        PQ_MC('¿Cuál de los siguientes NO es un músculo suprahioideo?', ['Digástrico','Estilohioideo','Omohioideo','Genihioideo'], 2),
+        PQ_MC('El vientre anterior del digástrico está inervado por:', ['El nervio digástrico','El nervio milohioideo','El asa cervical','El ramo anterior de C1 a través del hipogloso'], 1),
+        PQ_MC('El genihioideo está inervado por:', ['El nervio milohioideo','El ramo estilohioideo del nervio facial','El ramo anterior de C1 a través del nervio hipogloso','El asa cervical (C2–C3)'], 2),
+        PQ_MC('El omohioideo se origina en:', ['La cara posterior del manubrio del esternón','El borde superior de la escápula','La apófisis estiloides','La línea oblicua del cartílago tiroides'], 1),
+        PQ_MC('Músculo que se origina en la apófisis transversa del atlas y se inserta en la apófisis yugular del occipital:', ['Recto anterior de la cabeza','Recto lateral de la cabeza','Largo de la cabeza','Escaleno mínimo'], 1),
+        PQ_MC('El diafragma está inervado por:', ['Los nervios intercostales','El nervio frénico (C3–C5)','El nervio vago','El nervio accesorio'], 1),
+        PQ_MC('Los intercostales externos:', ['Descienden las costillas durante la espiración','Ascienden las costillas, tensan los espacios intercostales y estabilizan la pared torácica durante la inspiración','Ascienden las costillas, tensan los espacios intercostales y estabilizan la pared torácica durante la espiración','Descienden las costillas, tensan los espacios intercostales y estabilizan la pared torácica durante la inspiración'], 1),
+        PQ_MC('Sobre el músculo intercostal interno es correcto:', ['Todo el músculo es inspirador','Su porción intercondral eleva las costillas como accesorio de la inspiración y el resto actúa en la espiración forzada','Se extiende desde la articulación costotransversa hasta la articulación costocondral','Está inervado por el nervio frénico'], 1),
+        PQ_MC('El hiato esofágico da paso a:', ['La vena cava inferior y los ramos frenicoabdominales del nervio frénico derecho','La arteria aorta y el conducto torácico','El esófago y los nervios vagos','El tronco simpático'], 2),
+        PQ_MC('Músculo que se origina en la cara interna del cuerpo del esternón y de la apófisis xifoides y se inserta en la cara interna de los cartílagos costales 3.º a 6.º:', ['Subcostales','Transverso del tórax','Intercostal íntimo','Esternal'], 1),
+        PQ_MC('El trapecio está inervado por:', ['El nervio toracodorsal','El nervio dorsal de la escápula','El nervio accesorio','Los ramos posteriores de los nervios espinales'], 2),
+        // ---- Selección múltiple: casos clínicos ----
+        PQ_MC('Un paciente refiere que no logra cerrar por completo el ojo derecho, ni siquiera al dormir. ¿Qué músculo no está cumpliendo su función?', ['Corrugador superciliar','Orbicular del ojo','Prócer','Depresor superciliar'], 1),
+        PQ_MC('Una paciente presenta debilidad en todos los músculos de la mitad derecha de la cara: no arruga la frente, no cierra bien el ojo y la comisura labial está caída. ¿Qué nervio inerva todos estos músculos?', ['Nervio mandibular (V3)','Nervio accesorio','Nervio facial (NC VII)','Nervio frénico'], 2),
+        PQ_MC('Al pedirle a un paciente que mire hacia arriba, no se le forman arrugas horizontales en la frente. ¿Qué músculo está afectado?', ['Vientre occipital del occipitofrontal','Temporoparietal','Corrugador superciliar','Vientre frontal del occipitofrontal'], 3),
+        PQ_MC('Un paciente nota que, al comer, los alimentos se le acumulan entre la mejilla y la encía. ¿Qué músculo está afectado?', ['Masetero','Risorio','Buccinador','Pterigoideo medial'], 2),
+        PQ_MC('Una paciente no puede silbar ni mantener los labios cerrados al soplar una vela. ¿Qué músculo funciona como el verdadero esfínter de la boca?', ['Orbicular de la boca','Buccinador','Mentoniano','Depresor del labio inferior'], 0),
+        PQ_MC('Al sonreír, a un paciente no se le eleva la comisura labial izquierda. ¿Qué músculo, que se origina en el hueso cigomático, está afectado?', ['Risorio','Cigomático mayor','Depresor del ángulo de la boca','Mentoniano'], 1),
+        PQ_MC('Una estudiante consulta porque, cuando se concentra, se le forman arrugas verticales entre las cejas. ¿Qué músculo las produce?', ['Corrugador superciliar','Vientre frontal','Prócer','Orbicular del ojo'], 0),
+        PQ_MC('Un paciente tiene una herida profunda en la mejilla por la que sale saliva, porque se lesionó el conducto parotídeo. ¿Qué músculo de la mejilla atraviesa normalmente este conducto?', ['Masetero','Cigomático mayor','Risorio','Buccinador'], 3),
+        PQ_MC('Después de correr, un niño respira agitado y se le dilatan las narinas en cada inspiración. ¿Qué porción muscular dilata el orificio nasal?', ['Porción transversa del nasal','Porción alar del nasal','Depresor del tabique nasal','Prócer'], 1),
+        PQ_MC('Un niño hace "puchero" antes de llorar y se le arruga y eleva la piel del mentón. ¿Qué músculo produce este gesto?', ['Depresor del labio inferior','Transverso del mentón','Mentoniano','Platisma'], 2),
+        PQ_MC('Una estudiante que rechina los dientes de noche (bruxismo) amanece con dolor en la región del ángulo de la mandíbula, donde palpa un músculo duro al apretar los dientes. ¿Qué músculo es?', ['Temporal','Masetero','Pterigoideo lateral','Buccinador'], 1),
+        PQ_MC('Un paciente refiere dolor cada vez que mastica alimentos duros. ¿Qué músculo, que se origina en la línea temporal inferior y en la fascia temporal, es el más probablemente implicado?', ['Masetero','Pterigoideo medial','Temporal','Auricular anterior'], 2),
+        PQ_MC('Un paciente cierra la boca con normalidad, pero no logra llevar la mandíbula hacia adelante (protrusión). ¿Qué músculo es el principal responsable de ese movimiento?', ['Temporal','Pterigoideo lateral','Digástrico','Pterigoideo medial'], 1),
+        PQ_MC('Un paciente no puede desplazar el mentón hacia la izquierda. ¿Qué músculo realiza ese movimiento?', ['Pterigoideo lateral izquierdo','Masetero izquierdo','Pterigoideo lateral derecho','Temporal derecho'], 2),
+        PQ_MC('Un paciente tiene debilidad en el temporal, el masetero y los dos pterigoideos. ¿Qué nervio inerva a estos cuatro músculos?', ['Nervio facial','Nervio mandibular (V3)','Nervio accesorio','Nervio hipogloso'], 1),
+        PQ_MC('Un compañero afirma: "Este paciente no puede llevar la mandíbula hacia atrás porque tiene débiles el digástrico y el milohioideo". ¿Cuál es la corrección?', ['Tiene razón: esos músculos realizan la retrusión','La retrusión la realiza el pterigoideo lateral','La retrusión la realizan las fibras posteriores del temporal y las profundas del masetero; el digástrico y el milohioideo descienden la mandíbula','La retrusión la realiza el buccinador'], 2),
+        PQ_MC('Al explorar por dentro de la boca, detrás de los molares, se palpa un músculo ubicado por dentro (medial) de la rama de la mandíbula, que colabora con el temporal y el masetero para cerrar la boca. ¿Cuál es?', ['Pterigoideo medial','Pterigoideo lateral','Buccinador','Milohioideo'], 0),
+        PQ_MC('Un lactante mantiene la cabeza inclinada hacia la izquierda y el mentón rotado hacia la derecha. ¿Qué músculo está acortado?', ['Esternocleidomastoideo derecho','Trapecio izquierdo','Escaleno anterior derecho','Esternocleidomastoideo izquierdo'], 3),
+        PQ_MC('Al girar la cabeza, se marca en el cuello un relieve que va desde el esternón y la clavícula hasta detrás de la oreja. ¿Qué músculo es y dónde se inserta por arriba?', ['Esternocleidomastoideo; apófisis mastoides y línea nucal superior','Esternohioideo; cuerpo del hioides','Platisma; borde inferior de la mandíbula','Trapecio; clavícula'], 0),
+        PQ_MC('Una persona con dificultad para respirar usa músculos del cuello que se insertan en la primera costilla y la elevan. ¿Cuáles son?', ['Esternohioideo y esternotiroideo','Escaleno posterior y escaleno anterior','Escaleno anterior y escaleno medio','Omohioideo y platisma'], 2),
+        PQ_MC('Al tragar, se siente con los dedos que el hioides sube. ¿Qué grupo de músculos lo eleva?', ['Infrahioideos','Suprahioideos','Prevertebrales','Escalenos'], 1),
+        PQ_MC('Después de tragar, el hioides vuelve a su posición. ¿Qué músculo lo desciende después de su elevación en la deglución?', ['Milohioideo','Genihioideo','Estilohioideo','Esternohioideo'], 3),
+        PQ_MC('Al empujar la lengua contra el paladar para tragar, se contrae el músculo que forma el piso de la boca. ¿Cuál es?', ['Milohioideo','Genihioideo','Esternohioideo','Buccinador'], 0),
+        PQ_MC('Si se abre la boca contra resistencia, se palpa bajo el mentón un músculo que ayuda a descender la mandíbula y que tiene un vientre anterior y otro posterior. ¿Cuál es?', ['Omohioideo','Digástrico','Estilohioideo','Masetero'], 1),
+        PQ_MC('En una disección se observa un músculo delgado con dos vientres unidos por un tendón intermedio, que cruza el cuello desde el borde superior de la escápula hasta el hioides. ¿Cuál es?', ['Digástrico','Esternotiroideo','Omohioideo','Escaleno medio'], 2),
+        PQ_MC('Al hacer un esfuerzo con los dientes apretados y las comisuras hacia abajo, se marcan bandas en la piel del cuello. ¿Qué músculo es?', ['Esternocleidomastoideo','Platisma','Esternohioideo','Trapecio'], 1),
+        PQ_MC('En una persona sana que respira en reposo, ¿cuál es el principal músculo de la inspiración?', ['Esternocleidomastoideo','Intercostal interno','Diafragma','Transverso del tórax'], 2),
+        PQ_MC('Si se lesiona el nervio frénico, ¿qué músculo deja de contraerse?', ['Intercostal externo','Diafragma','Serrato anterior','Escaleno anterior'], 1),
+        PQ_MC('Un estudiante sopla con fuerza para inflar un globo (espiración forzada). ¿Qué músculos participan?', ['Diafragma e intercostales externos','Esternocleidomastoideo y escalenos','Ninguno, porque la espiración siempre es pasiva','Músculos abdominales, intercostales íntimos y serrato anterior (fibras medias)'], 3),
+        PQ_MC('Un paciente que respira con mucho esfuerzo muestra contracción del esternocleidomastoideo y de los escalenos en cada inspiración. ¿Cómo se clasifican estos músculos?', ['Músculos de la espiración forzada','Músculos accesorios de la inspiración forzada','Músculos de la inspiración normal','Músculos de la masticación'], 1),
+        PQ_MC('A un adulto mayor le diagnostican que parte del estómago subió al tórax a través del diafragma (hernia hiatal). ¿Por qué orificio pasa normalmente el esófago?', ['Hiato aórtico','Foramen de la vena cava','Hiato esofágico','Triángulo lumbocostal'], 2),
+        PQ_MC('Para no lesionar la vena, la arteria y el nervio intercostales al puncionar un espacio intercostal, se introduce la aguja por el borde superior de la costilla inferior. ¿Por qué?', ['Porque esos vasos y el nervio discurren por el surco costal, en el borde inferior de la costilla superior','Porque en el borde superior no hay músculos intercostales','Porque allí pasa el nervio frénico','Porque el intercostal externo solo existe en el borde inferior'], 0),
+        PQ_MC('Al cargar una mochila pesada, una persona eleva y encoge los hombros. ¿Qué músculo, inervado por el nervio accesorio, realiza principalmente esta acción?', ['Dorsal ancho','Romboides mayor','Serrato posterior superior','Trapecio (porción descendente)'], 3),
+        PQ_MC('Para corregir su postura, un estudiante junta las escápulas hacia la columna. Además del trapecio, ¿qué músculos llevan la escápula hacia medial?', ['Romboides mayor y menor','Dorsal ancho y redondo mayor','Serratos posteriores','Esplenios'], 0),
+        PQ_MC('Un paciente que usa muletas levanta el tronco apoyándose en los brazos, igual que al trepar una cuerda. ¿Qué músculo del dorso es el principal responsable?', ['Trapecio','Elevador de la escápula','Dorsal ancho','Romboides menor'], 2),
+        PQ_MC('Para girar la cabeza hacia la derecha trabajan juntos un músculo del cuello y uno del dorso. ¿Qué par es correcto?', ['ECM derecho y esplenio izquierdo','ECM izquierdo y esplenio de la cabeza derecho','Ambos ECM','Trapecio derecho y romboides izquierdo'], 1),
+        PQ_MC('Un paciente con dolor lumbar tiene contracturada la masa muscular que ocupa el surco entre las apófisis espinosas y los ángulos de las costillas. ¿Qué músculo es?', ['Dorsal ancho','Erector de la columna','Serrato posterior inferior','Trapecio'], 1),
+        // ---- Verdadero o falso ----
+        PQ_TF('El temporoparietal forma parte del epicráneo y se inserta en la galea aponeurótica.', true),
+        PQ_TF('Los infrahioideos superficiales son el esternotiroideo y el tirohioideo.', false),
+        PQ_TF('El dorsal ancho se inserta en el fondo del surco intertubercular del húmero y está inervado por el nervio toracodorsal.', true),
+        PQ_TF('Si una persona no puede cerrar los párpados, el músculo afectado es el corrugador superciliar.', false),
+        PQ_TF('Aunque ayuda al comer, el buccinador es un músculo de la mímica.', true),
+        PQ_TF('Para llevar el mentón hacia la derecha se contrae el pterigoideo lateral derecho.', false),
+        PQ_TF('Los músculos que se marcan en el cuello al respirar con esfuerzo, como el ECM y los escalenos, son accesorios de la inspiración.', true),
+        PQ_TF('En una persona sana en reposo, espirar requiere contraer los músculos abdominales.', false),
+        PQ_TF('Cuando el diafragma se contrae y desciende, aumenta el diámetro vertical del tórax.', true),
+        PQ_TF('Las arrugas verticales del entrecejo las produce el vientre frontal del occipitofrontal.', false),
+        // ---- Completar (sin distinguir mayúsculas ni tildes; avisa si falta una tilde) ----
+        PQ_FILL('El músculo ______ tiene dos vientres unidos por un tendón intermedio y va de la escápula al hioides.', [['omohioideo']]),
+        PQ_FILL('El trapecio tiene tres porciones: ______, ______ y ______.', [['descendente'],['transversa'],['ascendente']], true),
+        PQ_FILL('El músculo que forma el piso de la boca es el ______.', [['milohioideo']]),
+        PQ_FILL('Al tragar, el hioides es elevado por los músculos ______.', [['suprahioideos']]),
+        PQ_FILL('El nervio que inerva los cuatro músculos de la masticación es el nervio ______.', [['mandibular']]),
+        PQ_FILL('El principal músculo de la inspiración es el ______.', [['diafragma']]),
+        PQ_FILL('El orificio del diafragma por donde pasa el esófago es el hiato ______.', [['esofágico']]),
+        PQ_FILL('El músculo del dorso que usamos para levantar el tronco al trepar es el ______.', [['dorsal ancho']]),
+        PQ_FILL('La contracción del ECM izquierdo rota el mentón hacia la ______.', [['derecha']])
+      ]
+    }
+  ]
+};
+
 const CATEGORIES = {
   oseo: {
     id:'oseo',
@@ -682,7 +789,7 @@ const CATEGORIES = {
     emoji:'💪',
     title:'Estructuras y funciones del sistema muscular',
     subtitle:'Tipos de músculo, componentes del músculo esquelético, grupos musculares y acciones',
-    moduleIds:[]
+    moduleIds:['MU1']
   },
   nervioso: {
     id:'nervioso',
@@ -1525,7 +1632,7 @@ function shuffle(arr){
 }
 function pct(correct,total){ return total? Math.round((correct/total)*100) : 0; }
 
-const MODULE_TIMER_VIEWS = ['sort','match','mc','completar','imgLabel','mcMulti','sequence','levelDone'];
+const MODULE_TIMER_VIEWS = ['sort','match','mc','completar','imgLabel','mcMulti','sequence','practice','levelDone'];
 
 function render(){
   if(_activeTimerModule && !(MODULE_TIMER_VIEWS.includes(state.view) && state.currentModule===_activeTimerModule)){
@@ -1545,6 +1652,7 @@ function render(){
     imgLabel: viewImgLabel,
     mcMulti: viewMcMulti,
     sequence: viewSequence,
+    practice: viewPractice,
     levelDone: viewLevelDone,
     boss: viewBoss,
     bossDone: viewBossDone,
@@ -1651,7 +1759,7 @@ function navRow(){
   const nav = el('nav','app-nav');
   nav.setAttribute('aria-label','Navegación');
   const v = state.view;
-  const inTheme = ['menu','moduleSubmenu','comingSoon','sort','match','mc','completar','imgLabel','mcMulti','sequence','levelDone','boss','bossDone'].indexOf(v) !== -1;
+  const inTheme = ['menu','moduleSubmenu','comingSoon','sort','match','mc','completar','imgLabel','mcMulti','sequence','practice','levelDone','boss','bossDone'].indexOf(v) !== -1;
   const inDash = ['dashboard','monitorLogin','dashboardActivity'].indexOf(v) !== -1;
 
   function link(label, active, onClick){
@@ -1971,7 +2079,20 @@ function moduleCard(mod, num){
     let done = 0, sumPct = 0;
     mod.levels.forEach(l=>{ const p = state.progress[levelKey(mod.id, l.id)]; if(p){ done++; sumPct += pct(p.correct, p.total); } });
     const avg = done ? Math.round(sumPct / done) : 0;
-    const kind = done >= total ? 'is-done' : done > 0 ? 'is-progress' : '';
+    // Módulo de un solo nivel "practice": la barra cuenta preguntas respondidas
+    // (leídas del avance parcial), no "niveles", para que se vea el avance real.
+    const pl = (mod.levels.length === 1 && mod.levels[0].type === 'practice') ? mod.levels[0] : null;
+    let pp = null;
+    if(pl){
+      const fin = state.progress[levelKey(mod.id, pl.id)];
+      const snap = state.progress[resumeKey(mod.id, pl.id)];
+      const ansObj = (!fin && snap && snap.type === 'practice' && snap.ans) ? snap.ans : {};
+      const keys = Object.keys(ansObj);
+      const okN = keys.filter(function(k){ return ansObj[k] && ansObj[k].ok; }).length;
+      pp = fin ? { answered: fin.total, total: fin.total, avg: pct(fin.correct, fin.total) }
+               : { answered: keys.length, total: pl.questions.length, avg: keys.length ? Math.round(okN / keys.length * 100) : 0 };
+    }
+    const kind = done >= total ? 'is-done' : (done > 0 || (pp && pp.answered > 0)) ? 'is-progress' : '';
     const timerT = state.timers[mod.id];
     const timeLabel = timerT && (timerT.elapsedSec > 0 || timerT.status !== 'not_started')
       ? '⏱ ' + formatHMS(currentElapsed(mod.id)) + (timerT.status === 'completed' ? ' · tiempo final' : '') : '';
@@ -1983,7 +2104,9 @@ function moduleCard(mod, num){
     head.appendChild(el('span','mod-title2', esc(mod.title)));
     card.appendChild(head);
     if(mod.subtitle) card.appendChild(el('p','mod-sub', esc(mod.subtitle)));
-    card.appendChild(progressBar(done, total, { avg: avg }));
+    card.appendChild(pp
+      ? progressBar(pp.answered, pp.total, { unit:'preguntas respondidas', avg: pp.avg })
+      : progressBar(done, total, { avg: avg }));
     if(timeLabel) card.appendChild(el('div','mod-meta', timeLabel));
     card.onclick = ()=>{ goToLevel(mod.id, firstIncompleteLevelIdx(mod)); };
     return card;
@@ -2359,7 +2482,8 @@ const ACTIVITY_TYPE_LABEL = {
   hotspot:'Señala la estructura',
   imgLabel:'Señalar estructuras',
   mcMulti:'Varias respuestas correctas',
-  sequence:'Ordenar en secuencia'
+  sequence:'Ordenar en secuencia',
+  practice:'Preguntas de práctica'
 };
 
 function beginActivity(opts){
@@ -3224,6 +3348,289 @@ function viewFill(){
 }
 
 /* ============================================================
+   VISTA: PREGUNTAS DE PRÁCTICA (practice)
+   Un solo nivel con todas las preguntas juntas (selección múltiple,
+   verdadero/falso y completar). El estudiante puede saltar a cualquier
+   pregunta con el panel numerado, ir "Anterior"/"Siguiente", y cada
+   respuesta comprobada queda fija (sin reintento). El puntaje final es
+   correctas / total y se guarda al responder todas. El avance se
+   reanuda igual que en las demás actividades por preguntas.
+   ============================================================ */
+const PQ_TYPE_LABEL = { mc:'Selección múltiple', tf:'Verdadero o falso', fill:'Completar' };
+
+// Orden barajado reproducible (mismo seed → mismo orden), para no tener que
+// guardar la permutación de opciones de cada pregunta en el perfil.
+function seededOrder(n, seed){
+  let a = (seed|0) >>> 0;
+  function rnd(){
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+  const arr = [];
+  for(let i=0;i<n;i++) arr.push(i);
+  for(let i=n-1;i>0;i--){
+    const j = Math.floor(rnd()*(i+1));
+    const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+  }
+  return arr;
+}
+
+function fillCleanWords(s){
+  return String(s==null?'':s).toLowerCase().replace(/[^a-z0-9à-ÿ\s]/g,' ').replace(/\s+/g,' ').trim().split(' ');
+}
+// ¿Coincide lo escrito con alguna respuesta aceptada? Ignora mayúsculas,
+// tildes y puntuación; devuelve además las palabras que llevan tilde y el
+// estudiante escribió sin ella.
+function matchBlank(typed, accepted){
+  const t = normLabel(typed);
+  if(!t) return { ok:false };
+  for(let i=0;i<accepted.length;i++){
+    if(normLabel(accepted[i]) === t){
+      const tw = fillCleanWords(typed), aw = fillCleanWords(accepted[i]);
+      const accents = [];
+      for(let k=0;k<aw.length;k++){ if(tw[k] !== aw[k]) accents.push(aw[k]); }
+      return { ok:true, ans:accepted[i], accents:accents };
+    }
+  }
+  return { ok:false };
+}
+// Califica una pregunta de completar. Si q.anyOrder, cada texto escrito se
+// asigna al primer hueco libre que coincida (p. ej. "descendente,
+// transversa y ascendente" valen en cualquier orden).
+function gradeFill(q, typed){
+  const n = q.blanks.length;
+  const oks = [], accents = [];
+  const used = {};
+  for(let i=0;i<n;i++){
+    let m = { ok:false };
+    if(q.anyOrder){
+      for(let b=0;b<n;b++){
+        if(used[b]) continue;
+        const r = matchBlank(typed[i], q.blanks[b]);
+        if(r.ok){ used[b] = true; m = r; break; }
+      }
+    } else {
+      m = matchBlank(typed[i], q.blanks[i]);
+    }
+    oks.push(m.ok);
+    if(m.ok) (m.accents||[]).forEach(function(w){ if(accents.indexOf(w) === -1) accents.push(w); });
+  }
+  return { ok: oks.every(Boolean), oks:oks, accents:accents };
+}
+
+function viewPractice(){
+  const mod = MODULES[state.currentModule];
+  const level = mod.levels[state.currentLevelIdx];
+  const idx = state.currentLevelIdx;
+  const qs = level.questions;
+  const total = qs.length;
+
+  if(!state._levelRuntime){
+    state._levelRuntime = loadResume(mod.id, level.id, 'practice', level) || {
+      n: total, cur:0, ans:{}, seed: Math.floor(Math.random()*1e9)
+    };
+  }
+  const rt = state._levelRuntime;
+  if(!rt.pending) rt.pending = {};
+  if(!rt.draft) rt.draft = {};
+  const cur = Math.min(Math.max(0, rt.cur|0), total-1);
+  rt.cur = cur;
+  const q = qs[cur];
+  const rec = rt.ans[cur] || null;
+  const answeredCount = Object.keys(rt.ans).length;
+  const correctCount = Object.keys(rt.ans).filter(function(k){ return rt.ans[k].ok; }).length;
+  const allAnswered = answeredCount >= total;
+
+  const A = beginActivity({ mod:mod, level:level, idx:idx,
+    progress:{ label:'Pregunta '+(cur+1)+' de '+total+' · '+answeredCount+' respondidas',
+               frac: answeredCount / total } });
+  const card = A.content;
+
+  // ---- panel numerado para saltar entre preguntas ----
+  const navToggle = el('button','pq-nav-toggle', (rt.navOpen ? '▾' : '▸') + ' Ver todas las preguntas');
+  navToggle.type = 'button';
+  navToggle.setAttribute('aria-expanded', rt.navOpen ? 'true' : 'false');
+  navToggle.onclick = ()=>{ rt.navOpen = !rt.navOpen; render(); };
+  card.appendChild(navToggle);
+
+  if(rt.navOpen){
+    const grid = el('div','pq-grid');
+    let lastType = null;
+    qs.forEach(function(qq, i){
+      if(qq.t !== lastType){
+        lastType = qq.t;
+        grid.appendChild(el('div','pq-group-label', esc(PQ_TYPE_LABEL[qq.t] || qq.t)));
+      }
+      const r = rt.ans[i];
+      const cls = 'pq-chip' + (i===cur ? ' is-current' : '') + (r ? (r.ok ? ' is-ok' : ' is-bad') : '');
+      const b = el('button', cls, String(i+1));
+      b.type = 'button';
+      b.setAttribute('aria-label', 'Pregunta '+(i+1)+(r ? (r.ok ? ', correcta' : ', incorrecta') : ', sin responder'));
+      if(i===cur) b.setAttribute('aria-current','true');
+      b.onclick = ()=>{ rt.cur = i; rt.navOpen = false; render(); };
+      grid.appendChild(b);
+    });
+    card.appendChild(grid);
+    card.appendChild(el('p','pq-legend','Verde: correcta · Rojo: incorrecta · Gris: sin responder'));
+  }
+
+  // ---- enunciado ----
+  card.appendChild(el('div','pq-type', esc(PQ_TYPE_LABEL[q.t] || '')));
+  const answered = !!rec;
+  let canCheck = false;
+  let checkFn = null;
+  let fillInputs = [];
+
+  if(q.t === 'fill'){
+    const parts = String(q.q).split(/_{2,}/);
+    const prompt = el('div','act-prompt');
+    const typedVals = answered ? rec.v : (rt.draft[cur] || []);
+    const nBlanks = q.blanks.length;
+    function fitInline(inp){ inp.size = Math.max(11, (inp.value||'').length + 2); }
+    function refreshCanCheck(){ mainBtn.disabled = !fillInputs.some(function(x){ return x.value.trim(); }); }
+    parts.forEach(function(txt, i){
+      if(txt) prompt.appendChild(document.createTextNode(txt));
+      if(i < parts.length - 1){
+        const bi = fillInputs.length;
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.className = 'fillinline' + (answered ? (rec.oks && rec.oks[bi] ? ' ok' : ' bad') : '');
+        inp.value = typedVals[bi] || '';
+        inp.disabled = answered;
+        inp.autocomplete = 'off';
+        inp.setAttribute('aria-label', 'Respuesta '+(bi+1));
+        fitInline(inp);
+        if(!answered){
+          inp.addEventListener('input', function(){
+            rt.draft[cur] = fillInputs.map(function(x){ return x.value; });
+            fitInline(inp);
+            refreshCanCheck();
+          });
+          inp.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); if(!mainBtn.disabled) mainBtn.click(); } });
+        }
+        fillInputs.push(inp);
+        prompt.appendChild(inp);
+      }
+    });
+    card.appendChild(prompt);
+    canCheck = true;
+    checkFn = function(){
+      const vals = fillInputs.map(function(x){ return x.value; });
+      if(!vals.join('').trim()) return;
+      const g = gradeFill(q, vals);
+      rt.ans[cur] = { ok:g.ok, v:vals, oks:g.oks, ac:g.accents };
+      delete rt.draft[cur];
+    };
+  } else {
+    card.appendChild(el('p','act-prompt', esc(q.q)));
+    let optList, correctIdx, isTF = (q.t === 'tf');
+    if(isTF){ optList = ['Verdadero','Falso']; correctIdx = q.correct ? 0 : 1; }
+    else { optList = q.opts; correctIdx = q.correct; }
+    const order = isTF ? [0,1] : seededOrder(optList.length, rt.seed + cur*9973);
+    const optsWrap = el('div','act-options '+(isTF ? 'tf' : 'cols-2'));
+    order.forEach(function(origIdx, displayIdx){
+      const btn = el('button','opt2');
+      btn.type = 'button';
+      btn.innerHTML = (isTF ? '' : '<span class="k">'+(OPTION_LETTERS[displayIdx]||(displayIdx+1))+'</span>')
+        + '<span class="t">'+esc(optList[origIdx])+'</span>';
+      if(answered){
+        btn.disabled = true;
+        if(origIdx === correctIdx) btn.classList.add('is-correct');
+        else if(origIdx === rec.s) btn.classList.add('is-wrong');
+      } else {
+        if(rt.pending[cur] === origIdx){ btn.classList.add('is-selected'); btn.setAttribute('aria-pressed','true'); }
+        btn.onclick = function(){ rt.pending[cur] = origIdx; render(); };
+      }
+      optsWrap.appendChild(btn);
+    });
+    card.appendChild(optsWrap);
+    canCheck = (rt.pending[cur] !== undefined);
+    checkFn = function(){
+      const s = rt.pending[cur];
+      if(s === undefined) return;
+      rt.ans[cur] = { ok: s === correctIdx, s: s };
+      delete rt.pending[cur];
+    };
+  }
+
+  appendDoubtControl(A, { mod:mod, level:level, origQIdx:cur, qText:q.q });
+
+  // ---- retroalimentación de una pregunta ya respondida ----
+  if(answered){
+    if(q.t === 'fill'){
+      let body = '';
+      if(rec.ok){
+        if(rec.ac && rec.ac.length){
+          body = (rec.ac.length === 1 ? 'Esta palabra lleva tilde: ' : 'Estas palabras llevan tilde: ')
+            + rec.ac.map(function(w){ return '<b>'+esc(w)+'</b>'; }).join(', ') + '.';
+        }
+        A.feedback({ ok:true, title:'¡Correcto!', body: body });
+      } else {
+        const answersTxt = q.blanks.map(function(b){ return b[0]; });
+        body = (answersTxt.length > 1 ? 'Las respuestas son ' : 'La respuesta es ')
+          + answersTxt.map(function(w){ return '<b>'+esc(w)+'</b>'; }).join(', ')
+          + (q.anyOrder && answersTxt.length > 1 ? ' <span style="opacity:.75">(en cualquier orden)</span>' : '') + '.';
+        A.feedback({ ok:false, body: body });
+      }
+    } else {
+      const okTxt = q.t === 'tf' ? (q.correct ? 'Verdadero' : 'Falso') : q.opts[q.correct];
+      A.feedback({ ok: rec.ok, body: rec.ok ? 'Respuesta correcta.' : 'La respuesta correcta es <b>'+esc(okTxt)+'</b>.' });
+    }
+  }
+
+  // ---- acciones ----
+  const mainBtn = el('button','act-btn','');
+  mainBtn.type = 'button';
+  if(!answered){
+    mainBtn.textContent = 'Comprobar respuesta →';
+    mainBtn.disabled = !canCheck;
+    mainBtn.onclick = function(){
+      checkFn();
+      if(!rt.ans[cur]) return;
+      rt.cur = cur;
+      saveResume(mod.id, level.id, 'practice', rt);
+      render();
+    };
+    if(q.t === 'fill'){
+      mainBtn.disabled = !(rt.draft[cur] || []).some(function(x){ return String(x).trim(); });
+      setTimeout(function(){ try{ if(fillInputs[0]) fillInputs[0].focus(); }catch(e){} }, 0);
+    }
+  } else if(allAnswered){
+    mainBtn.textContent = 'Finalizar actividad →';
+    mainBtn.onclick = function(){ finishLevel(mod.id, level.id, correctCount, total); };
+  } else if(cur + 1 < total){
+    mainBtn.textContent = 'Siguiente pregunta →';
+    mainBtn.onclick = function(){ rt.cur = cur + 1; render(); };
+  } else {
+    const firstOpen = qs.findIndex(function(_, i){ return !rt.ans[i]; });
+    mainBtn.textContent = 'Ir a una pregunta sin responder →';
+    mainBtn.onclick = function(){ rt.cur = firstOpen; render(); };
+  }
+  A.actions.appendChild(mainBtn);
+
+  const navRow = el('div','pq-navrow');
+  const prevBtn = el('button','act-btn is-ghost','← Anterior');
+  prevBtn.type = 'button';
+  prevBtn.disabled = cur === 0;
+  prevBtn.onclick = function(){ rt.cur = cur - 1; render(); };
+  navRow.appendChild(prevBtn);
+  if(!answered){
+    const skipBtn = el('button','act-btn is-ghost','Siguiente →');
+    skipBtn.type = 'button';
+    skipBtn.disabled = cur + 1 >= total;
+    skipBtn.onclick = function(){ rt.cur = cur + 1; render(); };
+    navRow.appendChild(skipBtn);
+  }
+  A.actions.appendChild(navRow);
+  appendResetControl(A, mod, level, rt, answeredCount > 0);
+
+  return A.root;
+}
+
+/* ============================================================
    VISTA: SEÑALAR ESTRUCTURAS SOBRE UNA IMAGEN (imgLabel)
    Una imagen por "pantalla", con marcadores en las puntas de las
    flechas ya dibujadas. Tocar un marcador abre un panel para
@@ -3442,6 +3849,12 @@ function loadResume(modId, levelId, type, level){
     if(!s.order.some(function(si,i){ return si!==i; })) return null; // no movió nada, empieza igual que uno nuevo
     return { order: s.order.slice(), answered:false, score:0, touched:true };
   }
+  if(type === 'practice'){
+    const total = (level.questions || []).length;
+    if(s.n !== total || !s.ans || typeof s.ans !== 'object') return null; // el banco cambió
+    if(!Object.keys(s.ans).length) return null;
+    return { n: total, cur: Math.min(Math.max(0, s.cur|0), total-1), ans: s.ans, seed: s.seed|0 };
+  }
   const n = level.questions.length;
   if(!Array.isArray(s.qOrder) || s.qOrder.length !== n) return null; // el contenido cambió
   const qIdx = Math.min(Math.max(0, s.qIdx|0), n - 1);
@@ -3474,6 +3887,12 @@ function saveResume(modId, levelId, type, rt){
   if(type === 'sequence'){
     if(!rt.order.some(function(si,i){ return si!==i; })){ delete state.progress[k]; }
     else { state.progress[k] = { type:'sequence', order: rt.order }; }
+    saveProfile();
+    return;
+  }
+  if(type === 'practice'){
+    if(!Object.keys(rt.ans).length){ delete state.progress[k]; }
+    else { state.progress[k] = { type:'practice', n: rt.n, cur: rt.cur, seed: rt.seed, ans: rt.ans }; }
     saveProfile();
     return;
   }
