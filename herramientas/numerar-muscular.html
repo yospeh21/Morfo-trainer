@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Numerar imágenes anatómicas</title>
+<style>
+  :root{--bg:#f4f1ea;--card:#fff;--ink:#231b3a;--soft:#6b6480;--line:#d8d2c4;--brand:#6a4ff0;--gold:#ffd23f;--ok:#1f9d55;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink);}
+  header{padding:14px 20px;background:#1B103F;color:#fff}
+  header h1{margin:0;font-size:19px}
+  header p{margin:4px 0 0;font-size:13.5px;opacity:.85;line-height:1.45}
+  #tabs{display:flex;flex-wrap:wrap;gap:8px;padding:12px 20px 0}
+  .tab{border:1.5px solid var(--line);background:var(--card);border-radius:999px;padding:7px 14px;cursor:pointer;font-weight:700;font-size:13px;color:var(--soft)}
+  .tab.on{background:var(--brand);border-color:var(--brand);color:#fff}
+  .tab.done{border-color:var(--ok)}
+  .tab small{font-weight:600;opacity:.85;margin-left:4px}
+  main{display:flex;gap:18px;padding:14px 20px 20px;align-items:flex-start;flex-wrap:wrap}
+  #stage{flex:0 0 auto}
+  #imgwrap{position:relative;width:min(640px,92vw);aspect-ratio:1000/1200;background:#fff;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;user-select:none}
+  #imgwrap img{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  #layer{position:absolute;inset:0}
+  #layer.add{cursor:crosshair}
+  .pt{position:absolute;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;padding:0}
+  .pt.free{background:rgba(106,79,240,.12);border:2.5px dashed var(--brand);color:transparent}
+  .pt.free:hover{background:rgba(106,79,240,.35)}
+  .pt.num{background:var(--gold);border:2.5px solid #000;color:#000}
+  .pt.hl{outline:3px solid var(--brand);outline-offset:2px}
+  #side{flex:1 1 320px;max-width:520px;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:14px}
+  #side h2{margin:0 0 6px;font-size:15px}
+  #hint{font-size:13px;color:var(--soft);line-height:1.5;margin:0 0 10px}
+  .row{display:flex;gap:8px;align-items:center;margin:6px 0}
+  .row .n{flex:0 0 28px;height:28px;border-radius:50%;background:var(--gold);border:2px solid #000;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
+  .row input{flex:1;padding:7px 9px;border:1.5px solid var(--line);border-radius:8px;font-size:13.5px}
+  .row input:focus{outline:none;border-color:var(--brand)}
+  .row button{border:none;background:none;cursor:pointer;color:var(--soft);font-size:16px}
+  .btns{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}
+  button.b{border:1.5px solid var(--line);background:var(--card);border-radius:8px;padding:8px 12px;cursor:pointer;font-weight:700;font-size:13px;color:var(--ink)}
+  button.b:hover{border-color:var(--brand)}
+  button.b.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  button.b.on{background:#ece8ff;border-color:var(--brand)}
+  #export{padding:0 20px 30px}
+  #export .card{background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:14px;max-width:1100px}
+  textarea{width:100%;height:150px;border:1.5px solid var(--line);border-radius:8px;padding:8px;font-family:Consolas,monospace;font-size:12px}
+  #msg{font-size:13px;color:var(--ok);font-weight:700;margin-left:6px}
+  #warn{font-size:13px;color:#b45309;margin:6px 0 0;line-height:1.45}
+</style>
+</head>
+<body>
+<header>
+  <h1>Numerar imágenes anatómicas · músculos de la mímica, masticación, cuello, tórax y dorso</h1>
+  <p>1) Elige una imagen. 2) Toca los círculos morados en el orden en que quieres numerarlos: el primero que toques será el 1, luego el 2, etc. 3) (Opcional) escribe la respuesta de cada número en la lista de la derecha. 4) Abajo, toca <b>Copiar resultado</b> y pégamelo en el chat. Tu trabajo se guarda solo en este navegador.</p>
+</header>
+<nav id="tabs"></nav>
+<main>
+  <section id="stage"><div id="imgwrap"><img id="img" alt=""><div id="layer"></div></div></section>
+  <aside id="side">
+    <h2 id="sideTitle"></h2>
+    <p id="hint">Toca un círculo para numerarlo. Toca un número amarillo para quitarlo (los siguientes se recorren).</p>
+    <div id="list"></div>
+    <div class="btns">
+      <button class="b" id="bUndo">↶ Deshacer último</button>
+      <button class="b" id="bAuto">Numerar automático (horario)</button>
+      <button class="b" id="bClear">Borrar esta imagen</button>
+      <button class="b" id="bAdd">＋ Agregar punto manual</button>
+    </div>
+    <p id="warn"></p>
+  </aside>
+</main>
+<section id="export"><div class="card">
+  <div class="btns" style="margin:0 0 10px">
+    <button class="b primary" id="bCopy">Copiar resultado</button>
+    <button class="b" id="bDown">Descargar archivo .json</button><span id="msg"></span>
+  </div>
+  <textarea id="out" readonly></textarea>
+</div></section>
+<script>
+const IMGS = ["1.png","2.png","3.png","4.png","5.png","6.png","7.png"];
+const CAND = {"1.png":[{"x":48.52,"y":35.01},{"x":63.81,"y":40.44},{"x":51.37,"y":51.14},{"x":66.92,"y":61.77},{"x":58.8,"y":63.11},{"x":53.52,"y":79.9},{"x":41.59,"y":66.79},{"x":29.35,"y":66.65},{"x":34.05,"y":57.92},{"x":16.13,"y":40.41},{"x":33.99,"y":24.2}],"2.png":[{"x":57.22,"y":37.31},{"x":50.66,"y":70.17},{"x":26.64,"y":79.25},{"x":32.93,"y":71.34},{"x":10.28,"y":84.69}],"3.png":[{"x":56.5,"y":33.53},{"x":58.64,"y":41.67},{"x":72.32,"y":42.66},{"x":50.2,"y":68.39},{"x":36.95,"y":66.17},{"x":44.91,"y":45.12}],"4.png":[{"x":60.51,"y":29.19},{"x":60.46,"y":42.54},{"x":60.8,"y":55.03},{"x":45.3,"y":62.11},{"x":25.62,"y":67.17},{"x":43.04,"y":48.11},{"x":48.99,"y":26.7}],"5.png":[{"x":75.15,"y":34.12},{"x":26.87,"y":50.07}],"6.png":[{"x":55.46,"y":22.24},{"x":59.92,"y":29.48},{"x":52.68,"y":36.44},{"x":58.98,"y":61.44},{"x":38.75,"y":59.19},{"x":44.26,"y":42.58},{"x":40.25,"y":30.08},{"x":43.79,"y":23.62}],"7.png":[{"x":50.53,"y":35.32},{"x":52.54,"y":44.82},{"x":67.49,"y":44.56},{"x":55.51,"y":60.31},{"x":25.14,"y":57.49},{"x":42.26,"y":41.27}]};
+const KEY = "muscular-numeracion-v1";
+let S; try { S = JSON.parse(localStorage.getItem(KEY)) || {}; } catch(e){ S = {}; }
+IMGS.forEach(f=>{ if(!S[f]) S[f] = { order:[], manual:[], ans:{} }; });
+let cur = IMGS[0], addMode = false;
+const $ = id => document.getElementById(id);
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function points(f){
+  const c = (CAND[f]||[]).map((p,i)=>({id:"c"+i,x:p.x,y:p.y}));
+  return c.concat(S[f].manual);
+}
+function byId(f,id){ return points(f).find(p=>p.id===id); }
+function refresh(){ save(); draw(); exportText(); }
+
+function draw(){
+  // pestañas
+  $("tabs").innerHTML = "";
+  IMGS.forEach(f=>{
+    const tot = points(f).length, n = S[f].order.length;
+    const b = document.createElement("button");
+    b.className = "tab"+(f===cur?" on":"")+(n>0&&n===tot?" done":"");
+    b.innerHTML = "Imagen "+f.replace(".png","")+"<small>"+n+"/"+tot+"</small>";
+    b.onclick = ()=>{ cur=f; draw(); };
+    $("tabs").appendChild(b);
+  });
+  $("img").src = "../assets/img/muscular/mimica-masticacion-cuello-torax-dorso/"+cur;
+  $("sideTitle").textContent = "Imagen "+cur.replace(".png","")+" — "+S[cur].order.length+" numerados de "+points(cur).length;
+  // puntos
+  const layer = $("layer"); layer.innerHTML = ""; layer.className = addMode ? "add" : "";
+  points(cur).forEach(p=>{
+    const k = S[cur].order.indexOf(p.id);
+    const b = document.createElement("button");
+    b.className = "pt "+(k>=0?"num":"free"); b.id = "pt-"+p.id;
+    b.style.left = p.x+"%"; b.style.top = p.y+"%";
+    b.textContent = k>=0 ? (k+1) : "";
+    b.title = k>=0 ? "Toca para quitar el número "+(k+1) : "Toca para numerar";
+    b.onclick = ev=>{ ev.stopPropagation();
+      if(k>=0){ S[cur].order.splice(k,1); } else { S[cur].order.push(p.id); }
+      refresh(); };
+    layer.appendChild(b);
+  });
+  // lista de respuestas
+  const list = $("list"); list.innerHTML = "";
+  S[cur].order.forEach((id,i)=>{
+    const row = document.createElement("div"); row.className = "row";
+    row.innerHTML = '<span class="n">'+(i+1)+'</span>';
+    const inp = document.createElement("input");
+    inp.placeholder = "Respuesta (opcional). Varias válidas: sepáralas con  /";
+    inp.value = S[cur].ans[id] || "";
+    inp.oninput = ()=>{ S[cur].ans[id] = inp.value; save(); exportText(); };
+    inp.onfocus = ()=>{ const e=$("pt-"+id); if(e) e.classList.add("hl"); };
+    inp.onblur = ()=>{ const e=$("pt-"+id); if(e) e.classList.remove("hl"); };
+    row.appendChild(inp);
+    const x = document.createElement("button"); x.textContent = "✕"; x.title = "Quitar este número";
+    x.onclick = ()=>{ S[cur].order.splice(i,1); refresh(); };
+    row.appendChild(x);
+    list.appendChild(row);
+  });
+  const sin = points(cur).length - S[cur].order.length;
+  $("warn").textContent = sin>0 ? "Quedan "+sin+" círculo(s) sin numerar en esta imagen (si alguno no es una flecha real, déjalo sin numerar)." : "";
+  $("bAdd").className = "b"+(addMode?" on":"");
+  $("hint").textContent = addMode
+    ? "Modo agregar punto: toca sobre la imagen donde quieras un punto nuevo (se numera solo). Vuelve a tocar el botón para salir."
+    : "Toca un círculo para numerarlo. Toca un número amarillo para quitarlo (los siguientes se recorren).";
+}
+
+$("layer").onclick = ev=>{
+  if(!addMode) return;
+  const r = $("layer").getBoundingClientRect();
+  const x = Math.round((ev.clientX-r.left)/r.width*10000)/100, y = Math.round((ev.clientY-r.top)/r.height*10000)/100;
+  const id = "m"+Date.now();
+  S[cur].manual.push({id,x,y}); S[cur].order.push(id); refresh();
+};
+$("bAdd").onclick = ()=>{ addMode = !addMode; draw(); };
+$("bUndo").onclick = ()=>{ S[cur].order.pop(); refresh(); };
+$("bClear").onclick = ()=>{ if(confirm("¿Borrar la numeración y las respuestas de esta imagen?")){ S[cur]={order:[],manual:[],ans:{}}; refresh(); } };
+$("bAuto").onclick = ()=>{
+  const pts = points(cur); if(!pts.length) return;
+  const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length, cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
+  const ang = p=>{ let a = Math.atan2(p.x-cx, -(p.y-cy)); return a<0 ? a+2*Math.PI : a; };
+  S[cur].order = pts.slice().sort((a,b)=>ang(a)-ang(b)).map(p=>p.id); refresh();
+};
+
+function result(){
+  const out = {};
+  IMGS.forEach(f=>{
+    out[f] = S[f].order.map((id,i)=>{
+      const p = byId(f,id); const o = { n:i+1, x:p.x, y:p.y };
+      const a = (S[f].ans[id]||"").split("/").map(s=>s.trim()).filter(Boolean);
+      if(a.length) o.answers = a;
+      return o;
+    });
+  });
+  return out;
+}
+function exportText(){ $("out").value = JSON.stringify(result(), null, 1); }
+$("bCopy").onclick = async ()=>{
+  exportText(); $("out").select();
+  try{ await navigator.clipboard.writeText($("out").value); $("msg").textContent = "¡Copiado! Pégalo en el chat."; }
+  catch(e){ document.execCommand("copy"); $("msg").textContent = "Copiado (si no, selecciona el cuadro y usa Ctrl+C)."; }
+};
+$("bDown").onclick = ()=>{
+  exportText();
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([$("out").value],{type:"application/json"}));
+  a.download = "numeracion-muscular.json"; a.click();
+};
+refresh();
+</script>
+</body>
+</html>
