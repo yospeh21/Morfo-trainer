@@ -850,16 +850,86 @@ MODULES.MU1.levels.push({
 });
 MODULES.MU1.subActivities.push({ id:'img', title:'Imágenes anatómicas', icon:'🖼️', ready:true });
 
-// MU2 = segunda unidad temática del sistema muscular. Sus "Preguntas de
-// práctica" (nivel `mu2-practica`, tipo `practice`, igual que MU1) se cargan
-// cuando el profesor entregue el banco; mientras tanto el botón sale "Próximamente".
+// MU2 = segunda unidad temática del sistema muscular: un solo nivel `practice` con
+// anatomía, casos clínicos y fisiología juntos (igual que MU1). Orden: selección
+// múltiple, verdadero/falso y completar; la numeración del estudiante es 1..N.
 MODULES.MU2 = {
   id:'MU2', title:'Músculos del miembro superior, cintura pélvica e inferior y fisiología muscular',
   subtitle:'Selecciona el tipo de actividad', placeholder:true,
   subActivities:[
-    { id:'mu2-practica', title:'Preguntas de práctica', icon:'📝', ready:false }
+    { id:'mu2-practica', title:'Preguntas de práctica', icon:'📝', ready:true }
   ],
-  levels:[]
+  levels:[
+    { id:'mu2-practica', type:'practice', title:'Anatomía, casos clínicos y fisiología',
+      questions:[
+        PQ_MC('El músculo deltoides está inervado por el:', ['Nervio radial','Nervio axilar','Nervio musculocutáneo','Nervio supraescapular'], 1),
+        PQ_MC('La porción acromial del deltoides realiza:', ['Anteversión y rotación medial del brazo','Retroversión y rotación lateral del brazo','Abducción del brazo hasta el plano horizontal','Aducción del brazo'], 2),
+        PQ_MC('El subescapular se inserta en:', ['El tubérculo mayor del húmero','El tubérculo menor del húmero','La tuberosidad deltoidea','La cresta del tubérculo mayor'], 1),
+        PQ_MC('Los músculos del compartimento anterior del brazo están inervados por el:', ['Nervio mediano','Nervio radial','Nervio cubital','Nervio musculocutáneo'], 3),
+        PQ_MC('El tendón distal del bíceps braquial se inserta en:', ['La tuberosidad del radio','La tuberosidad del cúbito','El olécranon','La apófisis coronoides del cúbito'], 0),
+        PQ_MC('Según el Pró, ¿cuál es el principal músculo flexor del codo?', ['Coracobraquial','Braquial','Bíceps braquial','Pronador cuadrado'], 1),
+        PQ_MC('El tríceps braquial se inserta distalmente en:', ['La tuberosidad del radio','Olécranon','El epicóndilo lateral','La apófisis coronoides'], 1),
+        PQ_MC('Los músculos flexores y pronadores del antebrazo se originan, de manera general, en:', ['El epicóndilo medial','El epicóndilo lateral','El borde lateral del húmero','La tuberosidad del radio'], 0),
+        PQ_MC('El iliopsoas (psoas mayor e ilíaco) se inserta en:', ['El trocánter mayor del fémur','La tuberosidad glútea','El trocánter menor del fémur','La fosa trocantérica'], 2),
+        PQ_MC('¿Qué músculos se insertan en el trocánter mayor y son los principales abductores del muslo?', ['Glúteo medio y glúteo menor','Iliopsoas y pectíneo','Aductor largo y aductor corto','Cuadrado femoral y obturador externo'], 0),
+        PQ_MC('El cuádriceps femoral está formado por:', ['Recto femoral, vasto lateral, vasto intermedio y vasto medial','Sartorio, recto femoral, vasto lateral y vasto medial','Semitendinoso, semimembranoso y bíceps femoral','Recto femoral, grácil, vasto lateral y vasto medial'], 0),
+        PQ_MC('Los músculos del compartimento femoral medial (aductores y grácil) están inervados principalmente por el:', ['Nervio femoral','Nervio tibial','Nervio obturador','Nervio glúteo superior'], 2),
+        PQ_MC('El tibial anterior realiza:', ['Flexión plantar y pronación del pie','Flexión dorsal y supinación del pie','Extensión de los dedos','Flexión de la rodilla'], 1),
+        PQ_MC('El gastrocnemio y el sóleo se insertan, mediante el tendón calcáneo, en:', ['La base del quinto metatarsiano','La tuberosidad del calcáneo','El hueso navicular','El cuneiforme medial'], 1),
+        PQ_MC('¿Qué ion, al unirse a la troponina, desplaza la tropomiosina y deja libres los sitios de unión a la miosina en la actina?', ['Sodio (Na+)','Potasio (K+)','Calcio (Ca2+)','Cloro (Cl-)'], 2),
+        PQ_MC('¿Qué neurotransmisor se libera en la unión neuromuscular y qué enzima lo degrada?', ['Noradrenalina; monoaminooxidasa','Acetilcolina; acetilcolinesterasa','Acetilcolina; creatincinasa','Dopamina; acetilcolinesterasa'], 1),
+        PQ_MC('¿Cuál es la vía más rápida para formar ATP al iniciar una contracción y es exclusiva de las fibras musculares?', ['Fosfocreatina','Glucólisis anaeróbica','Respiración celular aeróbica','Betaoxidación de ácidos grasos'], 0),
+        PQ_MC('La enfermera aplica una vacuna intramuscular en la región lateral del hombro, en el músculo que cubre la articulación y se inserta en la tuberosidad deltoidea. ¿Qué músculo es?', ['Supraespinoso','Pectoral mayor','Deltoides','Redondo mayor'], 2),
+        PQ_MC('Un pintor de paredes refiere dolor agudo en el hombro cada vez que eleva el brazo hacia un lado hasta los 90°. ¿Qué tendón se comprime con más frecuencia contra el acromion en este movimiento?', ['Supraespinoso','Redondo mayor','Tríceps braquial','Coracobraquial'], 0),
+        PQ_MC('Un paciente con lesión del manguito rotador no puede abducir ni rotar lateralmente el brazo. ¿Qué par de músculos del manguito se insertan en el tubérculo mayor y realizan estas acciones?', ['Subescapular y redondo mayor','Supraespinoso e infraespinoso','Pectoral mayor y dorsal ancho','Supraespinoso y subescapular'], 1),
+        PQ_MC('Un tenista refiere dolor en la cara lateral del codo que aumenta al extender la muñeca contra resistencia (codo de tenista). ¿En qué estructura se insertan los músculos afectados?', ['Epicóndilo medial','Olécranon','Epicóndilo lateral','Apófisis coronoides'], 2),
+        PQ_MC('Para abrir un frasco o girar un destornillador hacia la derecha, se lleva la palma hacia arriba. ¿Qué músculos producen este movimiento?', ['Pronador redondo y pronador cuadrado','Supinador y bíceps braquial','Braquial y coracobraquial','Flexor radial y flexor cubital del carpo'], 1),
+        PQ_MC('Un paciente que usa muletas necesita mantener el codo extendido mientras se apoya. ¿Qué músculo debe fortalecer?', ['Bíceps braquial','Braquial','Tríceps braquial','Coracobraquial'], 2),
+        PQ_MC('Una secretaria con síndrome del túnel carpiano tiene atrofia de la eminencia tenar y le cuesta tocar con el pulgar la punta del meñique. ¿Qué músculo se debilitó?', ['Aductor del pulgar','Oponente del pulgar','Abductor del meñique','Primer interóseo dorsal'], 1),
+        PQ_MC('A un niño con un yeso muy apretado en el antebrazo se le quedan los dedos y la muñeca permanentemente flexionados semanas después. ¿Qué ocurrió con los músculos flexores del antebrazo?', ['Se hipertrofiaron por el uso','Las fibras destruidas por falta de circulación fueron reemplazadas por tejido conectivo fibroso que no se puede estirar','Se convirtieron en músculo liso','Aumentó el número de fibras musculares'], 1),
+        PQ_MC('Al caminar, cuando un paciente apoya el pie derecho, la pelvis cae hacia el lado izquierdo. ¿Qué músculos del lado derecho, que se insertan en el trocánter mayor, están débiles?', ['Glúteo medio y glúteo menor','Glúteo mayor y piriforme','Aductores largo y corto','Iliopsoas'], 0),
+        PQ_MC('Un adulto mayor tiene dificultad para levantarse de una silla y subir escaleras porque no logra extender la cadera con fuerza. ¿Qué músculo es el principal responsable?', ['Glúteo menor','Glúteo mayor','Tensor de la fascia lata','Iliopsoas'], 1),
+        PQ_MC('En los lactantes, un sitio frecuente de inyección intramuscular es la cara anterolateral del muslo. ¿Qué componente del cuádriceps, que se origina en el trocánter mayor y en el labio lateral de la línea áspera, ocupa esta zona?', ['Vasto medial','Recto femoral','Vasto intermedio','Vasto lateral'], 3),
+        PQ_MC('Un futbolista no puede extender la rodilla para patear el balón después de una lesión en la cara anterior del muslo. ¿Qué grupo muscular está comprometido?', ['Isquiotibiales','Aductores','Cuádriceps femoral','Tríceps sural'], 2),
+        PQ_MC('Un velocista siente un "tirón" en la cara posterior del muslo durante una carrera de velocidad. ¿Qué acciones se verán más afectadas?', ['Extensión de la rodilla y flexión de la cadera','Flexión de la rodilla y extensión de la cadera','Abducción y rotación medial del muslo','Flexión dorsal del pie'], 1),
+        PQ_MC('Un futbolista refiere dolor en la ingle y en la cara medial del muslo al cerrar las piernas contra resistencia. ¿Qué grupo muscular, inervado principalmente por el nervio obturador, está afectado?', ['Aductores','Glúteos','Cuádriceps','Peroneos'], 0),
+        PQ_MC('Una corredora refiere dolor en la cara medial de la rodilla, justo debajo de la articulación, donde se insertan juntos tres tendones que conforman la llamada pata de ganso. ¿Qué músculos convergen ahí?', ['Recto femoral, vasto medial y vasto lateral','Bíceps femoral, plantar y poplíteo','Aductor mayor, aductor largo y pectíneo','Sartorio, grácil y semitendinoso'], 3),
+        PQ_MC('Al pedirle a un paciente que camine sobre los talones, no logra levantar la punta del pie derecho. ¿Qué músculo, inervado por el nervio peroneo profundo, está débil?', ['Gastrocnemio','Tibial posterior','Peroneo largo','Tibial anterior'], 3),
+        PQ_MC('Un hombre de 40 años sintió "como una patada" en la parte posterior del tobillo jugando microfútbol, y ahora no puede ponerse de puntillas. ¿Qué estructura se rompió?', ['El tendón calcáneo del gastrocnemio y el sóleo','El tendón del tibial anterior','El ligamento rotuliano','El tendón del peroneo corto'], 0),
+        PQ_MC('Un paciente acostado no puede levantar la pierna estirada (flexionar el muslo sobre el abdomen). ¿Qué músculo, que se inserta en el trocánter menor, es el principal flexor de la cadera?', ['Glúteo mayor','Iliopsoas','Cuadrado femoral','Bíceps femoral'], 1),
+        PQ_MC('Después de caminar mucho en un día caluroso, un paciente sin hidratarse bien despierta con un calambre doloroso en la pantorrilla. ¿Qué músculo superficial de la región posterior de la pierna se contrae involuntariamente?', ['Tibial anterior','Peroneo largo','Gastrocnemio','Vasto medial'], 2),
+        PQ_MC('Al bajar lentamente una bolsa del mercado hasta el piso, el bíceps sigue contraído mientras se alarga. ¿Qué tipo de contracción es?', ['Isotónica concéntrica','Isotónica excéntrica','Isométrica','Contracción aislada'], 1),
+        PQ_MC('Una persona consume una lata de conservas en mal estado y presenta debilidad muscular progresiva. La toxina botulínica impide que se libere el neurotransmisor en la unión neuromuscular. ¿Cuál es ese neurotransmisor?', ['Acetilcolina','Adrenalina','Serotonina','Calcio'], 0),
+        PQ_MC('Un auxiliar de enfermería nota que, unas horas después de un fallecimiento, el cuerpo está rígido. ¿Por qué no se separan los puentes cruzados?', ['Porque falta calcio en el sarcoplasma','Porque no hay ATP para separar las cabezas de miosina de la actina','Porque se destruyó la tropomiosina','Porque hay exceso de acetilcolina'], 1),
+        PQ_MC('A un paciente le retiran un yeso del muslo después de 6 semanas y la pierna se ve más delgada. ¿Qué ocurrió?', ['Atrofia por inactividad: las fibras disminuyeron de tamaño por pérdida de miofibrillas','Disminuyó el número de huesos','Hipertrofia muscular','Las fibras se dividieron'], 0),
+        PQ_MC('Tras meses de entrenamiento con pesas, un estudiante aumenta el tamaño de sus músculos. ¿A qué se debe?', ['Aumento del número de fibras (hiperplasia)','Aumento del tamaño de las fibras existentes, por mayor síntesis de filamentos y miofibrillas','Conversión del tejido adiposo en músculo','Aumento del líquido extracelular'], 1),
+        PQ_MC('Un atleta corre 100 metros planos en unos 10 segundos. ¿Cuál es la principal fuente de ATP en este esfuerzo?', ['Respiración celular aeróbica','Glucólisis anaeróbica','Fosfocreatina y ATP almacenado','Oxidación de grasas'], 2),
+        PQ_MC('Un atleta corre 400 metros a máxima velocidad (unos 45 segundos) y termina con sensación de ardor y fatiga en las piernas. ¿Qué vía predominó después de agotarse la fosfocreatina y qué producto se acumuló?', ['Respiración aeróbica; dióxido de carbono','Glucólisis anaeróbica; ácido láctico','Fosfocreatina; creatina','Respiración aeróbica; agua'], 1),
+        PQ_MC('Durante una maratón, ¿qué vía produce casi el 100 % del ATP al final de la carrera?', ['Fosfocreatina','Glucólisis anaeróbica','Creatincinasa','Respiración celular aeróbica'], 3),
+        PQ_MC('Después de correr, una estudiante sigue respirando agitada varios minutos. ¿Para qué usa el organismo ese oxígeno adicional?', ['Solo para enfriar el cuerpo','Para reconvertir ácido láctico en glucógeno hepático, resintetizar fosfocreatina y ATP y reponer el oxígeno de la mioglobina','Para producir más ácido láctico','Para degradar la acetilcolina'], 1),
+        PQ_MC('¿Por qué los músculos rojos, como los de la pantorrilla de un fondista, se fatigan menos?', ['Porque tienen más mioglobina, que almacena oxígeno dentro de la fibra para la respiración aeróbica','Porque tienen más hemoglobina dentro de la fibra','Porque no usan ATP','Porque solo usan fosfocreatina'], 0),
+        PQ_TF('El tríceps braquial está inervado por el nervio radial y extiende el antebrazo sobre el brazo.', true),
+        PQ_TF('El supraespinoso es el principal rotador medial del húmero.', false),
+        PQ_TF('Durante la contracción, los filamentos finos se deslizan hacia el centro del sarcómero y los discos Z se aproximan.', true),
+        PQ_TF('La mioglobina se encuentra en los eritrocitos y la hemoglobina en las fibras musculares.', false),
+        PQ_TF('En el codo de tenista se inflama la inserción de los músculos flexores en el epicóndilo medial.', false),
+        PQ_TF('Si una persona no puede ponerse de puntillas, el músculo más probablemente afectado es el tibial anterior.', false),
+        PQ_TF('Si al apoyar el pie derecho la pelvis cae hacia la izquierda, los glúteos medio y menor derechos están débiles.', true),
+        PQ_TF('El rigor mortis es la rigidez muscular que aparece tras la muerte porque, sin ATP, los puentes cruzados no pueden separarse de la actina.', true),
+        PQ_FILL('Tres músculos se insertan juntos, medial a la tuberosidad de la tibia, y forman la "pata de ganso". Escríbelos: ______, ______ y ______.', [['Sartorio'],['grácil'],['semitendinoso']], true),
+        PQ_FILL('El músculo del manguito rotador que se inserta en el tubérculo menor del húmero es el ______.', [['subescapular']]),
+        PQ_FILL('La unidad funcional contráctil de la miofibrilla, delimitada por dos discos Z, es el ______.', [['sarcómero']]),
+        PQ_FILL('El gastrocnemio, el sóleo y el plantar forman el ______.', [['tríceps sural']]),
+        PQ_FILL('El tendón del cuádriceps continúa como ligamento ______ hasta la tuberosidad de la tibia.', [['rotuliano']]),
+        PQ_FILL('Un lanzador de béisbol refiere dolor y debilidad en el hombro tras una lesión del manguito rotador, el grupo de músculos que mantiene la cabeza del húmero en la cavidad glenoidea de la escápula. Escribe los cuatro músculos que lo conforman: ______, ______, ______ y ______.', [['Supraespinoso'],['infraespinoso'],['redondo menor'],['subescapular']], true),
+        PQ_FILL('El músculo en el que se aplican vacunas intramusculares en la cara lateral del hombro es el ______.', [['deltoides']]),
+        PQ_FILL('Para caminar sobre los talones se necesita la flexión dorsal que realiza el músculo tibial ______.', [['anterior']]),
+        PQ_FILL('El tendón que se rompe cuando una persona no puede ponerse de puntillas tras sentir "una patada" en el tobillo es el tendón ______.', [['calcáneo']]),
+        PQ_FILL('Sostener una caja sin moverla es un ejemplo de contracción ______.', [['isométrica']]),
+        PQ_FILL('La proteína que almacena oxígeno dentro de la fibra muscular es la ______.', [['mioglobina']])
+      ]
+    }
+  ]
 };
 
 const CATEGORIES = {
