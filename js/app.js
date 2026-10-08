@@ -850,6 +850,18 @@ MODULES.MU1.levels.push({
 });
 MODULES.MU1.subActivities.push({ id:'img', title:'Imágenes anatómicas', icon:'🖼️', ready:true });
 
+// MU2 = segunda unidad temática del sistema muscular. Sus "Preguntas de
+// práctica" (nivel `mu2-practica`, tipo `practice`, igual que MU1) se cargan
+// cuando el profesor entregue el banco; mientras tanto el botón sale "Próximamente".
+MODULES.MU2 = {
+  id:'MU2', title:'Músculos del miembro superior, cintura pélvica e inferior y fisiología muscular',
+  subtitle:'Selecciona el tipo de actividad', placeholder:true,
+  subActivities:[
+    { id:'mu2-practica', title:'Preguntas de práctica', icon:'📝', ready:false }
+  ],
+  levels:[]
+};
+
 const CATEGORIES = {
   oseo: {
     id:'oseo',
@@ -863,7 +875,7 @@ const CATEGORIES = {
     emoji:'💪',
     title:'Estructuras y funciones del sistema muscular',
     subtitle:'Tipos de músculo, componentes del músculo esquelético, grupos musculares y acciones',
-    moduleIds:['MU1']
+    moduleIds:['MU1','MU2']
   },
   nervioso: {
     id:'nervioso',
