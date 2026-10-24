@@ -944,6 +944,60 @@ MODULES.NC1 = {
   levels:[]
 };
 
+MODULES.NC1.levels.push({
+  id:'nc1-img', type:'imgLabel', title:'Imágenes de práctica',
+  instructions:'Toca cada marcador y escribe el nombre de la estructura que señala la flecha. No importan las mayúsculas ni las tildes; giro y circunvolución, surco y cisura, valen lo mismo.',
+  images:[
+    { file:'assets/img/sistema-nervioso-central/1.png', label:'Cerebro · cara lateral', points:[
+      {n:1, x:57.92, y:9.9, answers:['Cisura central','Surco central','Surco de Rolando']},
+      {n:2, x:69.08, y:18, answers:['Giro postcentral']},
+      {n:3, x:83.92, y:27.3, answers:['Surco postcentral']},
+      {n:4, x:90.58, y:38.5, answers:['Surco parieto-occipital','Surco parietooccipital']},
+      {n:5, x:94, y:74.4, answers:['Surco calcarino']},
+      {n:6, x:82.75, y:75.9, answers:['Surco semilunar']},
+      {n:7, x:68.25, y:79.2, answers:['Giro temporal inferior']},
+      {n:8, x:62.17, y:83.2, answers:['Surco temporal inferior']},
+      {n:9, x:56.25, y:84.8, answers:['Giro temporal medio']},
+      {n:10, x:51, y:88.9, answers:['Surco temporal superior']},
+      {n:11, x:44, y:91.4, answers:['Giro temporal superior']},
+      {n:12, x:37.67, y:89, answers:['Surco lateral','Cisura de Silvio','Surco de Silvio']},
+      {n:13, x:27.08, y:83.1, answers:['Porción ascendente del surco lateral','Ramo ascendente del surco lateral','Ramo ascendente del surco de Silvio']},
+      {n:14, x:14.83, y:79.5, answers:['Ramo anterior del surco lateral','Ramo anterior del surco de Silvio','Porción anterior del surco lateral']},
+      {n:15, x:4.75, y:65, answers:['Parte triangular del giro frontal inferior','Porción triangular del giro frontal inferior']},
+      {n:16, x:4.75, y:55.2, answers:['Giro frontal inferior']},
+      {n:17, x:8.25, y:35.9, answers:['Surco frontal superior']},
+      {n:18, x:11.67, y:27.6, answers:['Surco frontal inferior']},
+      {n:19, x:20.42, y:19.9, answers:['Giro frontal medio']},
+      {n:20, x:26.83, y:13.7, answers:['Giro frontal superior']},
+      {n:21, x:31.33, y:11.7, answers:['Porción opercular','Porción opercular del giro frontal inferior']},
+      {n:22, x:36.25, y:11.6, answers:['Surco precentral']},
+      {n:23, x:43.92, y:13.7, answers:['Giro precentral']}
+    ]},
+    { file:'assets/img/sistema-nervioso-central/2.png', label:'Tronco del encéfalo · cara inferior', points:[
+      {n:1, x:86, y:9.8, answers:['Tracto olfatorio','Tracto olfativo','Cintilla olfatoria','Haz olfatorio','Pedúnculo olfatorio']},
+      {n:2, x:86, y:20.8, answers:['Quiasma óptico','Quiasma','Quiasma de los nervios ópticos']},
+      {n:3, x:83.83, y:27.7, answers:['Cuerpo mamilar','Cuerpos mamilares','Tubérculo mamilar','Tubérculos mamilares']},
+      {n:4, x:83.67, y:34.8, answers:['Nervio oculomotor (tercer par craneal)','Nervio oculomotor','Nervio motor ocular común','tercer par craneal','tercer par','tercer nervio craneal','III par craneal','Par craneal III','Nervio craneal III','NC III','3 par craneal','Par craneal 3','Nervio craneal 3','NC 3']},
+      {n:5, x:82.5, y:43.2, answers:['Nervio troclear (cuarto par craneal)','Nervio troclear','Nervio patético','cuarto par craneal','cuarto par','cuarto nervio craneal','IV par craneal','Par craneal IV','Nervio craneal IV','NC IV','4 par craneal','Par craneal 4','Nervio craneal 4','NC 4']},
+      {n:6, x:80, y:49.9, answers:['Nervio vestibulococlear (octavo par craneal)','Nervio vestibulococlear','Nervio vestíbulo coclear','Nervio estatoacústico','Nervio auditivo','Nervio acústico','octavo par craneal','octavo par','octavo nervio craneal','VIII par craneal','Par craneal VIII','Nervio craneal VIII','NC VIII','8 par craneal','Par craneal 8','Nervio craneal 8','NC 8']},
+      {n:7, x:81.08, y:68.8, answers:['Nervio facial (séptimo par craneal)','Nervio facial','séptimo par craneal','séptimo par','séptimo nervio craneal','VII par craneal','Par craneal VII','Nervio craneal VII','NC VII','7 par craneal','Par craneal 7','Nervio craneal 7','NC 7']},
+      {n:8, x:82.5, y:86.2, answers:['Nervio glosofaríngeo (noveno par craneal)','Nervio glosofaríngeo','noveno par craneal','noveno par','noveno nervio craneal','IX par craneal','Par craneal IX','Nervio craneal IX','NC IX','9 par craneal','Par craneal 9','Nervio craneal 9','NC 9']},
+      {n:9, x:77.5, y:89, answers:['Nervio vago (décimo par craneal)','Nervio vago','Nervio neumogástrico','décimo par craneal','décimo par','décimo nervio craneal','X par craneal','Par craneal X','Nervio craneal X','NC X','10 par craneal','Par craneal 10','Nervio craneal 10','NC 10']},
+      {n:10, x:68.67, y:93.2, answers:['Nervio accesorio (undécimo par craneal)','Nervio accesorio','Nervio espinal','Nervio accesorio espinal','Nervio espinal accesorio','undécimo par craneal','undécimo par','undécimo nervio craneal','décimo primer par craneal','décimo primer par','décimo primer nervio craneal','décimo primero par craneal','décimo primero par','décimo primero nervio craneal','decimoprimer par craneal','decimoprimer par','decimoprimer nervio craneal','XI par craneal','Par craneal XI','Nervio craneal XI','NC XI','11 par craneal','Par craneal 11','Nervio craneal 11','NC 11']},
+      {n:11, x:61, y:96.2, answers:['Nervio hipogloso (par craneal 12)','Nervio hipogloso','duodécimo par craneal','duodécimo par','duodécimo nervio craneal','décimo segundo par craneal','décimo segundo par','décimo segundo nervio craneal','decimosegundo par craneal','decimosegundo par','decimosegundo nervio craneal','XII par craneal','Par craneal XII','Nervio craneal XII','NC XII','12 par craneal','Par craneal 12','Nervio craneal 12','NC 12']},
+      {n:12, x:23.83, y:89.1, answers:['Decusación piramidal','Decusación de las pirámides','Decusación motora','Entrecruzamiento piramidal']},
+      {n:13, x:24.42, y:80.1, answers:['Oliva','Oliva bulbar']},
+      {n:14, x:24.25, y:69.8, answers:['Pirámide','Pirámide bulbar','Pirámides']},
+      {n:15, x:15.08, y:56.9, answers:['Nervio abducens (sexto par craneal)','Nervio abducens','Nervio abducente','Nervio motor ocular externo','sexto par craneal','sexto par','sexto nervio craneal','VI par craneal','Par craneal VI','Nervio craneal VI','NC VI','6 par craneal','Par craneal 6','Nervio craneal 6','NC 6']},
+      {n:16, x:14.42, y:47.4, answers:['Nervio trigémino (quinto par craneal)','Nervio trigémino','quinto par craneal','quinto par','quinto nervio craneal','V par craneal','Par craneal V','Nervio craneal V','NC V','5 par craneal','Par craneal 5','Nervio craneal 5','NC 5']},
+      {n:17, x:9.58, y:37.9, answers:['Puente','Puente de Varolio','Surco basilar','Protuberancia','Protuberancia anular','Puente troncoencefálico','Pons']},
+      {n:18, x:15.17, y:27.6, answers:['Pedúnculos cerebrales','Pedúnculo cerebral','Pilar del cerebro','Pilares del cerebro','Crus cerebri','Pie del pedúnculo cerebral','Pie peduncular']},
+      {n:19, x:15.83, y:17.9, answers:['Tracto óptico','Cintilla óptica']}
+    ]}
+  ]
+});
+MODULES.NC1.subActivities.find(s=>s.id==='nc1-img').ready = true;
+
 const CATEGORIES = {
   oseo: {
     id:'oseo',
@@ -3359,7 +3413,14 @@ function normLabel(s){
 }
 // "músculo estilohioideo" y "estilohioideo" valen lo mismo: se ignora el
 // "músculo" inicial tanto en lo escrito como en la respuesta.
-function stripMusculo(s){ return String(s==null?'':s).trim().replace(/^m[uú]sculo\s+/i, ''); }
+// Además, "giro" = "circunvolución" y "surco" = "cisura" (sinónimos en
+// neuroanatomía): se unifican en lo escrito y en las respuestas.
+function stripMusculo(s){
+  return String(s==null?'':s).trim()
+    .replace(/^(?:m[uú]sculo|nervio)\s+/i, '')
+    .replace(/circunvoluci[oó]n(es)?/gi, function(m, pl){ return pl ? 'giros' : 'giro'; })
+    .replace(/cisura(s)?/gi, function(m, pl){ return pl ? 'surcos' : 'surco'; });
+}
 
 // Señala EN QUÉ palabra está la diferencia entre lo escrito y la respuesta:
 // tilde faltante (misma palabra sin tilde) o error de escritura (otras
@@ -3405,22 +3466,27 @@ function checkLabelAnswer(typed, answers){
   const t = normLabel(st);
   if(!t) return null;
   const list = answers || [];
+  // "circunvolucion" sin tilde se acepta, pero se avisa (stripMusculo ya la unificó con "giro").
+  const circNote = /circunvolucion/i.test(String(typed)) ? 'Falta la tilde en "circunvolución".' : null;
+  const withNote = function(n){ return [n, circNote].filter(Boolean).join(' ') || null; };
   for(const ans of list){
     if(normLabel(stripMusculo(ans)) === t){
-      return { correct:true, accentNote: describeLabelDiff(st, stripMusculo(ans)), correctAnswer: ans };
+      return { correct:true, accentNote: withNote(describeLabelDiff(st, stripMusculo(ans))), correctAnswer: ans };
     }
   }
   // Sin coincidencia exacta (ni ignorando tildes): admite una sola letra de
   // diferencia en respuestas suficientemente largas, para no penalizar un
   // error de tipeo real. Señala la palabra mal escrita.
+  // Nunca por una cifra distinta ("par craneal 3" ≠ "par craneal 4", "VII" ≠ "VIII").
+  const numSig = function(s){ return (s.match(/\b(?:[ivx]+|\d+)\b/g) || []).join(','); };
   let best = null;
   for(const ans of list){
     const na = normLabel(stripMusculo(ans));
     if(na.length < 5) continue;
-    if(!best && levenshtein(t, na) === 1) best = ans;
+    if(!best && levenshtein(t, na) === 1 && numSig(t) === numSig(na)) best = ans;
   }
   if(best){
-    return { correct:true, accentNote: describeLabelDiff(st, stripMusculo(best)), correctAnswer: best };
+    return { correct:true, accentNote: withNote(describeLabelDiff(st, stripMusculo(best))), correctAnswer: best };
   }
   return { correct:false, accentNote:null, correctAnswer: (list && list[0]) || '' };
 }
