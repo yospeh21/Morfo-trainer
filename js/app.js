@@ -938,7 +938,8 @@ MODULES.NC1 = {
   id:'NC1', title:'Sistema nervioso central',
   subtitle:'Selecciona el tipo de actividad', placeholder:true, localOnly:true,
   subActivities:[
-    { id:'nc1-practica', title:'Preguntas de práctica', icon:'📝', ready:false }
+    { id:'nc1-practica', title:'Preguntas de práctica', icon:'📝', ready:false },
+    { id:'nc1-img', title:'Imágenes de práctica', icon:'🖼️', ready:false }
   ],
   levels:[]
 };
