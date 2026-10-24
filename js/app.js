@@ -932,6 +932,17 @@ MODULES.MU2 = {
   ]
 };
 
+// Sistema nervioso — unidad "Sistema nervioso central". Contenido pendiente:
+// el botón sale "Próximamente" hasta que el profesor entregue el material.
+MODULES.NC1 = {
+  id:'NC1', title:'Sistema nervioso central',
+  subtitle:'Selecciona el tipo de actividad', placeholder:true, localOnly:true,
+  subActivities:[
+    { id:'nc1-practica', title:'Preguntas de práctica', icon:'📝', ready:false }
+  ],
+  levels:[]
+};
+
 const CATEGORIES = {
   oseo: {
     id:'oseo',
@@ -952,7 +963,7 @@ const CATEGORIES = {
     emoji:'🧠',
     title:'Estructuras y funciones del sistema nervioso',
     subtitle:'Organización del SNC y del SNP, neurona y neuroglía, vías y reflejos',
-    moduleIds:[]
+    moduleIds:['NC1']
   }
 };
 
@@ -2162,12 +2173,13 @@ function viewWelcome(){
    VISTA: SELECCIÓN DE TEMA (home)
    ============================================================ */
 function categoryStats(cat){
-  let total=0, done=0, sumPct=0, hasUnlocked=false, pendingContent=false;
+  let total=0, done=0, sumPct=0, hasUnlocked=false, pendingContent=false, hasLocalUnit=false;
   cat.moduleIds.forEach(mid=>{
     const mod=MODULES[mid];
     if(!mod || isModuleLocked(mid)) return;
     hasUnlocked = true;
-    if(mod.placeholder && !mod.levels.length && !_dynamicContentLoaded) pendingContent = true;
+    if(mod.placeholder && !mod.levels.length && !mod.localOnly && !_dynamicContentLoaded) pendingContent = true;
+    if(mod.localOnly) hasLocalUnit = true;
     mod.levels.forEach(l=>{
       total++;
       const p=state.progress[levelKey(mod.id,l.id)];
@@ -2178,7 +2190,7 @@ function categoryStats(cat){
     total, done,
     avg: done ? Math.round(sumPct/done) : 0,
     hasUnlocked, pendingContent,
-    locked: !hasUnlocked || (total===0 && !pendingContent),
+    locked: !hasUnlocked || (total===0 && !pendingContent && !hasLocalUnit),
     completed: total>0 && done>=total,
     inProgress: done>0 && done<total
   };
@@ -2207,7 +2219,8 @@ function courseCard(cat){
     card.appendChild(el('p','course-desc','Cargando actividades…'));
     card.onclick = ()=>{ state.currentCategory = cat.id; state.view = 'menu'; render(); };
   } else {
-    card.appendChild(progressBar(s.done, s.total, { avg: s.avg }));
+    if(s.total > 0) card.appendChild(progressBar(s.done, s.total, { avg: s.avg }));
+    else card.appendChild(el('p','course-desc','Tu profesor irá habilitando las actividades de este tema.'));
     card.onclick = ()=>{ state.currentCategory = cat.id; state.view = 'menu'; render(); };
   }
   return card;
@@ -2408,7 +2421,7 @@ function practiceSnapshot(mod, sub){
 
 function viewModuleSubmenu(){
   const mod = MODULES[state.currentModule];
-  if(mod && mod.placeholder && !mod.levels.length && !_dynamicContentLoaded){
+  if(mod && mod.placeholder && !mod.levels.length && !mod.localOnly && !_dynamicContentLoaded){
     return contentLoadingView(mod.title, 'Volver al panel', ()=>{ state.view='menu'; render(); });
   }
   const wrap = el('div','home');
