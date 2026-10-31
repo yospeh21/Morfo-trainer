@@ -676,7 +676,7 @@ MODULES.I.levels = [
 // (t:'fill'). La numeración que ve el estudiante es la del arreglo (1..N),
 // no la del Word (que salta números).
 function PQ_MC(q, opts, correct){ return { t:'mc', q:q, opts:opts, correct:correct }; }
-function PQ_TF(q, correct){ return { t:'tf', q:q, correct:correct }; }
+function PQ_TF(q, correct, explain){ return { t:'tf', q:q, correct:correct, explain:explain }; }
 function PQ_FILL(q, blanks, anyOrder){ return { t:'fill', q:q, blanks:blanks, anyOrder:!!anyOrder }; }
 
 // Cada grupo muscular es un módulo del tema (botón), con sus actividades
@@ -936,16 +936,17 @@ MODULES.MU2 = {
 // el botón sale "Próximamente" hasta que el profesor entregue el material.
 MODULES.NC1 = {
   id:'NC1', title:'Sistema nervioso central',
-  subtitle:'Selecciona el tipo de actividad', placeholder:true, localOnly:true,
+  subtitle:'Selecciona el tipo de actividad', placeholder:true, localOnly:true, groupedActivities:true,
   subActivities:[
     { id:'nc1-practica', title:'Preguntas de práctica', icon:'📝', ready:false },
-    { id:'nc1-img', title:'Imágenes de práctica', icon:'🖼️', ready:false }
+    { id:'nc1-anatomia', title:'Anatomía', icon:'🧠', ready:false, group:'anatomia' },
+    { id:'nc1-img', title:'Imágenes de práctica', icon:'🖼️', ready:false, group:'img' }
   ],
   levels:[]
 };
 
 MODULES.NC1.levels.push({
-  id:'nc1-img', type:'imgLabel', title:'Imágenes de práctica',
+  id:'nc1-img', group:'img', type:'imgLabel', title:'Imágenes de práctica',
   instructions:'Toca cada marcador y escribe el nombre de la estructura que señala la flecha. No importan las mayúsculas ni las tildes; giro y circunvolución, surco y cisura, valen lo mismo.',
   images:[
     { file:'assets/img/sistema-nervioso-central/1.png', label:'Cerebro · cara lateral', points:[
@@ -997,6 +998,174 @@ MODULES.NC1.levels.push({
   ]
 });
 MODULES.NC1.subActivities.find(s=>s.id==='nc1-img').ready = true;
+
+// Anatomía del SNC: preguntas (anatomía + casos clínicos + V/F + completar) en un solo nivel `practice`,
+// más 2 de relacionar y 5 de ordenar, navegables con chips (group 'anatomia'). Claves de relacionar y de
+// ordenar deducidas del contenido (el Word no traía la clave marcada): confirmar con el profesor.
+MODULES.NC1.levels.push(
+  { id:'nc1-an-practica', group:'anatomia', type:'practice', title:'Preguntas de práctica',
+    questions:[
+        PQ_MC('Surco interlobar que separa el lóbulo frontal del lóbulo parietal:', ['Surco central','Surco parietooccipital','Surco precental','Surco lateral'], 0),
+        PQ_MC('En la cara inferior del lóbulo frontal, el giro ubicado medial al surco olfatorio es el:', ['Giro occipitotemporal medial','Giro orbitario','Giro parahipocampal','Giro recto'], 3),
+        PQ_MC('Núcleo elongado que se dispone alrededor del tálamo en forma de coma y presenta cabeza, cuerpo y cola:', ['Globo pálido','Claustro','Núcleo lenticular','Núcleo caudado'], 3),
+        PQ_MC('El núcleo lenticular está formado por:', ['Núcleo caudado y putamen','Putamen y globo pálido','Globo pálido y claustro','Núcleo caudado y globo pálido'], 1),
+        PQ_MC('Lámina de sustancia gris ubicada entre el núcleo lenticular y la corteza de la ínsula:', ['Claustro','Cápsula interna','Cápsula externa','Cápsula extrema'], 0),
+        PQ_MC('La sustancia blanca ubicada entre el núcleo lenticular y el claustro corresponde a la:', ['Cápsula interna','Cápsula externa','Cápsula extrema','Lámina medular lateral'], 1),
+        PQ_MC('Orden correcto de las porciones del cuerpo calloso, de anterior a posterior:', ['Rodilla, cuerpo, pico y esplenio','Rodilla, pico, cuerpo y esplenio','Pico, cuerpo, rodilla y esplenio','Pico, rodilla, cuerpo y esplenio'], 3),
+        PQ_MC('Fibras de sustancia blanca que unen el hipocampo con el cuerpo mamilar:', ['Comisura posterior','Fórnix','Comisura anterior','Cuerpo calloso'], 1),
+        PQ_MC('La sustancia blanca ubicada entre el claustro y la corteza de la ínsula corresponde a la:', ['Cápsula externa','Cápsula interna','Cápsula extrema','Lámina medular medial'], 2),
+        PQ_MC('Lámina de sustancia blanca que separa el tálamo del núcleo lenticular:', ['Cápsula interna','Cápsula externa','Cápsula extrema','Fórnix'], 0),
+        PQ_MC('El metatálamo está formado por:', ['Núcleos supraóptico y paraventricular','Colículos superiores e inferiores','Cuerpos geniculados medial y lateral','Habénula y glándula pineal'], 2),
+        PQ_MC('Entre los pedúnculos cerebrales derecho e izquierdo se encuentra:', ['La fosa interpeduncular','El surco bulbopontino','El surco basilar','La placa tectal'], 0),
+        PQ_MC('Surco que separa el puente de la médula oblongada:', ['Surco bulbopontino','Surco basilar','Surco retroolivar','Surco preolivar'], 0),
+        PQ_MC('Pedúnculo cerebeloso que une el cerebelo con el puente:', ['Cerebral','Medio','Inferior','Superior'], 1),
+        PQ_MC('El arquicerebelo (vestibulocerebelo) se relaciona funcionalmente con:', ['La percepción visual','La regulación del equilibrio','La regulación hormonal','La coordinación de movimientos voluntarios'], 1),
+        PQ_MC('El "origen real" de un nervio craneal corresponde a:', ['El órgano que inerva','El sitio donde se ubican sus núcleos','El foramen por donde sale del cráneo','El sitio por donde emerge del tronco encefálico'], 1),
+        PQ_MC('Único nervio craneal que emerge de la cara posterior del tronco encefálico:', ['Oculomotor (III)','Troclear (IV)','Trigémino (V)','Abducens (VI)'], 1),
+        PQ_MC('El nervio abducens (NC VI) inerva el músculo:', ['Recto medial','Recto lateral','Oblicuo superior','Oblicuo inferior'], 1),
+        PQ_MC('Nervio que emerge de la cara anterolateral del puente, a nivel de los pedúnculos cerebelosos medios:', ['Abducens','Facial','Trigémino','Vestibulococlear'], 2),
+        PQ_MC('Nervio craneal que emerge por el surco preolivar de la médula oblongada:', ['Hipogloso','Vago','Glosofaríngeo','Accesorio'], 0),
+        PQ_MC('La duramadre craneal está formada por:', ['Una lámina meníngea y la piamadre','Una lámina perióstica y una lámina meníngea','Una sola capa meníngea','Una lámina perióstica y la aracnoides'], 1),
+        PQ_MC('Repliegue de la duramadre que separa los dos hemisferios cerebrales:', ['Hoz del cerebelo','Diafragma selar','Tienda del cerebelo','Hoz del cerebro'], 3),
+        PQ_MC('El líquido cefalorraquídeo circula en el espacio:', ['Subdural','Subaracnoideo','Epidural','Subpial'], 1),
+        PQ_MC('Rama terminal más grande de la arteria carótida interna:', ['Arteria cerebral media','Arteria cerebral posterior','Arteria cerebral anterior','Arteria comunicante posterior'], 0),
+        PQ_MC('Las arterias vertebrales son ramas de la arteria:', ['Carótida común','Subclavia','Carótida externa','Basilar'], 1),
+        PQ_MC('El seno sagital inferior drena directamente en el seno:', ['Sigmoideo','Transverso','Cavernoso','Recto'], 3),
+        PQ_MC('El LCR pasa del III al IV ventrículo a través de:', ['Los forámenes interventriculares','La abertura mediana','Las aberturas laterales','El acueducto del mesencéfalo'], 3),
+        PQ_MC('En la consulta de geriatría, un adulto de 82 años que se cayó hace dos semanas presenta confusión progresiva. La TC muestra sangre por debajo de la duramadre. ¿Qué tipo de hematoma y qué vasos se lesionaron?', ['Epidural, por rotura de venas corticales','Subaracnoideo, por rotura de aneurisma','Epidural, por rotura arterial','Subdural, por rotura de venas corticales'], 3),
+        PQ_MC('Durante una cirugía de cráneo, la neurocirujana retira el hueso. ¿Cuál es la primera meninge que encuentra?', ['Tela coroidea','Duramadre','Aracnoides','Piamadre'], 1),
+        PQ_MC('Para tomar una muestra de LCR se introduce una aguja hasta el espacio que lo contiene. ¿Entre qué meninges se encuentra ese espacio?', ['Entre la aracnoides y la piamadre','Entre la piamadre y el encéfalo','Entre el hueso y la duramadre','Entre la duramadre y la aracnoides'], 0),
+        PQ_MC('Por la rotura de un aneurisma, la sangre se derrama en el espacio subaracnoideo. La arteria afectada es la que une las dos arterias cerebrales anteriores. Esta corresponde a:', ['Arteria comunicante posterior','Arteria basilar','Arteria cerebral media','Arteria comunicante anterior'], 3),
+        PQ_MC('Al despertar, un hombre no puede mover la cara ni el brazo de un lado. Se obstruyó la arteria que recorre el surco lateral. ¿Cuál es?', ['Arteria cerebral posterior','Arteria cerebral media','Arteria comunicante posterior','Arteria cerebral anterior'], 1),
+        PQ_MC('Un conductor deja de ver parte de su campo visual porque se interrumpió la irrigación de la cara medial del lóbulo occipital. ¿Qué arteria la irriga?', ['Arteria comunicante anterior','Arteria cerebral anterior','Arteria cerebral posterior','Arteria cerebral media'], 2),
+        PQ_MC('Una madre consulta porque la cabeza de su bebé crece demasiado. El LCR no logra pasar del III al IV ventrículo. Una de estas estructuras se encuentra obstruida:', ['Forámenes interventriculares','Abertura mediana','Acueducto del mesencéfalo','Conducto central de la médula'], 2),
+        PQ_MC('Por un quiste, el LCR no puede salir de los ventrículos laterales hacia el III ventrículo. ¿Qué comunicación está bloqueada?', ['Abertura mediana','Aberturas laterales','Forámenes interventriculares','Acueducto del mesencéfalo'], 2),
+        PQ_MC('Un estudiante pregunta en qué estructuras se produce el LCR que llena los ventrículos. Usted que estuvo atento a la clase ¿qué le respondería?', ['Senos venosos durales','Cisternas subaracnoideas','Plexos coroideos','Granulaciones aracnoideas'], 2),
+        PQ_MC('Con el párpado caído, un joven no logra elevarlo. ¿Qué nervio inerva el músculo elevador del párpado superior?', ['Abducens (VI)','Facial (VII)','Oculomotor (III)','Troclear (IV)'], 2),
+        PQ_MC('Una paciente no puede llevar el ojo hacia afuera porque está paralizado el músculo recto lateral. ¿Qué nervio lo inerva?', ['Oculomotor (III)','Trigémino (V)','Abducens (VI)','Troclear (IV)'], 2),
+        PQ_MC('Una estudiante se levanta sin poder cerrar el ojo ni sonreír de un lado. ¿Qué nervio inerva los músculos de la mímica?', ['Facial (VII)','Glosofaríngeo (IX)','Trigémino (V)','Hipogloso (XII)'], 0),
+        PQ_MC('Al lavarse la cara, una señora siente dolor en la mejilla y el labio superior. ¿Qué rama del trigémino da la sensibilidad de esta zona?', ['Nervio oftálmico (V1)','Nervio mandibular (V3)','Nervio maxilar (V2)','Nervio facial'], 2),
+        PQ_MC('Por una lesión nerviosa, una persona tiene dificultad para masticar. ¿Qué nervio craneal da la inervación motora a los músculos de la masticación?', ['Hipogloso (XII)','Glosofaríngeo (IX)','Facial (VII)','Trigémino (V)'], 3),
+        PQ_MC('Con pérdida de audición en un oído, un hombre tiene un tumor sobre el nervio que conduce la audición y el equilibrio. El nervio afectado es:', ['Vago (X)','Facial (VII)','Vestibulococlear (VIII)','Glosofaríngeo (IX)'], 2),
+        PQ_MC('Cuando se le pide sacar la lengua, la lengua de un niño se desvía hacia un lado. ¿Qué nervio inerva los músculos de la lengua?', ['Vago (X)','Glosofaríngeo (IX)','Hipogloso (XII)','Accesorio (XI)'], 2),
+        PQ_MC('Una persona no percibe sabores en el tercio posterior de la lengua. Esta situación indica lesión del nervio:', ['Glosofaríngeo (IX)','Facial (VII)','Hipogloso (XII)','Trigémino (V)'], 0),
+        PQ_MC('Un paciente no logra tocarse la nariz con precisión porque falla la coordinación de los movimientos voluntarios. ¿Qué división del cerebelo cumple esta función?', ['Neocerebelo','Vestibulocerebelo','Arquicerebelo','Paleocerebelo'], 0),
+        PQ_MC('Un niño con un tumor en el lóbulo floculonodular pierde el equilibrio con facilidad. ¿A qué división filogenética pertenece este lóbulo?', ['Neocerebelo','Pontocerebelo','Arquicerebelo','Paleocerebelo'], 2),
+        PQ_MC('Una paciente con un tumor de hipófisis pierde visión a los lados porque el tumor comprime una estructura ubicada anterior a la glándula, esta es:', ['Quiasma óptico','Nervio oculomotor','Cuerpo geniculado lateral','Seno esfenoidal'], 0),
+        PQ_MC('Después de una cirugía, se lesiona el lóbulo posterior de la hipófisis. ¿Qué hormonas transportan las fibras que llegan a este lóbulo desde el hipotálamo?', ['Cortisol y adrenalina','Hormonas liberadoras hipotalámicas','Hormona del crecimiento y prolactina','Oxitocina y hormona antidiurética'], 3),
+        PQ_MC('Un niño tiene un tumor en la glándula pineal. ¿De qué porción del diencéfalo forma parte esta glándula?', ['Metatálamo','Hipotálamo','Epitálamo','Subtálamo'], 2),
+        PQ_MC('Una lesión en el cuerpo geniculado lateral altera la visión. ¿Hacia dónde se dirigen las radiaciones ópticas que salen de esta estructura?', ['Cerebelo','Corteza visual del lóbulo occipital','Hipotálamo','Corteza del lóbulo frontal'], 1),
+        PQ_TF('El nervio troclear es el único que emerge de la cara posterior del tronco encefálico.', true),
+        PQ_TF('La arteria cerebral posterior es rama terminal de la arteria carótida interna.', false, 'Es rama terminal de la arteria basilar.'),
+        PQ_TF('El fórnix une el hipocampo con el cuerpo mamilar.', true),
+        PQ_TF('El glosofaríngeo recoge el gusto de los dos tercios anteriores de la lengua.', false, 'El gusto de los dos tercios anteriores lo recoge el facial (VII); el glosofaríngeo recoge el del tercio posterior.'),
+        PQ_TF('El aneurisma más frecuente del polígono de Willis se localiza en la arteria comunicante anterior.', true),
+        PQ_TF('El hematoma subdural suele ser de origen arterial.', false, 'Suele ser de origen venoso (rotura de venas corticales).'),
+        PQ_FILL('Porciones del tronco encefálico, de superior a inferior: ______, ______ y ______.', [['Mesencéfalo'],['Puente','Protuberancia','Puente de Varolio'],['Bulbo raquídeo','Médula oblongada','Bulbo']]),
+        PQ_FILL('Las partes del diencéfalo son: ______, ______, ______, ______ y ______.', [['tálamo'],['epitálamo'],['subtálamo'],['metatálamo'],['hipotálamo']], true),
+        PQ_FILL('De afuera hacia adentro, las meninges son: ______, ______ y ______.', [['duramadre'],['aracnoides'],['piamadre']]),
+        PQ_FILL('Las porciones del cuerpo calloso son: ______, ______, ______ y ______.', [['pico'],['rodilla'],['cuerpo'],['esplenio']], true),
+        PQ_FILL('Las tres ramas del nervio trigémino son: ______, ______ y ______.', [['oftálmico','nervio oftálmico','V1','oftálmico (V1)'],['maxilar','nervio maxilar','V2','maxilar (V2)'],['mandibular','nervio mandibular','V3','mandibular (V3)']], true),
+        PQ_FILL('El polígono de Willis se conforma de dos sistemas, estos son: ______ y ______.', [['carotídeo','sistema carotídeo','arteria carótida interna','carótida interna','carotídeo (arteria carótida interna)'],['vertebrobasilar','sistema vertebrobasilar','vertebral y basilar']], true),
+        PQ_FILL('La arteria basilar se forma de la unión de: ______.', [['las dos arterias vertebrales','dos arterias vertebrales','las arterias vertebrales','arterias vertebrales','las vertebrales','vertebrales']]),
+        PQ_FILL('El LCR vuelve a la sangre a través de las ______, principalmente en el seno ______.', [['granulaciones aracnoideas','granulaciones','vellosidades aracnoideas','vellosidades','granulaciones (vellosidades) aracnoideas'],['sagital superior','seno sagital superior']]),
+        PQ_FILL('El metatálamo está formado por los cuerpos geniculados ______ y ______.', [['medial'],['lateral']], true),
+        PQ_FILL('Los músculos trapecio y esternocleidomastoideo son inervados por el nervio ______.', [['accesorio','nervio accesorio','accesorio (NC XI)','espinal','nervio espinal','NC XI','XI','undécimo par craneal','par craneal XI','par craneal 11']]),
+        PQ_FILL('Los senos sigmoideos drenan en ______.', [['la vena yugular interna','vena yugular interna','la yugular interna','yugular interna','las venas yugulares internas','venas yugulares internas']])
+    ]
+  },
+  { id:'nc1-an-rel1', group:'anatomia', type:'match', title:'Relacionar: estructuras y descripciones',
+    instructions:'Toca un término y luego su definición correcta.',
+    pairs:[
+      ['Hoz del cerebro','Separa los hemisferios cerebrales'],
+      ['Diafragma selar','Repliegue dural por encima de la hipófisis'],
+      ['Seno cavernoso','A los lados de la silla turca'],
+      ['Acueducto del mesencéfalo','Comunica el III con el IV ventrículo'],
+      ['Claustro','Lámina gris entre el lenticular y la ínsula'],
+      ['Comisura posterior','Entre la pineal y el acueducto'],
+      ['Vermis','Une los hemisferios cerebelosos'],
+      ['Epitálamo','Habénula y glándula pineal']
+    ]
+  },
+  { id:'nc1-an-rel2', group:'anatomia', type:'match', title:'Relacionar: nervios craneales y función',
+    instructions:'Toca un nervio craneal y luego su función.',
+    pairs:[
+      ['NC I · Olfatorio','Olfacción'],
+      ['NC II · Óptico','Visión'],
+      ['NC III · Oculomotor','Músculo elevador del párpado superior y músculos rectos superior, medial e inferior'],
+      ['NC IV · Troclear','Músculo oblicuo superior'],
+      ['NC V · Trigémino','Sensibilidad de la cara y músculos de la masticación'],
+      ['NC VI · Abducens','Músculo recto lateral'],
+      ['NC VII · Facial','Músculos de la mímica'],
+      ['NC VIII · Vestibulococlear','Audición y equilibrio'],
+      ['NC IX · Glosofaríngeo','Gusto del tercio posterior de la lengua'],
+      ['NC X · Vago','Inervación motora de la laringe y de vísceras del tórax y el abdomen'],
+      ['NC XI · Accesorio','Músculos trapecio y esternocleidomastoideo'],
+      ['NC XII · Hipogloso','Músculos de la lengua']
+    ]
+  },
+  { id:'nc1-an-seq1', group:'anatomia', type:'sequence', title:'Ordenar: recorrido del LCR',
+    instructions:'Ordena el recorrido del LCR desde su formación hasta su reabsorción. Arrastra los pasos (o usa las flechas) hasta ordenarlos.',
+    steps:[
+      {title:'Ventrículos laterales'},
+      {title:'Forámenes interventriculares'},
+      {title:'Tercer ventrículo'},
+      {title:'Acueducto del mesencéfalo'},
+      {title:'Cuarto ventrículo'},
+      {title:'Aberturas mediana y laterales'},
+      {title:'Espacio subaracnoideo'},
+      {title:'Granulaciones aracnoideas / seno sagital superior'}
+    ]
+  },
+  { id:'nc1-an-seq2', group:'anatomia', type:'sequence', title:'Ordenar: capas desde la superficie al encéfalo',
+    instructions:'Ordena las capas desde la superficie hasta el encéfalo. Arrastra los pasos (o usa las flechas) hasta ordenarlos.',
+    steps:[
+      {title:'Cráneo'},
+      {title:'Duramadre'},
+      {title:'Aracnoides'},
+      {title:'Espacio subaracnoideo'},
+      {title:'Piamadre'},
+      {title:'Encéfalo'}
+    ]
+  },
+  { id:'nc1-an-seq3', group:'anatomia', type:'sequence', title:'Ordenar: drenaje venoso',
+    instructions:'Ordena el drenaje venoso. Arrastra los pasos (o usa las flechas) hasta ordenarlos.',
+    steps:[
+      {title:'Seno sagital superior'},
+      {title:'Confluencia de los senos'},
+      {title:'Seno transverso'},
+      {title:'Seno sigmoideo'},
+      {title:'Vena yugular interna'}
+    ]
+  },
+  { id:'nc1-an-seq4', group:'anatomia', type:'sequence', title:'Ordenar: nervios craneales',
+    instructions:'Ordena los nervios craneales según su numeración. Arrastra los pasos (o usa las flechas) hasta ordenarlos.',
+    steps:[
+      {title:'Olfatorio'},
+      {title:'Óptico'},
+      {title:'Oculomotor'},
+      {title:'Troclear'},
+      {title:'Trigémino'},
+      {title:'Abducens'},
+      {title:'Facial'},
+      {title:'Vestibulococlear'},
+      {title:'Glosofaríngeo'},
+      {title:'Vago'},
+      {title:'Accesorio'},
+      {title:'Hipogloso'}
+    ]
+  },
+  { id:'nc1-an-seq5', group:'anatomia', type:'sequence', title:'Ordenar: trayecto de la arteria carótida interna',
+    instructions:'Ordena el trayecto de la arteria carótida interna. Arrastra los pasos (o usa las flechas) hasta ordenarlos.',
+    steps:[
+      {title:'Porción cervical'},
+      {title:'Porción petrosa'},
+      {title:'Porción cavernosa'},
+      {title:'Porción cerebral'}
+    ]
+  }
+);
+MODULES.NC1.subActivities.find(s=>s.id==='nc1-anatomia').ready = true;
 
 const CATEGORIES = {
   oseo: {
@@ -2562,7 +2731,7 @@ function viewModuleSubmenu(){
     else if(doneInfo) hd.appendChild(badge('Completado','done'));
     else hd.appendChild(badge('Disponible','progress'));
     card.appendChild(hd);
-    if(grouped){
+    if(grouped && sub.ready){
       card.appendChild(progressBar(doneCount, totalCount, { unit:'actividades', avg: avg }));
     } else if(sub.ready && doneInfo){
       card.appendChild(el('div','mod-meta','✓ ' + pct(doneInfo.correct, doneInfo.total) + '% en tu último intento'));
@@ -2743,10 +2912,12 @@ function beginActivity(opts){
   // `group`/`kind` (p. ej. H separa Histología/Fisiología, y dentro de cada
   // una, diversas vs. selección múltiple), los chips se limitan a los
   // niveles que compartan esos mismos campos con el nivel actual.
-  const multi = mod.levels.length > 1 && (!mod.subActivities || mod.groupedActivities);
-  const groupLevels = multi ? mod.levels.filter(l=>
+  const multi0 = mod.levels.length > 1 && (!mod.subActivities || mod.groupedActivities);
+  const groupLevels0 = multi0 ? mod.levels.filter(l=>
     l.group === level.group && l.kind === level.kind
   ) : null;
+  const multi = multi0 && groupLevels0.length > 1;
+  const groupLevels = multi ? groupLevels0 : null;
   const groupIdx = multi ? groupLevels.indexOf(level) : idx;
   head.appendChild(el('div','act-type',
     multi ? ('Nivel '+(groupIdx+1)+' · '+esc(level.title))
@@ -3832,7 +4003,7 @@ function viewPractice(){
       }
     } else {
       const okTxt = q.t === 'tf' ? (q.correct ? 'Verdadero' : 'Falso') : q.opts[q.correct];
-      A.feedback({ ok: rec.ok, body: rec.ok ? 'Respuesta correcta.' : 'La respuesta correcta es <b>'+esc(okTxt)+'</b>.' });
+      A.feedback({ ok: rec.ok, body: (rec.ok ? 'Respuesta correcta.' : 'La respuesta correcta es <b>'+esc(okTxt)+'</b>.') + (q.explain ? '<br>'+esc(q.explain) : '') });
     }
   }
 
@@ -4580,10 +4751,12 @@ function viewLevelDone(){
   const p=state.progress[levelKey(mod.id, level.id)];
   const score=pct(p.correct, p.total);
   const tier=resultTier(score);
-  const multi = mod.levels.length > 1 && (!mod.subActivities || mod.groupedActivities);
-  const groupLevels = multi ? mod.levels.filter(l=>
+  const multi0 = mod.levels.length > 1 && (!mod.subActivities || mod.groupedActivities);
+  const groupLevels0 = multi0 ? mod.levels.filter(l=>
     l.group === level.group && l.kind === level.kind
   ) : null;
+  const multi = multi0 && groupLevels0.length > 1;
+  const groupLevels = multi ? groupLevels0 : null;
   const groupIdx = multi ? groupLevels.indexOf(level) : idx;
   const t = ensureTimer(mod.id);
 
