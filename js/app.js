@@ -940,6 +940,7 @@ MODULES.NC1 = {
   subActivities:[
     { id:'nc1-practica', title:'Preguntas de práctica', icon:'📝', ready:false },
     { id:'nc1-anatomia', title:'Anatomía', icon:'🧠', ready:false, group:'anatomia' },
+    { id:'nc1-fisiologia', title:'Fisiología', icon:'⚡', ready:false, group:'fisiologia' },
     { id:'nc1-img', title:'Imágenes de práctica', icon:'🖼️', ready:false, group:'img' }
   ],
   levels:[]
@@ -1166,6 +1167,153 @@ MODULES.NC1.levels.push(
   }
 );
 MODULES.NC1.subActivities.find(s=>s.id==='nc1-anatomia').ready = true;
+
+// Fisiología del SNC: mismo formato que Anatomía (nivel `practice` + relacionar + ordenar), group 'fisiologia'.
+MODULES.NC1.levels.push(
+  { id:'nc1-fi-practica', group:'fisiologia', type:'practice', title:'Preguntas de práctica',
+    questions:[
+        PQ_MC('Las dos grandes divisiones anatómicas del sistema nervioso son:', ['Sistema nervioso central y sistema nervioso periférico','División simpática y división parasimpática','Encéfalo y médula espinal','Sistema nervioso somático y sistema nervioso autónomo'], 0),
+        PQ_MC('El sistema nervioso periférico NO incluye:', ['La médula espinal','Los nervios craneales y espinales','Los ganglios','Los receptores sensoriales'], 0),
+        PQ_MC('División del sistema nervioso periférico que controla de forma voluntaria el músculo esquelético:', ['Sistema nervioso autónomo','Sistema nervioso somático','Sistema nervioso entérico','División parasimpática'], 1),
+        PQ_MC('División del sistema nervioso autónomo relacionada con las respuestas de "lucha o huida":', ['Somática','Entérica','Simpática','Parasimpática'], 2),
+        PQ_MC('Red neuronal de los plexos del tubo digestivo, conocida como "cerebro visceral":', ['Sistema nervioso entérico','División parasimpática','Formación reticular','Sistema nervioso somático'], 0),
+        PQ_MC('Conjunto de cuerpos celulares neuronales localizado dentro del SNC:', ['Ganglio','Tracto','Nervio','Núcleo'], 3),
+        PQ_MC('Haz de axones localizado dentro del SNC:', ['Ganglio','Tracto','Núcleo','Nervio'], 1),
+        PQ_MC('El axón no puede sintetizar proteínas porque su axoplasma carece de:', ['Mitocondrias','Retículo endoplasmático rugoso','Microtúbulos','Membrana plasmática'], 1),
+        PQ_MC('Neurona con una dendrita principal y un axón, presente en la retina, el oído interno y el área olfatoria:', ['Multipolar','Interneurona','Bipolar','Unipolar'], 2),
+        PQ_MC('Células gliales más grandes y numerosas del SNC, que participan en la formación de la barrera hematoencefálica:', ['Microglía','Oligodendrocitos','Astrocitos','Células ependimarias'], 2),
+        PQ_MC('Células que forman y mantienen la vaina de mielina en el SNC:', ['Células satélite','Oligodendrocitos','Células de Schwann','Astrocitos'], 1),
+        PQ_MC('Células de la neuroglía con función fagocítica:', ['Oligodendrocitos','Microglía','Células satélite','Células ependimarias'], 1),
+        PQ_MC('Células de forma cuboide o cilíndrica que revisten los ventrículos y el conducto central:', ['Astrocitos','Células satélite','Células ependimarias','Células de Schwann'], 2),
+        PQ_MC('Células que rodean los cuerpos neuronales en los ganglios del SNP:', ['Microglía','Oligodendrocitos','Células satélite','Células de Schwann'], 2),
+        PQ_MC('La sustancia blanca está formada principalmente por:', ['Neuroglía y axones amielínicos','Cuerpos celulares neuronales','Dendritas y terminales axónicos','Axones mielínicos'], 3),
+        PQ_MC('Valor aproximado del potencial de membrana en reposo de las fibras nerviosas grandes:', ['0 mV','−40 mV','−90 mV','+35 mV'], 2),
+        PQ_MC('Por cada ciclo, la bomba sodio-potasio:', ['Expulsa 3 Na⁺ e introduce 2 K⁺','Expulsa 2 K⁺ e introduce 3 Na⁺','Expulsa 3 K⁺ e introduce 2 Na⁺','Expulsa 2 Na⁺ e introduce 3 K⁺'], 0),
+        PQ_MC('Ion que se encuentra en mayor concentración en el interior de la neurona:', ['Potasio (K⁺)','Calcio (Ca²⁺)','Sodio (Na⁺)','Cloro (Cl⁻)'], 0),
+        PQ_MC('Fase del potencial de acción en la que la membrana se vuelve permeable al Na⁺ y este entra a la célula:', ['Reposo','Despolarización','Repolarización','Período refractario'], 1),
+        PQ_MC('Los potenciales graduados se generan principalmente por la apertura de canales:', ['De fuga de K⁺ exclusivamente','De Na⁺ y K⁺ dependientes de voltaje','De las uniones de hendidura','Activados mecánicamente y dependientes de ligando'], 3),
+        PQ_MC('Característica propia de un potencial graduado:', ['Se propaga sin disminuir a lo largo del axón','Siempre debe alcanzar el umbral','Obedece el principio del todo o nada','Su amplitud depende de la intensidad del estímulo'], 3),
+        PQ_MC('Intervalo en el que no puede generarse un segundo potencial de acción, aunque el estímulo sea intenso:', ['Período refractario','Facilitación','Sumación','Umbral'], 0),
+        PQ_MC('La conducción saltatoria se produce en:', ['Axones amielínicos','Fibras musculares','Dendritas y cuerpo celular','Axones mielinizados, de un nodo de Ranvier al siguiente'], 3),
+        PQ_MC('Ion cuya entrada al terminal presináptico provoca la liberación del neurotransmisor:', ['Calcio (Ca²⁺)','Cloro (Cl⁻)','Sodio (Na⁺)','Potasio (K⁺)'], 0),
+        PQ_MC('En la sinapsis eléctrica, la señal pasa de una célula a otra a través de:', ['Un neurotransmisor, en un solo sentido','Receptores acoplados a proteína G, en un solo sentido','Uniones de hendidura, en ambos sentidos','Vesículas sinápticas, en ambos sentidos'], 2),
+        PQ_MC('Neurotransmisor de molécula pequeña con acción excitadora:', ['Glicina','Glutamato','GABA','Dopamina'], 1),
+        PQ_MC('La inhibición presináptica en las vías sensitivas se debe a la liberación de:', ['Glutamato','Óxido nítrico','Acetilcolina','GABA'], 3),
+        PQ_MC('Las arterias vertebrales ascienden por ______ y entran al cráneo por el foramen magno:', ['El conducto vertebral junto a la médula','El foramen yugular','Los forámenes transversos de C6 a C1','El conducto carotídeo'], 2),
+        PQ_MC('Porción de la arteria carótida interna que NO emite ramas:', ['Cerebral','Cavernosa','Petrosa','Cervical'], 3),
+        PQ_MC('Barrera formada por las uniones estrechas de las células ependimarias, que separa la sangre del LCR:', ['Barrera aracnoidea','Barrera hematoencefálica','Barrera hematorraquídea','Barrera pial'], 2),
+        PQ_MC('Volumen total aproximado de LCR en un adulto:', ['1000 mL','20 mL','450–600 mL','80–150 mL'], 3),
+        PQ_MC('Sustancia que atraviesa la barrera hematoencefálica por transporte activo:', ['Alcohol','Dióxido de carbono','Oxígeno','Glucosa'], 3),
+        PQ_MC('Al tocar una olla caliente, los receptores de la piel de una estudiante detectan el calor y envían la información al SNC. ¿Qué función básica del sistema nervioso se cumple en este paso?', ['Integradora','Sensitiva','Endocrina','Motora'], 1),
+        PQ_MC('En la misma situación, los músculos del brazo se contraen y retiran la mano. ¿Qué función del sistema nervioso se cumple en este paso?', ['Motora','Homeostática','Integradora','Sensitiva'], 0),
+        PQ_MC('Mientras estudia, un joven escucha su celular, analiza la situación y decide contestar. ¿Qué función del sistema nervioso le permitió tomar la decisión?', ['Motora','Refleja','Sensitiva','Integradora'], 3),
+        PQ_MC('Durante una carrera, la frecuencia cardíaca de una atleta aumenta sin que ella lo decida. ¿Qué división del sistema nervioso controla esta respuesta?', ['División parasimpática del SNA','Sistema nervioso somático','División simpática del SNA','Sistema nervioso entérico'], 2),
+        PQ_MC('Después de un almuerzo abundante, una persona se recuesta y su digestión se activa. ¿Qué división predomina en este estado de reposo?', ['Nivel cortical','División simpática del SNA','División parasimpática del SNA','Sistema nervioso somático'], 2),
+        PQ_MC('Al escribir un mensaje en el teclado, un estudiante mueve los dedos de forma voluntaria. ¿Qué división del SNP controla estos músculos?', ['Sistema nervioso somático','Sistema nervioso entérico','Sistema nervioso autónomo','División simpática'], 0),
+        PQ_MC('Al observar al microscopio un ganglio espinal, una estudiante ve células pequeñas que rodean los cuerpos neuronales y regulan el intercambio de sustancias. ¿Qué células son?', ['Células ependimarias','Células satélite','Microglía','Células de Schwann'], 1),
+        PQ_MC('En la esclerosis múltiple se pierde la mielina del SNC. ¿Qué células producen la mielina que se pierde?', ['Células de Schwann','Oligodendrocitos','Astrocitos','Microglía'], 1),
+        PQ_MC('En la misma enfermedad, la conducción del impulso se vuelve más lenta o falla. ¿Por qué ocurre esto?', ['La bomba Na⁺/K⁺ deja de funcionar en todo el axón','Los canales de Na⁺ se concentran en exceso en los nodos','Aumenta el diámetro del axón y la señal se dispersa','La corriente se filtra por la membrana y no alcanza a llevar el siguiente nodo de Ranvier al umbral'], 3),
+        PQ_MC('Durante una infección del encéfalo, unas células gliales fagocitan microorganismos y tejido dañado. ¿Cuáles son?', ['Microglía','Células ependimarias','Oligodendrocitos','Astrocitos'], 0),
+        PQ_MC('En el laboratorio se estudia una neurona sensitiva del tacto con una sola prolongación que se divide en dos ramas, y su cuerpo celular está en un ganglio espinal. ¿Cómo se clasifica?', ['Unipolar (seudounipolar)','Bipolar','Interneurona','Multipolar'], 0),
+        PQ_MC('Antes de una sutura, se aplica una sustancia que bloquea los canales de Na⁺ dependientes de voltaje del nervio. ¿Qué ocurrirá con el potencial de acción?', ['Se propaga más rápido','Solo se altera la repolarización','Se genera con mayor amplitud','No se genera, porque no puede producirse la despolarización'], 3),
+        PQ_MC('Un roce muy leve en la piel produce un pequeño cambio en el potencial de membrana que no alcanza el umbral. ¿Qué se genera?', ['Un período refractario','Un potencial de acción que se propaga a medias','Solo un potencial graduado, sin potencial de acción','Un potencial de acción de baja amplitud'], 2),
+        PQ_MC('Dos estímulos despolarizantes llegan al mismo tiempo a diferentes dendritas de una neurona. ¿Qué resultado se espera?', ['No tienen ningún efecto sobre el soma','Se cancelan entre sí','Se suman y producen una mayor despolarización','Producen una hiperpolarización'], 2),
+        PQ_MC('Al mismo tiempo, una neurona recibe un potencial despolarizante y otro hiperpolarizante de magnitud similar. ¿Qué ocurre?', ['Se pueden cancelar','Se produce una gran hiperpolarización','Se produce una gran despolarización','Se dispara un potencial de acción'], 0),
+        PQ_MC('En un experimento se aumenta la intensidad de un estímulo que ya superó el umbral. ¿Qué ocurre con la amplitud del potencial de acción?', ['Se duplica','Se mantiene igual (todo o nada)','Disminuye','Aumenta proporcionalmente'], 1),
+        PQ_MC('Un estudiante compara dos axones mielinizados: uno grueso y otro delgado. ¿Cuál conduce más rápido el potencial de acción?', ['Ambos a la misma velocidad','Depende solo de la temperatura','El de mayor diámetro','El de menor diámetro'], 2),
+        PQ_MC('Después de meter la mano en agua helada, una persona siente los dedos "dormidos" y lentos. ¿Qué factor explica la menor velocidad de propagación?', ['La conducción saltatoria','La disminución de la temperatura','El aumento de la mielinización','El aumento del diámetro del axón'], 1),
+        PQ_MC('Durante un potencial de acción, después de la entrada de Na⁺, los canales de K⁺ se abren y el K⁺ sale. ¿Qué fase se produce?', ['Reposo','Despolarización','Sumación','Repolarización'], 3),
+        PQ_MC('En el laboratorio se baña una sinapsis en un líquido sin calcio. ¿Qué paso de la transmisión sináptica fallará?', ['La unión del neurotransmisor al receptor','La liberación del neurotransmisor desde el terminal presináptico','La síntesis de mielina','La propagación del potencial de acción por el axón'], 1),
+        PQ_MC('Un neurotransmisor se une a su receptor y abre canales de Cl⁻; el interior de la neurona se vuelve más negativo. ¿Qué efecto tiene sobre la neurona?', ['Dispara de inmediato un potencial de acción','La excita, porque se acerca al umbral','No modifica su excitabilidad','La inhibe, porque se aleja del umbral'], 3),
+        PQ_MC('Algunos sedantes potencian la acción del GABA en el encéfalo. ¿Qué efecto se espera sobre las neuronas?', ['Mayor excitación','Mayor inhibición','Más liberación de glutamato','Despolarización sostenida'], 1),
+        PQ_MC('De tanto practicar una melodía en el piano, a una estudiante le resulta cada vez más fácil tocarla. ¿Qué propiedad de las sinapsis explica esta mejora?', ['Inhibición presináptica','Período refractario','Conducción decremental','Facilitación'], 3),
+        PQ_MC('Al levantarse muy rápido de la cama, un joven se marea por unos segundos. ¿Qué lo explica?', ['Una disminución leve y transitoria del flujo sanguíneo encefálico','Un aumento del volumen de LCR','Un exceso de glucosa en el encéfalo','El cierre de la barrera hematoencefálica'], 0),
+        PQ_MC('Durante una falta de oxígeno, las neuronas se afectan en pocos minutos. ¿Por qué son tan vulnerables?', ['Almacenan grandes reservas de glucógeno','Obtienen energía principalmente de las proteínas','La barrera hematoencefálica impide el paso de oxígeno','Producen ATP casi solo a partir de glucosa y oxígeno, y casi no almacenan glucosa'], 3),
+        PQ_MC('Pocos minutos después de beber alcohol, una persona ya nota efectos en su comportamiento. ¿Por qué el alcohol llega tan rápido al tejido nervioso?', ['Viaja dentro del LCR','Es liposoluble y atraviesa fácilmente la barrera hematoencefálica','Atraviesa la barrera solo por transporte activo','Se produce dentro del encéfalo'], 1),
+        PQ_MC('Si un coágulo obstruye la arteria basilar, ¿qué ramas terminales dejarán de recibir sangre?', ['Las arterias cerebrales anteriores','Las arterias cerebrales medias','Las arterias comunicantes anteriores','Las arterias cerebrales posteriores'], 3),
+        PQ_MC('En la imagen de un paciente se observa un coágulo en la confluencia de los senos. ¿A qué nivel se ubica esta confluencia?', ['A nivel de la protuberancia occipital interna','A los lados de la silla turca','En el borde libre de la hoz del cerebro','En el foramen yugular'], 0),
+        PQ_TF('La neuroglía es más pequeña y más numerosa que las neuronas.', true),
+        PQ_TF('Un oligodendrocito puede mielinizar segmentos de varios axones.', true),
+        PQ_TF('Cada célula de Schwann mieliniza segmentos de varios axones.', false, 'Cada célula de Schwann mieliniza un solo segmento de un único axón.'),
+        PQ_TF('El potencial graduado se propaga a lo largo del axón sin disminuir.', false, 'Disminuye con la distancia (conducción decremental); el que no disminuye es el potencial de acción.'),
+        PQ_TF('El potencial de acción obedece el principio del todo o nada.', true),
+        PQ_TF('Los potenciales de acción se suman igual que los potenciales graduados.', false, 'Los potenciales de acción no se suman; los graduados sí (sumación temporal y espacial).'),
+        PQ_TF('Durante la repolarización se cierran los canales de Na⁺ y se abren los de K⁺.', true),
+        PQ_TF('La conducción saltatoria consume más ATP que la conducción continua.', false, 'Consume menos, porque reduce el intercambio de iones.'),
+        PQ_TF('El GABA y la glicina son neurotransmisores inhibidores.', true),
+        PQ_TF('La sustancia gris está formada principalmente por axones mielínicos.', false, 'Está formada por cuerpos neuronales, dendritas, axones amielínicos y neuroglía; los axones mielínicos forman la sustancia blanca.'),
+        PQ_FILL('El SNP tiene ______ pares de nervios craneales y ______ pares de nervios espinales.', [['12','doce'],['31','treinta y uno']]),
+        PQ_FILL('La bomba sodio-potasio expulsa ______ iones Na⁺ e introduce ______ iones K⁺.', [['3','tres'],['2','dos']]),
+        PQ_FILL('El potencial de membrana en reposo de las fibras nerviosas grandes es de aproximadamente ______ mV.', [['−90','-90','90','menos 90','menos noventa']]),
+        PQ_FILL('Después del reposo, las fases del potencial de acción son la ______ y la ______.', [['despolarización'],['repolarización']]),
+        PQ_FILL('La entrada de iones ______ al terminal presináptico desencadena la liberación del neurotransmisor.', [['calcio (Ca²⁺)','calcio','Ca²⁺','Ca2+','Ca']])
+    ]
+  },
+  { id:'nc1-fi-rel1', group:'fisiologia', type:'match', title:'Relacionar: neuroglía y función',
+    instructions:'Toca una célula y luego su función.',
+    pairs:[
+      ['Astrocitos','Forman parte de la barrera hematoencefálica'],
+      ['Oligodendrocitos','Forman la mielina en el SNC'],
+      ['Microglía','Fagocitan microorganismos y tejido dañado'],
+      ['Células ependimarias','Revisten los ventrículos y contribuyen a la circulación del LCR'],
+      ['Células de Schwann','Forman la mielina en el SNP y tienen neurolema'],
+      ['Células satélite','Rodean los cuerpos neuronales en los ganglios del SNP']
+    ]
+  },
+  { id:'nc1-fi-rel2', group:'fisiologia', type:'match', title:'Relacionar: términos y definiciones',
+    instructions:'Toca un término y luego su definición.',
+    pairs:[
+      ['Ganglio','Cuerpos neuronales en el SNP'],
+      ['Núcleo','Cuerpos neuronales en el SNC'],
+      ['Nervio','Haz de axones en el SNP'],
+      ['Tracto','Haz de axones en el SNC'],
+      ['SN somático','Músculo esquelético, control voluntario'],
+      ['SN autónomo','Músculo liso, cardíaco y glándulas'],
+      ['SN entérico','Tubo digestivo']
+    ]
+  },
+  { id:'nc1-fi-seq1', group:'fisiologia', type:'sequence', title:'Ordenar: estímulo hasta la respuesta',
+    instructions:'Ordene el recorrido desde el estímulo hasta la respuesta. Arrastra los pasos (o usa las flechas) hasta ordenarlos.',
+    steps:[
+      {title:'Receptor'},
+      {title:'Neurona aferente (sensitiva)'},
+      {title:'Integración en el SNC'},
+      {title:'Neurona eferente (motora)'},
+      {title:'Efector (músculo o glándula)'}
+    ]
+  },
+  { id:'nc1-fi-seq2', group:'fisiologia', type:'sequence', title:'Ordenar: flujo de información en la neurona',
+    instructions:'Ordene el flujo de información dentro de una neurona. Arrastra los pasos (o usa las flechas) hasta ordenarlos.',
+    steps:[
+      {title:'Dendritas'},
+      {title:'Cuerpo celular (soma)'},
+      {title:'Cono axónico'},
+      {title:'Axón'},
+      {title:'Terminales axónicos'}
+    ]
+  },
+  { id:'nc1-fi-seq3', group:'fisiologia', type:'sequence', title:'Ordenar: liberación del neurotransmisor',
+    instructions:'Ordene los pasos de la liberación del neurotransmisor. Arrastra los pasos (o usa las flechas) hasta ordenarlos.',
+    steps:[
+      {title:'Llega el potencial de acción al terminal presináptico'},
+      {title:'Se abren los canales de Ca²⁺ dependientes de voltaje'},
+      {title:'Entra Ca²⁺ al terminal'},
+      {title:'Las vesículas liberan el neurotransmisor a la hendidura'},
+      {title:'El neurotransmisor se une a los receptores postsinápticos'}
+    ]
+  },
+  { id:'nc1-fi-seq4', group:'fisiologia', type:'sequence', title:'Ordenar: eventos del potencial de acción',
+    instructions:'Ordene los eventos del potencial de acción. Arrastra los pasos (o usa las flechas) hasta ordenarlos.',
+    steps:[
+      {title:'Membrana en reposo (−90 mV)'},
+      {title:'El estímulo alcanza el umbral'},
+      {title:'Entrada de Na⁺ (despolarización)'},
+      {title:'Salida de K⁺ (repolarización)'},
+      {title:'Regreso al potencial de reposo'}
+    ]
+  }
+);
+MODULES.NC1.subActivities.find(s=>s.id==='nc1-fisiologia').ready = true;
 
 const CATEGORIES = {
   oseo: {
