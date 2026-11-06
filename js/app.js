@@ -995,6 +995,40 @@ MODULES.NC1.levels.push({
       {n:17, x:9.58, y:37.9, answers:['Puente','Puente de Varolio','Surco basilar','Protuberancia','Protuberancia anular','Puente troncoencefálico','Pons']},
       {n:18, x:15.17, y:27.6, answers:['Pedúnculos cerebrales','Pedúnculo cerebral','Pilar del cerebro','Pilares del cerebro','Crus cerebri','Pie del pedúnculo cerebral','Pie peduncular']},
       {n:19, x:15.83, y:17.9, answers:['Tracto óptico','Cintilla óptica']}
+    ]},
+    { file:'assets/img/sistema-nervioso-central/3.png', label:'Polígono arterial (círculo de Willis)', points:[
+      {n:1, x:35.9, y:11.82, answers:['Arteria comunicante anterior']},
+      {n:2, x:70.4, y:16.62, answers:['Arteria cerebral anterior']},
+      {n:3, x:83.8, y:24.48, answers:['Arteria cerebral media']},
+      {n:4, x:76.35, y:43.01, answers:['Arteria comunicante posterior']},
+      {n:5, x:79.4, y:51.17, answers:['Arteria cerebral posterior']},
+      {n:6, x:66.5, y:68.63, answers:['Arteria basilar']},
+      {n:7, x:70.75, y:89.68, answers:['Arteria vertebral']}
+    ]},
+    { file:'assets/img/sistema-nervioso-central/4.png', label:'Cerebelo · vista superior', points:[
+      {n:1, x:45.75, y:13.5, answers:['Vermis del cerebelo','Vermis']},
+      {n:2, x:16.65, y:15.24, answers:['Lóbulo anterior','Lóbulo anterior del cerebelo','Lobulillo cuadrangular anterior','Lóbulo cuadrangular anterior']},
+      {n:3, x:78.35, y:17.88, answers:['Fisura primaria','Fisura prima','Fisura preclival']},
+      {n:4, x:87.5, y:26.51, answers:['Fisura horizontal']},
+      {n:5, x:11.25, y:85.66, answers:['Lobulillo simple','Lóbulo simple','Lobulillo cuadrangular posterior','Lóbulo cuadrangular posterior','Lóbulo posterior']}
+    ]},
+    { file:'assets/img/sistema-nervioso-central/5.png', label:'Cerebelo · cara posterior con cortes', points:[
+      {n:1, x:52, y:10.08, answers:['Nódulo del vermis','Nódulo']},
+      {n:2, x:79.65, y:10.98, answers:['Flóculo']},
+      {n:3, x:19.3, y:15.24, answers:['Pedúnculo cerebeloso medio','Brazo del puente']},
+      {n:4, x:50, y:85.18, answers:['Vermis']},
+      {n:5, x:22.75, y:86.38, answers:['Tonsila del cerebelo','Tonsila cerebelosa','Amígdala cerebelosa','Amígdala del cerebelo']},
+      {n:6, x:83.4, y:89.68, answers:['Lobulillo digástrico','Lóbulo digástrico','Lobulillo biventral','Lóbulo biventral','Lóbulo biventer']}
+    ]},
+    { file:'assets/img/sistema-nervioso-central/6.png', label:'Corte sagital · senos venosos de la duramadre', points:[
+      {n:1, x:83.75, y:6.48, answers:['Seno sagital inferior']},
+      {n:2, x:19.5, y:16.08, answers:['Seno petroso superior']},
+      {n:3, x:92.5, y:25.67, answers:['Seno sagital superior']},
+      {n:4, x:93.1, y:42.89, answers:['Seno recto']},
+      {n:5, x:93, y:64.61, answers:['Confluencia de los senos','Prensa de Herófilo']},
+      {n:6, x:87.5, y:76.18, answers:['Seno transverso','Seno lateral']},
+      {n:7, x:79.65, y:80.08, answers:['Seno occipital']},
+      {n:8, x:44.75, y:93.88, answers:['Seno sigmoideo','Seno sigmoides']}
     ]}
   ]
 });
